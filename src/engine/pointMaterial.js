@@ -34,7 +34,7 @@ import * as THREE from 'three';
  *   uSize          기본 점 크기 (카메라 거리 1 기준 픽셀)
  *   uPixelRatio    renderer.getPixelRatio()
  *   uReveal        0 = 모두 숨김, 1 = 모두 보임. 아래→위 스캔라인
- *   uRevealMin/Max 스캔라인이 지나가는 월드 y 범위
+ *   uRevealMin/Max 스캔라인이 지나가는 월드 y 범위. 기본은 자동: 점 구름의 실제 높이에 맞춘다
  *   uRevealEdge    스캔라인 띠 두께 (월드 단위)
  *   uRevealColor   스캔라인 색 (#8FC1FF)
  *   uTwinkle       반짝임 세기 0~1
@@ -118,15 +118,15 @@ const fragmentShader = /* glsl */ `
  * @param {number} [opts.size=3]          기본 점 크기
  * @param {number} [opts.pixelRatio]      기본값 window.devicePixelRatio (최대 2)
  * @param {number} [opts.reveal=1]        시작 uReveal 값
- * @param {number} [opts.revealMin=-1]    스캔라인 시작 y
- * @param {number} [opts.revealMax=1]     스캔라인 끝 y
+ * @param {number} [opts.revealMin]      스캔라인 시작 y. 생략하면 자동 (점 구름 맨 아래)
+ * @param {number} [opts.revealMax]       스캔라인 끝 y. 생략하면 자동 (점 구름 맨 위)
  * @param {number} [opts.revealEdge=0.08] 스캔라인 띠 두께
  * @param {number} [opts.twinkle=0.35]    반짝임 세기
  * @param {number} [opts.opacity=1]
  * @returns {THREE.ShaderMaterial}
  */
 export function createPointMaterial(opts = {}) {
-  return new THREE.ShaderMaterial({
+  const material = new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
     uniforms: {
@@ -147,6 +147,21 @@ export function createPointMaterial(opts = {}) {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
+
+  // 스캔라인 범위 자동 맞춤: 그리기 직전에 점 구름의 월드 높이를 잰다.
+  // 위치가 크게 바뀌면 geometry.boundingBox = null 로 두면 다시 잰다 (morph.js 가 그렇게 한다)
+  const autoMin = opts.revealMin === undefined;
+  const autoMax = opts.revealMax === undefined;
+  if (autoMin || autoMax) {
+    const box = new THREE.Box3();
+    material.onBeforeRender = (renderer, scene, camera, geometry, object) => {
+      if (!geometry.boundingBox) geometry.computeBoundingBox();
+      box.copy(geometry.boundingBox).applyMatrix4(object.matrixWorld);
+      if (autoMin) material.uniforms.uRevealMin.value = box.min.y;
+      if (autoMax) material.uniforms.uRevealMax.value = box.max.y;
+    };
+  }
+  return material;
 }
 
 /**

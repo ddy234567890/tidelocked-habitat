@@ -133,13 +133,7 @@ export function createComposer({ scene, data, rig }) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(shape.positions.slice(), 3));
     addPointAttributes(geometry, { color: shape.colors.slice() });
-    const box = new THREE.Box3().setFromArray(shape.positions);
-    const material = createPointMaterial({
-      size: kind === 'overlay' ? 6 : 8,
-      reveal: 0,
-      revealMin: box.min.y - 0.05,
-      revealMax: box.max.y + 0.05,
-    });
+    const material = createPointMaterial({ size: kind === 'overlay' ? 6 : 8, reveal: 0 });
     const points = new THREE.Points(geometry, material);
     scene.add(points);
     return points;

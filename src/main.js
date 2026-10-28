@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { createCameraRig } from './engine/cameraRig.js';
 import { createComposer } from './engine/composer.js';
+import { createFlow } from './engine/flow.js';
 import week1 from './data/choices/week1.json';
 
-// 데모 장면: 레이어 조합기(e05) 확인용. 1주차 선지를 버튼으로 골라 장면을 조합한다.
+// 데모 장면: 레이어 조합기(e05) + 파티클 흐름(e06) 확인용. 1주차 선지를 버튼으로 골라 장면을 조합한다.
 const canvas = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -56,6 +57,16 @@ function render() {
   composer.apply(selection);
 }
 
+// 흐름 시험: 오버레이 자리에서 주거 쪽으로 산소가 흐르는 관. 버튼으로 중간을 끊는다
+const flow = createFlow({ path: [[1.6, 0.25, 0.9], [1.4, 1.1, 0.6], [0.6, 1.3, 0.2], [0, 0.6, 0]], count: 700 });
+scene.add(flow.points);
+const breakButton = document.getElementById('break-flow');
+breakButton.addEventListener('click', () => {
+  flow.setBroken(flow.broken === null ? 0.5 : null);
+  breakButton.setAttribute('aria-pressed', String(flow.broken !== null));
+  breakButton.textContent = flow.broken === null ? '관 끊기' : '관 잇기';
+});
+
 rig.goTo(week1.steps[0].choices[0].cameraShot, { instant: true });
 render();
 
@@ -70,7 +81,9 @@ resize();
 
 const start = performance.now();
 renderer.setAnimationLoop(() => {
-  composer.update((performance.now() - start) / 1000);
+  const seconds = (performance.now() - start) / 1000;
+  composer.update(seconds);
+  flow.update(seconds);
   rig.update();
   renderer.render(scene, camera);
 });

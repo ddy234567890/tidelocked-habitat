@@ -58,6 +58,7 @@ export function createMorph(points, defaults = {}) {
     for (let i = 0; i < count * 3; i++) color.array[i] += (targetColor.array[i] - color.array[i]) * m;
     position.needsUpdate = true;
     color.needsUpdate = true;
+    geometry.boundingBox = null; // 모양이 바뀌었으니 스캔라인 범위를 다시 잰다
     uniforms.uMorph.value = 0;
   }
 
