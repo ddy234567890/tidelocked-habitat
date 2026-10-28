@@ -26,6 +26,8 @@ const ui = document.getElementById('demo-ui');
 const statsBox = document.getElementById('stats');
 
 function choose(stepId, choiceId) {
+  // 위치는 늘 하나가 골라져 있어야 무대가 있다. 고른 위치를 다시 눌러도 해제하지 않는다
+  if (!choiceId && stepId === week1.steps[0].id) return;
   if (choiceId) selection[stepId] = choiceId;
   else delete selection[stepId];
   // 앞 단계가 바뀌어 더는 고를 수 없게 된 뒤 단계 선택은 지운다
