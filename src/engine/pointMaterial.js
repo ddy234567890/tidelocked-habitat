@@ -26,6 +26,7 @@ import * as THREE from 'three';
  *   aColor       vec3   색 r,g,b 0~1 (palette.js 로 만든다)
  *   aRandom      float  0~1 난수. 반짝임 위상 등에 쓰는 점별 시드
  *   aTarget, aTargetColor  모프 전환 목표 위치·색 (morph.js가 관리)
+ *   aShake       float  0~1 떨림 세기. 0(기본)이면 가만히, 1이면 미세하게 떤다 (예: 용암동굴 '무너질 위험' 천장)
  *
  * Uniforms
  *   uTime          초 단위 시간 (반짝임)
@@ -38,14 +39,18 @@ import * as THREE from 'three';
  *   uRevealEdge    스캔라인 띠 두께 (월드 단위)
  *   uRevealColor   스캔라인 색 (#8FC1FF)
  *   uTwinkle       반짝임 세기 0~1
+ *   uShake         떨림 전체 배율 (기본 1, prefers-reduced-motion 이면 0). aShake 가 있는 점만 움직인다
  *   uOpacity       전체 밝기
  */
+
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const vertexShader = /* glsl */ `
   attribute vec3 aColor;
   attribute float aRandom;
   attribute vec3 aTarget;
   attribute vec3 aTargetColor;
+  attribute float aShake;
 
   uniform float uMorph;
   uniform float uScatter;
@@ -53,6 +58,7 @@ const vertexShader = /* glsl */ `
   uniform float uSize;
   uniform float uPixelRatio;
   uniform float uTwinkle;
+  uniform float uShake;
 
   varying vec3 vColor;
   varying float vTwinkle;
@@ -66,6 +72,13 @@ const vertexShader = /* glsl */ `
     // 모프 전환: position → aTarget 보간, 중간에 점마다 다른 방향으로 살짝 흩어졌다 모인다
     vec3 p = mix(position, aTarget, uMorph);
     p += hash3(aRandom * 97.0) * uScatter * sin(uMorph * 3.1415926);
+
+    // 떨림: aShake 가 있는 점만 점마다 다른 위상으로 아주 조금 흔들린다
+    p += aShake * uShake * 0.018 * vec3(
+      sin(uTime * 47.0 + aRandom * 40.0),
+      sin(uTime * 53.0 + aRandom * 71.0),
+      sin(uTime * 43.0 + aRandom * 23.0)
+    );
 
     vec4 worldPos = modelMatrix * vec4(p, 1.0);
     vec4 mvPosition = viewMatrix * worldPos;
@@ -141,6 +154,7 @@ export function createPointMaterial(opts = {}) {
       uRevealEdge: { value: opts.revealEdge ?? 0.08 },
       uRevealColor: { value: new THREE.Color(0x8fc1ff) },
       uTwinkle: { value: opts.twinkle ?? 0.35 },
+      uShake: { value: reducedMotion.matches ? 0 : 1 },
       uOpacity: { value: opts.opacity ?? 1 },
     },
     transparent: true,
@@ -171,15 +185,18 @@ export function createPointMaterial(opts = {}) {
  * @param {object} [data]
  * @param {Float32Array} [data.color]   점마다 r,g,b (0~1). 기본은 중간 파랑
  * @param {Float32Array} [data.random]  점마다 0~1. 기본은 Math.random()
+ * @param {Float32Array} [data.shake]   점마다 0~1 떨림 세기. 기본은 모두 0 (떨리지 않음)
  */
 export function addPointAttributes(geometry, data = {}) {
   const count = geometry.getAttribute('position').count;
 
   const color = data.color ?? new Float32Array(count * 3).map((_, i) => [0.18, 0.3, 0.74][i % 3]);
   const random = data.random ?? Float32Array.from({ length: count }, Math.random);
+  const shake = data.shake ?? new Float32Array(count);
 
   geometry.setAttribute('aColor', new THREE.BufferAttribute(color, 3));
   geometry.setAttribute('aRandom', new THREE.BufferAttribute(random, 1));
+  geometry.setAttribute('aShake', new THREE.BufferAttribute(shake, 1));
   // 모프 목표: 평소엔 지금 모양과 같게 둔다 (morph.js가 전환할 때 바꾼다)
   geometry.setAttribute('aTarget', geometry.getAttribute('position').clone());
   geometry.setAttribute('aTargetColor', new THREE.BufferAttribute(color.slice(), 3));
