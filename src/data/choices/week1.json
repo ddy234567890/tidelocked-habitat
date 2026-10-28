@@ -3,13 +3,13 @@
   "cameraShots": {
     "A_overview": { "position": [-3.2, 1.1, 5.5], "target": [0, 0.35, -1.5], "fov": 45 },
     "B_section": { "position": [1.4, -0.3, 9], "target": [0, -1, -0.6], "fov": 50 },
-    "C_ridge": { "position": [-4, 2.8, 4.5], "target": [0, 0.4, 0], "fov": 42 }
+    "C_ridge": { "position": [-1.6, 1, 3.8], "target": [0.2, -0.6, -0.2], "fov": 50 }
   },
   "layers": {
     "location": {
       "plain": { "label": "평지", "asset": null, "stage": "plain", "pointSize": 12, "temperature": [55, 66], "star": { "azimuth": 40, "elevation": 6 } },
       "lava_tube": { "label": "용암동굴", "asset": null, "stage": "lava_tube", "pointSize": 10, "temperature": [25, 30], "star": { "azimuth": 40, "elevation": 6 } },
-      "ridge": { "label": "능선 (고지대)", "asset": null }
+      "ridge": { "label": "능선 (고지대)", "asset": null, "stage": "ridge", "pointSize": 11, "temperature": [12, 66], "star": { "azimuth": 40, "elevation": 6 } }
     },
     "module": {
       "inflatable": { "label": "팽창식 모듈", "asset": null },
