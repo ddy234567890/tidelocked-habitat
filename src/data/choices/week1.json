@@ -1,4 +1,74 @@
 {
   "week": 1,
-  "steps": []
+  "cameraShots": {
+    "A_overview": { "position": [0, 3.2, 5.5], "target": [0, 0.3, 0], "fov": 45 },
+    "B_section": { "position": [5, 1, 2.5], "target": [0, -0.2, 0], "fov": 40 },
+    "C_ridge": { "position": [-4, 2.8, 4.5], "target": [0, 0.4, 0], "fov": 42 }
+  },
+  "layers": {
+    "location": {
+      "plain": { "label": "평지", "asset": null },
+      "lava_tube": { "label": "용암동굴", "asset": null },
+      "ridge": { "label": "능선 (고지대)", "asset": null }
+    },
+    "module": {
+      "inflatable": { "label": "팽창식 모듈", "asset": null },
+      "earth_print": { "label": "흙 3D 프린팅 집", "asset": null },
+      "cave_modules": { "label": "동굴 속 모듈", "asset": null },
+      "cave_sealed": { "label": "동굴 통째 밀폐", "asset": null },
+      "tower": { "label": "탑형 집", "asset": null },
+      "solar_village": { "label": "발전소 + 비탈 마을", "asset": null },
+      "ice_base": { "label": "얼음 옆 기지", "asset": null }
+    },
+    "overlay": {
+      "concentrator": { "label": "바깥 공기 농축", "asset": null },
+      "electrolysis": { "label": "물 전기분해", "asset": null },
+      "ice_electrolysis": { "label": "얼음 녹여 전기분해", "asset": null },
+      "algae": { "label": "조류 기르기", "asset": null },
+      "wall_algae": { "label": "바깥벽 조류", "asset": null },
+      "candle": { "label": "산소 캔들", "asset": null },
+      "tank": { "label": "산소 탱크 비축", "asset": null },
+      "central_pipe": { "label": "중앙 생산 후 관 공급", "asset": null },
+      "per_house": { "label": "집마다 작은 장치", "asset": null }
+    }
+  },
+  "steps": [
+    {
+      "id": "location",
+      "label": "위치",
+      "choices": [
+        { "id": "A", "label": "평지", "location": "plain", "cameraShot": "A_overview", "stats": { "temperature": null, "oxygen": null, "energy": null } },
+        { "id": "B", "label": "용암동굴", "location": "lava_tube", "cameraShot": "B_section", "stats": { "temperature": null, "oxygen": null, "energy": null } },
+        { "id": "C", "label": "능선 (고지대)", "location": "ridge", "cameraShot": "C_ridge", "stats": { "temperature": null, "oxygen": null, "energy": null } }
+      ]
+    },
+    {
+      "id": "module",
+      "label": "주거",
+      "choices": [
+        { "id": "A1", "label": "팽창식 모듈", "requires": { "location": ["A"] }, "module": "inflatable", "stats": {} },
+        { "id": "A2", "label": "흙 3D 프린팅 집", "requires": { "location": ["A"] }, "module": "earth_print", "stats": {} },
+        { "id": "B1", "label": "동굴 속 모듈", "requires": { "location": ["B"] }, "module": "cave_modules", "stats": {} },
+        { "id": "B2", "label": "동굴 통째 밀폐", "requires": { "location": ["B"] }, "module": "cave_sealed", "stats": {} },
+        { "id": "C1", "label": "탑형 집", "requires": { "location": ["C"] }, "module": "tower", "stats": {} },
+        { "id": "C2", "label": "발전소 + 비탈 마을", "requires": { "location": ["C"] }, "module": "solar_village", "stats": {} },
+        { "id": "C3", "label": "얼음 옆 기지", "hidden": true, "requires": { "location": ["C"] }, "module": "ice_base", "stats": {} }
+      ]
+    },
+    {
+      "id": "oxygen",
+      "label": "산소",
+      "choices": [
+        { "id": "O_concentrator", "label": "바깥 공기 농축", "overlays": ["concentrator"], "stats": {} },
+        { "id": "O_electrolysis", "label": "물 전기분해", "overlays": ["electrolysis"], "stats": {} },
+        { "id": "O_ice", "label": "얼음 녹여 전기분해", "requires": { "location": ["C"] }, "overlays": ["ice_electrolysis"], "stats": {} },
+        { "id": "O_algae", "label": "조류 기르기", "overlays": ["algae"], "stats": {} },
+        { "id": "O_wall_algae", "label": "바깥벽 조류", "overlays": ["wall_algae"], "stats": {} },
+        { "id": "O_candle", "label": "산소 캔들", "overlays": ["candle"], "stats": {} },
+        { "id": "O_tank", "label": "산소 탱크 비축", "overlays": ["tank"], "stats": {} },
+        { "id": "O_central", "label": "중앙 생산 후 관 공급", "requires": { "module": ["C2"] }, "overlays": ["central_pipe"], "stats": {} },
+        { "id": "O_per_house", "label": "집마다 작은 장치", "requires": { "module": ["C2"] }, "overlays": ["per_house"], "stats": {} }
+      ]
+    }
+  ]
 }
