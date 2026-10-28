@@ -3,8 +3,9 @@ import { createPointMaterial, addPointAttributes } from './engine/pointMaterial.
 import { sampleModel, sampleObject } from './engine/sampleModel.js';
 import { createMorph } from './engine/morph.js';
 import { toneColors } from './engine/palette.js';
+import { createCameraRig } from './engine/cameraRig.js';
 
-// 데모 장면: 모프 전환(e03) + 색 규칙 확인용. 엔진 카드(e01~e07)가 끝나면 composer로 교체한다.
+// 데모 장면: 모프 전환(e03) + 카메라 샷(e04) 확인용. 엔진 카드(e01~e07)가 끝나면 composer로 교체한다.
 const canvas = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -66,12 +67,28 @@ const points = new THREE.Points(geometry, material);
 scene.add(points);
 
 const morph = createMorph(points);
-const buttons = document.querySelectorAll('#demo-ui button');
+const buttons = document.querySelectorAll('#demo-ui [data-shape]');
 buttons.forEach((button) => {
   button.addEventListener('click', () => {
     buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
     const next = shapes[button.dataset.shape];
     morph.to(next.positions, { color: next.colors });
+  });
+});
+
+// 카메라 샷: 버튼으로 이동, 드래그는 ±20°까지만
+const rig = createCameraRig(camera, canvas);
+rig.addShot('overview', { position: [0, 1.8, 5], target: [0, 0, 0], fov: 45 });
+rig.addShot('top', { position: [0, 5, 0.8], target: [0, 0, 0], fov: 40 });
+rig.addShot('side', { position: [4.5, 0.4, 0], target: [0, 0, 0], fov: 45 });
+rig.addShot('close', { position: [2.2, 0.9, 2.6], target: [0.2, 0, 0], fov: 35 });
+rig.goTo('overview', { instant: true });
+
+const shotButtons = document.querySelectorAll('#demo-ui [data-shot]');
+shotButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    shotButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+    rig.goTo(button.dataset.shot);
   });
 });
 
@@ -91,8 +108,6 @@ renderer.setAnimationLoop(() => {
   material.uniforms.uTime.value = t;
   material.uniforms.uReveal.value = Math.min(t / revealSeconds, 1);
 
-  // 모양과 별은 고정, 카메라만 천천히 돈다
-  camera.position.set(Math.sin(t * 0.15) * 5, 1.8, Math.cos(t * 0.15) * 5);
-  camera.lookAt(0, 0, 0);
+  rig.update();
   renderer.render(scene, camera);
 });
