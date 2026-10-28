@@ -81,7 +81,6 @@
 | machine.glb | Washing Machine | https://poly.pizza/m/UFxsKNSl8W | Quaternius | CC0 | 미정 |
 | machine-b.glb | Can Fridge | https://poly.pizza/m/8OHbykvREu | Quaternius | CC0 | 미정 |
 | vent.glb | Vent | https://poly.pizza/m/UDFcnJ0U73 | Quaternius | CC0 | 미정 |
-| fan.glb | Fan | https://poly.pizza/m/QdOxYDGjhN | kazuma | CC0 | 미정 |
 
 ## 통로·배관
 
