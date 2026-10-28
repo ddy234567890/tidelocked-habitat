@@ -1,24 +1,43 @@
 import * as THREE from 'three';
-import { createPointMaterial, addPointAttributes, TEMP_MIN, TEMP_MAX } from './engine/pointMaterial.js';
+import { createPointMaterial, addPointAttributes } from './engine/pointMaterial.js';
 import { sampleModel, sampleObject } from './engine/sampleModel.js';
 import { createMorph } from './engine/morph.js';
+import { toneColors, scanify } from './engine/palette.js';
 
-// 데모 장면: 모프 전환(e03) 확인용. 엔진 카드(e01~e07)가 끝나면 composer로 교체한다.
+// 데모 장면: 모프 전환(e03) + 색 규칙 확인용. 엔진 카드(e01~e07)가 끝나면 composer로 교체한다.
 const canvas = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
 
-// 모든 모양을 같은 점 개수로 뽑아야 모프할 수 있다
+// 모든 모양을 같은 점 개수로 맞춰야 모프할 수 있다 (직접 만든 도형은 scanify 로 3배가 된다)
 const count = 30000;
-const shapes = {
-  sphere: sampleObject(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 32)), count),
-  box: sampleObject(new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5)), count),
-  cylinder: sampleObject(new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 1.8, 64)), count),
-  habitat: centered(await sampleModel('/models/test-habitat.glb', count)),
-};
+const starDir = new THREE.Vector3(1, 0.3, 0.2).normalize(); // 별은 고정
+const under = (y) => THREE.MathUtils.smoothstep(-y, 0.35, 0.9); // 데모: y < -0.35 아래를 땅속으로
+
+// 시험용 원래 색: 별을 향한 쪽이 밝은 회색 (실제 모델은 sampleModel 의 colors 로 받는다)
+function litColors(positions) {
+  const colors = new Float32Array(positions.length);
+  const v = new THREE.Vector3();
+  for (let i = 0; i < positions.length; i += 3) {
+    const l = 0.15 + 0.85 * Math.max(0, v.fromArray(positions, i).normalize().dot(starDir));
+    colors.fill(l, i, i + 3);
+  }
+  return colors;
+}
+
+function madeShape(geometry) {
+  const positions = sampleObject(new THREE.Mesh(geometry), count / 3);
+  return scanify(positions, toneColors(positions, litColors(positions), { under }));
+}
+
+async function modelShape(url) {
+  const positions = centered(await sampleModel(url, count));
+  return { positions, colors: toneColors(positions, litColors(positions), { under }) };
+}
 
 function centered(positions) {
   const box = new THREE.Box3().setFromArray(positions);
@@ -31,21 +50,18 @@ function centered(positions) {
   return positions;
 }
 
-// 별은 +x 방향에 고정: 별 쪽일수록 뜨겁다
-function temperatureOf(positions) {
-  const temps = new Float32Array(count);
-  for (let i = 0; i < count; i++) {
-    const t = THREE.MathUtils.smoothstep(positions[i * 3], -1, 1);
-    temps[i] = THREE.MathUtils.lerp(TEMP_MIN, TEMP_MAX, t);
-  }
-  return temps;
-}
+const shapes = {
+  sphere: madeShape(new THREE.SphereGeometry(1, 64, 32)),
+  box: madeShape(new THREE.BoxGeometry(1.5, 1.5, 1.5)),
+  cylinder: madeShape(new THREE.CylinderGeometry(0.8, 0.8, 1.8, 64)),
+  habitat: await modelShape('/models/test-habitat.glb'),
+};
 
 const geometry = new THREE.BufferGeometry();
-geometry.setAttribute('position', new THREE.BufferAttribute(shapes.sphere.slice(), 3));
-addPointAttributes(geometry, { temperature: temperatureOf(shapes.sphere) });
+geometry.setAttribute('position', new THREE.BufferAttribute(shapes.sphere.positions.slice(), 3));
+addPointAttributes(geometry, { color: shapes.sphere.colors.slice() });
 
-const material = createPointMaterial({ size: 5, reveal: 0 });
+const material = createPointMaterial({ size: 12, reveal: 0, focus: 5 });
 const points = new THREE.Points(geometry, material);
 scene.add(points);
 
@@ -55,7 +71,7 @@ buttons.forEach((button) => {
   button.addEventListener('click', () => {
     buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
     const next = shapes[button.dataset.shape];
-    morph.to(next, { temperature: temperatureOf(next) });
+    morph.to(next.positions, { color: next.colors });
   });
 });
 

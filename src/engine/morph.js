@@ -10,13 +10,13 @@
  *
  *   const morph = createMorph(points);                 // points: 공통 머티리얼을 쓰는 THREE.Points
  *   await morph.to(boxPositions);                      // 끝나면 resolve
- *   await morph.to(habitatPositions, { duration: 2.5, scatter: 0.6, temperature: temps });
+ *   await morph.to(habitatPositions, { duration: 2.5, scatter: 0.6, color: colors });
  *
  * 옵션 (createMorph 기본값, to()마다 바꿀 수 있음)
  *   duration     초 단위 길이 (기본 1.6)
  *   easing       (t) => t 함수 또는 easings 의 이름 (기본 'inOutCubic')
  *   scatter      중간에 흩어지는 거리, 월드 단위 (기본 0.35)
- *   temperature  새 모양의 점별 온도 (생략하면 지금 온도 유지)
+ *   color        새 모양의 점별 색 r,g,b (생략하면 지금 색 유지)
  *
  * - 전환 중에 to()를 다시 부르면 지금 보이는 중간 모양에서 새 목표로 이어서 간다.
  * - prefers-reduced-motion 이면 흩어짐 없이 바로 바뀐다.
@@ -39,9 +39,9 @@ export function createMorph(points, defaults = {}) {
   const geometry = points.geometry;
   const uniforms = points.material.uniforms;
   const position = geometry.getAttribute('position');
-  const temperature = geometry.getAttribute('temperature');
+  const color = geometry.getAttribute('aColor');
   const target = geometry.getAttribute('aTarget');
-  const targetTemp = geometry.getAttribute('aTargetTemperature');
+  const targetColor = geometry.getAttribute('aTargetColor');
   const count = position.count;
 
   // 모양이 바뀌면 원래 경계가 맞지 않으므로 화면 밖 판정을 끈다
@@ -55,9 +55,9 @@ export function createMorph(points, defaults = {}) {
     const m = uniforms.uMorph.value;
     if (m === 0) return;
     for (let i = 0; i < count * 3; i++) position.array[i] += (target.array[i] - position.array[i]) * m;
-    for (let i = 0; i < count; i++) temperature.array[i] += (targetTemp.array[i] - temperature.array[i]) * m;
+    for (let i = 0; i < count * 3; i++) color.array[i] += (targetColor.array[i] - color.array[i]) * m;
     position.needsUpdate = true;
-    temperature.needsUpdate = true;
+    color.needsUpdate = true;
     uniforms.uMorph.value = 0;
   }
 
@@ -80,8 +80,8 @@ export function createMorph(points, defaults = {}) {
 
     target.array.set(positions);
     target.needsUpdate = true;
-    targetTemp.array.set(opts.temperature ?? temperature.array);
-    targetTemp.needsUpdate = true;
+    targetColor.array.set(opts.color ?? color.array);
+    targetColor.needsUpdate = true;
 
     return new Promise((resolve) => {
       const done = () => {
