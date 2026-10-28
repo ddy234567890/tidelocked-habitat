@@ -3,6 +3,7 @@ import { createPointMaterial, addPointAttributes } from './pointMaterial.js';
 import { sampleModel, sampleObject } from './sampleModel.js';
 import { createMorph } from './morph.js';
 import { toneColors } from './palette.js';
+import { buildStage } from '../scenes/locations/index.js';
 
 /**
  * 레이어 조합기 (카드 e05)
@@ -25,6 +26,8 @@ import { toneColors } from './palette.js';
  *   cameraShots  { 샷이름: { position, target, fov } }  rig 에 등록된다
  *   layers       { location|module|overlay: { 레이어id: { label, asset, position?, scale? } } }
  *                asset 이 .glb 경로면 그 모델을, null 이면 박스 자리표시를 그린다
+ *                stage 가 있으면(위치 무대) src/scenes/locations 의 그 무대가 점과 색을 직접 만든다
+ *                pointSize 를 주면 그 레이어의 점 크기(uSize)를 바꾼다. 셰이더는 그대로고 값만 다르다
  *   steps[]      { id, label, choices[] }  선택 단계 (위치 → 주거 → 산소)
  *     choice     { id, label, location?, module?, overlays?, cameraShot?, stats, requires?, hidden? }
  *                requires: { 단계id: [선지id…] }  그 선지를 고른 경우에만 보인다
@@ -99,7 +102,7 @@ export function createComposer({ scene, data, rig }) {
     }
     layers.overlays.forEach((id, i) => {
       if (overlays.has(id)) return;
-      const points = makePoints(overlayShapes[i], 'overlay');
+      const points = makePoints(overlayShapes[i], 'overlay', overlayShapes[i].size);
       points.position.set(1.6 + i * 0.7, 0, 0.9); // 연결점(anchor)은 e06/w07 에서 정한다
       overlays.set(id, points);
       jobs.push(reveal(points, 1));
@@ -120,20 +123,21 @@ export function createComposer({ scene, data, rig }) {
       return;
     }
     if (!slot) {
-      const points = makePoints(shape, kind);
+      const points = makePoints(shape, kind, shape.size);
       slots[kind] = { id, points, morph: createMorph(points, { duration: 1.8 }) };
       await reveal(points, 1);
       return;
     }
     slot.id = id;
+    slot.points.material.uniforms.uSize.value = shape.size ?? (kind === 'overlay' ? 6 : 8); // 무대마다 점 크기가 다를 수 있다
     await slot.morph.to(shape.positions, { color: shape.colors });
   }
 
-  function makePoints(shape, kind) {
+  function makePoints(shape, kind, size) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(shape.positions.slice(), 3));
     addPointAttributes(geometry, { color: shape.colors.slice() });
-    const material = createPointMaterial({ size: kind === 'overlay' ? 6 : 8, reveal: 0 });
+    const material = createPointMaterial({ size: size ?? (kind === 'overlay' ? 6 : 8), reveal: 0 });
     const points = new THREE.Points(geometry, material);
     scene.add(points);
     return points;
@@ -198,7 +202,9 @@ async function buildLayer(kind, id, def) {
   const count = LAYER_POINTS[kind];
   let positions;
   let colors;
-  if (def.asset) {
+  if (def.stage) {
+    ({ positions, colors } = buildStage(def.stage, count, def));
+  } else if (def.asset) {
     colors = new Float32Array(count * 3);
     positions = await sampleModel(def.asset, count, { colors });
   } else {
@@ -214,8 +220,8 @@ async function buildLayer(kind, id, def) {
     positions[i + 2] = positions[i + 2] * scale + z;
   }
 
-  toneColors(positions, colors);
-  return { positions, colors };
+  if (!def.stage) toneColors(positions, colors); // 무대는 온도 색으로 이미 칠해서 온다
+  return { positions, colors, size: def.pointSize };
 }
 
 /** 에셋이 아직 없는 레이어의 박스 자리표시. id 마다 크기가 조금씩 달라 전환이 눈에 보인다 */
