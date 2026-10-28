@@ -64,7 +64,8 @@ export function createCameraRig(camera, element, opts = {}) {
     if (!dragging || e.pointerId !== dragging.id) return;
     const speed = 0.3 * DEG; // 1픽셀당 각도
     yaw = THREE.MathUtils.clamp(yaw - (e.clientX - dragging.x) * speed, -maxAngle, maxAngle);
-    pitch = THREE.MathUtils.clamp(pitch + (e.clientY - dragging.y) * speed, -maxAngle, maxAngle);
+    // 마우스를 위로 끌면 카메라가 아래로 가서 장면을 올려다본다 (팀 요청으로 위아래 반대)
+    pitch = THREE.MathUtils.clamp(pitch - (e.clientY - dragging.y) * speed, -maxAngle, maxAngle);
     dragging.x = e.clientX;
     dragging.y = e.clientY;
   });

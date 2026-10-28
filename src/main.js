@@ -18,6 +18,7 @@ const composer = createComposer({ scene, rig, data: week1 });
 const labels = createLabels(camera, canvas);
 const siteTag = labels.add({ position: [-1.2, 0, 1.2], text: '', offset: [-50, -40] });
 let moduleTag = null;
+let oxygenTag = null;
 
 // 선택 상태: { 단계id: 선지id }
 const selection = { location: week1.steps[0].choices[0].id };
@@ -58,11 +59,15 @@ function render() {
   const show = (v, unit) => (v == null ? '미정' : `${v}${unit}`);
   statsBox.textContent = `온도 ${show(stats.temperature, '°C')} · 산소 ${show(stats.oxygen, '%')} · 에너지 ${show(stats.energy, '')}`;
 
-  // 라벨: 위치 무대에는 SITE 표시, 주거가 있으면 그 위에 두 번째 표시
+  // 라벨: 위치 무대에는 SITE 표시, 주거·산소 장치가 있으면 그 위에 두 번째 표시
   const choiceOf = (stepId) => week1.steps.find((s) => s.id === stepId).choices.find((c) => c.id === selection[stepId]);
   siteTag.setText(`SITE ${selection.location} · ${choiceOf('location').label}`);
   moduleTag?.remove();
   moduleTag = selection.module ? labels.add({ position: [0, 0.9, 0], text: choiceOf('module').label, variant: 'amber' }) : null;
+  oxygenTag?.remove();
+  oxygenTag = selection.oxygen
+    ? labels.add({ position: [1.6, 0.4, 0.9], text: choiceOf('oxygen').label, variant: 'amber', offset: [-50, 40] })
+    : null;
 
   composer.apply(selection);
 }
