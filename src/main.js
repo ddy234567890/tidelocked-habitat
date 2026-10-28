@@ -2,9 +2,10 @@ import * as THREE from 'three';
 import { createCameraRig } from './engine/cameraRig.js';
 import { createComposer } from './engine/composer.js';
 import { createFlow } from './engine/flow.js';
+import { createLabels } from './engine/labels.js';
 import week1 from './data/choices/week1.json';
 
-// 데모 장면: 레이어 조합기(e05) + 파티클 흐름(e06) 확인용. 1주차 선지를 버튼으로 골라 장면을 조합한다.
+// 데모 장면: 레이어 조합기(e05) + 파티클 흐름(e06) + HUD 라벨(e07) 확인용. 1주차 선지를 버튼으로 골라 장면을 조합한다.
 const canvas = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -14,6 +15,10 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
 const rig = createCameraRig(camera, canvas);
 const composer = createComposer({ scene, rig, data: week1 });
+const labels = createLabels(camera, canvas);
+const siteTag = labels.add({ position: [-1.2, 0, 1.2], text: '', offset: [-50, -40] });
+let moduleTag = null;
+let oxygenTag = null;
 
 // 선택 상태: { 단계id: 선지id }
 const selection = { location: week1.steps[0].choices[0].id };
@@ -54,12 +59,23 @@ function render() {
   const show = (v, unit) => (v == null ? '미정' : `${v}${unit}`);
   statsBox.textContent = `온도 ${show(stats.temperature, '°C')} · 산소 ${show(stats.oxygen, '%')} · 에너지 ${show(stats.energy, '')}`;
 
+  // 라벨: 위치 무대에는 SITE 표시, 주거·산소 장치가 있으면 그 위에 두 번째 표시
+  const choiceOf = (stepId) => week1.steps.find((s) => s.id === stepId).choices.find((c) => c.id === selection[stepId]);
+  siteTag.setText(`SITE ${selection.location} · ${choiceOf('location').label}`);
+  moduleTag?.remove();
+  moduleTag = selection.module ? labels.add({ position: [0, 0.9, 0], text: choiceOf('module').label, variant: 'amber' }) : null;
+  oxygenTag?.remove();
+  oxygenTag = selection.oxygen
+    ? labels.add({ position: [1.6, 0.4, 0.9], text: choiceOf('oxygen').label, variant: 'amber', offset: [-50, 40] })
+    : null;
+
   composer.apply(selection);
 }
 
 // 흐름 시험: 오버레이 자리에서 주거 쪽으로 산소가 흐르는 관. 버튼으로 중간을 끊는다
 const flow = createFlow({ path: [[1.6, 0.25, 0.9], [1.4, 1.1, 0.6], [0.6, 1.3, 0.2], [0, 0.6, 0]], count: 700 });
 scene.add(flow.points);
+labels.add({ position: [1.2, 1.25, 0.45], text: '산소 흐름', offset: [36, -30] });
 const breakButton = document.getElementById('break-flow');
 breakButton.addEventListener('click', () => {
   flow.setBroken(flow.broken === null ? 0.5 : null);
@@ -85,5 +101,6 @@ renderer.setAnimationLoop(() => {
   composer.update(seconds);
   flow.update(seconds);
   rig.update();
+  labels.update();
   renderer.render(scene, camera);
 });

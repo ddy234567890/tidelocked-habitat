@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import { easings } from './morph.js';
 
 /**
- * 카메라 프리셋 + 제한된 드래그 (카드 e04)
+ * 카메라 프리셋 + 드래그 둘러보기 (카드 e04)
  *
  * 이름 붙은 카메라 샷을 등록해 두고 goTo(name)으로 부드럽게 옮겨 간다.
- * 사용자는 드래그로 지금 샷 기준 좌우·상하 ±20°까지만 둘러볼 수 있고, 손을 떼면 천천히 제자리로 돌아온다.
+ * 사용자는 드래그로 지금 샷 기준으로 자유롭게 둘러볼 수 있고, 손을 떼면 스르륵 미끄러지다 그 각도에 머문다.
+ * 다른 샷으로 goTo 하면 돌려 둔 각도는 이동하는 동안 함께 풀린다.
  * 선지 JSON 의 cameraShot 값이 여기 등록한 샷 이름이다.
  *
  * 사용법:
@@ -23,10 +24,11 @@ import { easings } from './morph.js';
  * 옵션 (createCameraRig)
  *   duration   샷 이동 시간, 초 (기본 1.8)
  *   easing     morph.js 의 easings 이름 또는 함수 (기본 'inOutCubic')
- *   maxAngle   드래그 허용 각도, 도 (기본 20)
- *   returnTime 손을 뗀 뒤 제자리로 돌아오는 빠르기, 초 (기본 1.2, 클수록 천천히)
+ *   maxAngle   드래그 허용 각도, 도 (기본 없음 = 제한 없이 회전. 숫자를 주면 좌우·상하 ±그 각도까지만)
+ *   inertia    손을 뗀 뒤 미끄러지는 정도, 초 (기본 0.6, 클수록 오래 미끄러짐, 0이면 바로 멈춤)
+ *   returnTime 주면 손을 뗀 뒤 이 시간(초)에 걸쳐 샷 각도로 천천히 돌아온다 (기본 없음 = 그 자리에 머묾)
  *
- * - prefers-reduced-motion 이면 샷 이동과 되돌아오기를 바로 한다.
+ * - prefers-reduced-motion 이면 샷 이동과 되돌아오기를 바로 하고, 미끄러짐도 없다.
  */
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -40,8 +42,9 @@ const DEG = Math.PI / 180;
 export function createCameraRig(camera, element, opts = {}) {
   const duration = opts.duration ?? 1.8;
   const easing = typeof opts.easing === 'function' ? opts.easing : easings[opts.easing ?? 'inOutCubic'];
-  const maxAngle = (opts.maxAngle ?? 20) * DEG;
-  const returnTime = opts.returnTime ?? 1.2;
+  const maxAngle = opts.maxAngle == null ? Infinity : opts.maxAngle * DEG;
+  const returnTime = opts.returnTime ?? null;
+  const inertia = opts.inertia ?? 0.6;
 
   const shots = new Map();
   // 지금 기준 자세 (샷 사이를 옮겨 가는 중이면 그 중간값)
@@ -54,22 +57,43 @@ export function createCameraRig(camera, element, opts = {}) {
   let pitch = 0;
   let dragging = null;
   let last = performance.now();
+  // 손을 뗀 뒤 미끄러지는 속도 (라디안/초)
+  let yawSpeed = 0;
+  let pitchSpeed = 0;
 
   element.style.touchAction = 'none';
   element.addEventListener('pointerdown', (e) => {
-    dragging = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    dragging = { id: e.pointerId, x: e.clientX, y: e.clientY, time: performance.now() };
+    yawSpeed = 0;
+    pitchSpeed = 0;
     element.setPointerCapture(e.pointerId);
   });
   element.addEventListener('pointermove', (e) => {
     if (!dragging || e.pointerId !== dragging.id) return;
     const speed = 0.3 * DEG; // 1픽셀당 각도
-    yaw = THREE.MathUtils.clamp(yaw - (e.clientX - dragging.x) * speed, -maxAngle, maxAngle);
-    pitch = THREE.MathUtils.clamp(pitch + (e.clientY - dragging.y) * speed, -maxAngle, maxAngle);
+    const dYaw = -(e.clientX - dragging.x) * speed;
+    // 마우스를 위로 끌면 카메라가 아래로 가서 장면을 올려다본다 (팀 요청으로 위아래 반대)
+    const dPitch = -(e.clientY - dragging.y) * speed;
+    yaw = THREE.MathUtils.clamp(yaw + dYaw, -maxAngle, maxAngle);
+    pitch = THREE.MathUtils.clamp(pitch + dPitch, -maxAngle, maxAngle);
+
+    // 최근 움직임 빠르기를 기억해 두었다가 손을 떼면 그 속도로 미끄러진다
+    const now = performance.now();
+    const dt = Math.max((now - dragging.time) / 1000, 1 / 240);
+    yawSpeed = THREE.MathUtils.lerp(yawSpeed, dYaw / dt, 0.5);
+    pitchSpeed = THREE.MathUtils.lerp(pitchSpeed, dPitch / dt, 0.5);
     dragging.x = e.clientX;
     dragging.y = e.clientY;
+    dragging.time = now;
   });
   const release = (e) => {
-    if (dragging && e.pointerId === dragging.id) dragging = null;
+    if (!dragging || e.pointerId !== dragging.id) return;
+    // 멈췄다가 손을 뗐으면 미끄러지지 않는다
+    if (performance.now() - dragging.time > 80 || reducedMotion.matches) {
+      yawSpeed = 0;
+      pitchSpeed = 0;
+    }
+    dragging = null;
   };
   element.addEventListener('pointerup', release);
   element.addEventListener('pointercancel', release);
@@ -98,9 +122,13 @@ export function createCameraRig(camera, element, opts = {}) {
     if (!shot) throw new Error(`cameraRig: 등록되지 않은 샷 '${name}' (등록된 샷: ${[...shots.keys()].join(', ')})`);
     current = name;
     move?.resolve();
+    yawSpeed = 0;
+    pitchSpeed = 0;
 
     const time = o.instant || reducedMotion.matches ? 0 : o.duration ?? duration;
     if (time <= 0) {
+      yaw = 0;
+      pitch = 0;
       pose.position.copy(shot.position);
       pose.target.copy(shot.target);
       pose.fov = shot.fov;
@@ -109,7 +137,7 @@ export function createCameraRig(camera, element, opts = {}) {
     }
     return new Promise((resolve) => {
       move = {
-        from: { position: pose.position.clone(), target: pose.target.clone(), fov: pose.fov },
+        from: { position: pose.position.clone(), target: pose.target.clone(), fov: pose.fov, yaw: wrap(yaw), pitch },
         to: shot,
         start: performance.now(),
         time,
@@ -133,14 +161,30 @@ export function createCameraRig(camera, element, opts = {}) {
       pose.position.lerpVectors(move.from.position, move.to.position, k);
       pose.target.lerpVectors(move.from.target, move.to.target, k);
       pose.fov = THREE.MathUtils.lerp(move.from.fov, move.to.fov, k);
+      // 돌려 둔 각도도 이동하는 동안 함께 풀어 새 샷 각도에 맞춘다
+      if (!dragging) {
+        yaw = move.from.yaw * (1 - k);
+        pitch = move.from.pitch * (1 - k);
+      }
       if (t >= 1) {
         move.resolve();
         move = null;
       }
     }
 
-    // 손을 떼면 드래그 각도가 천천히 0으로 돌아온다
-    if (!dragging) {
+    // 손을 뗀 뒤 미끄러지다 천천히 멈춘다
+    if (!dragging && (yawSpeed || pitchSpeed)) {
+      yaw = THREE.MathUtils.clamp(yaw + yawSpeed * dt, -maxAngle, maxAngle);
+      pitch = THREE.MathUtils.clamp(pitch + pitchSpeed * dt, -maxAngle, maxAngle);
+      const keep = inertia > 0 ? Math.exp(-dt / (inertia / 3)) : 0;
+      yawSpeed *= keep;
+      pitchSpeed *= keep;
+      if (Math.abs(yawSpeed) + Math.abs(pitchSpeed) < 0.001) yawSpeed = pitchSpeed = 0;
+    }
+
+    // returnTime 을 줬으면 손을 뗀 뒤 드래그 각도가 천천히 0으로 돌아온다 (여러 바퀴 돌렸어도 가까운 쪽으로)
+    if (!dragging && !move && returnTime !== null) {
+      yaw = wrap(yaw);
       const keep = reducedMotion.matches ? 0 : Math.exp(-dt / (returnTime / 3));
       yaw *= keep;
       pitch *= keep;
@@ -150,13 +194,21 @@ export function createCameraRig(camera, element, opts = {}) {
     offset.subVectors(pose.position, pose.target);
     spherical.setFromVector3(offset);
     spherical.theta += yaw;
-    spherical.phi = THREE.MathUtils.clamp(spherical.phi + pitch, 0.05, Math.PI - 0.05);
+    // 상하는 바로 위·바로 아래를 넘지 않게 막고, 막힌 만큼은 쌓아 두지 않는다 (반대로 끌면 바로 돌아오게)
+    const basePhi = spherical.phi;
+    spherical.phi = THREE.MathUtils.clamp(basePhi + pitch, 0.05, Math.PI - 0.05);
+    pitch = spherical.phi - basePhi;
     camera.position.setFromSpherical(spherical).add(pose.target);
     camera.lookAt(pose.target);
     if (camera.fov !== pose.fov) {
       camera.fov = pose.fov;
       camera.updateProjectionMatrix();
     }
+  }
+
+  // 각도를 -180°~180° 로 접는다 (여러 바퀴 돌린 만큼 되감지 않게)
+  function wrap(a) {
+    return Math.atan2(Math.sin(a), Math.cos(a));
   }
 
   return {
