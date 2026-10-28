@@ -7,10 +7,20 @@
     <style>
       html, body { margin: 0; height: 100%; background: #05081a; overflow: hidden; }
       #viewport { width: 100%; height: 100%; display: block; }
+      /* 데모용 버튼 (composer가 생기면 지운다) */
+      #demo-ui { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 8px; }
+      #demo-ui button { font: 14px system-ui, sans-serif; color: #e6eaff; background: #121a38; border: 1px solid #26336b; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+      #demo-ui button[aria-pressed="true"] { border-color: #6f8cff; background: #18224a; }
     </style>
   </head>
   <body>
     <canvas id="viewport"></canvas>
+    <div id="demo-ui">
+      <button data-shape="sphere" aria-pressed="true">구</button>
+      <button data-shape="box" aria-pressed="false">박스</button>
+      <button data-shape="cylinder" aria-pressed="false">원기둥</button>
+      <button data-shape="habitat" aria-pressed="false">시험 모델</button>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

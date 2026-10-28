@@ -23,9 +23,12 @@ import * as THREE from 'three';
  *   position     vec3   위치
  *   temperature  float  섭씨 온도 12~66. 밤 쪽 파랑 ↔ 낮 쪽 주황으로 보간
  *   aRandom      float  0~1 난수. 반짝임 위상 등에 쓰는 점별 시드
+ *   aTarget, aTargetTemperature  모프 전환 목표 위치·온도 (morph.js가 관리)
  *
  * Uniforms
  *   uTime          초 단위 시간 (반짝임)
+ *   uMorph         0 = position, 1 = aTarget. 모프 진행도 (morph.js가 관리)
+ *   uScatter       모프 중간에 흩어지는 거리 (월드 단위)
  *   uSize          기본 점 크기 (카메라 거리 1 기준 픽셀)
  *   uPixelRatio    renderer.getPixelRatio()
  *   uReveal        0 = 모두 숨김, 1 = 모두 보임. 아래→위 스캔라인
@@ -43,7 +46,11 @@ export const TEMP_MAX = 66;
 const vertexShader = /* glsl */ `
   attribute float temperature;
   attribute float aRandom;
+  attribute vec3 aTarget;
+  attribute float aTargetTemperature;
 
+  uniform float uMorph;
+  uniform float uScatter;
   uniform float uTime;
   uniform float uSize;
   uniform float uPixelRatio;
@@ -55,8 +62,16 @@ const vertexShader = /* glsl */ `
   varying float vTwinkle;
   varying float vWorldY;
 
+  vec3 hash3(float n) {
+    return fract(sin(vec3(n, n + 1.7, n + 3.1) * vec3(43758.5453, 22578.1459, 19642.3490))) * 2.0 - 1.0;
+  }
+
   void main() {
-    vec4 worldPos = modelMatrix * vec4(position, 1.0);
+    // 모프 전환: position → aTarget 보간, 중간에 점마다 다른 방향으로 살짝 흩어졌다 모인다
+    vec3 p = mix(position, aTarget, uMorph);
+    p += hash3(aRandom * 97.0) * uScatter * sin(uMorph * 3.1415926);
+
+    vec4 worldPos = modelMatrix * vec4(p, 1.0);
     vec4 mvPosition = viewMatrix * worldPos;
     gl_Position = projectionMatrix * mvPosition;
 
@@ -68,7 +83,8 @@ const vertexShader = /* glsl */ `
     // 카메라 거리에 따른 크기 감쇠
     gl_PointSize = uSize * uPixelRatio * (0.85 + 0.3 * vTwinkle) / max(-mvPosition.z, 0.001);
 
-    vTemp = clamp((temperature - uTempMin) / (uTempMax - uTempMin), 0.0, 1.0);
+    float temp = mix(temperature, aTargetTemperature, uMorph);
+    vTemp = clamp((temp - uTempMin) / (uTempMax - uTempMin), 0.0, 1.0);
     vWorldY = worldPos.y;
   }
 `;
@@ -123,6 +139,8 @@ export function createPointMaterial(opts = {}) {
     fragmentShader,
     uniforms: {
       uTime: { value: 0 },
+      uMorph: { value: 0 },
+      uScatter: { value: 0 },
       uSize: { value: opts.size ?? 3 },
       uPixelRatio: { value: opts.pixelRatio ?? Math.min(window.devicePixelRatio, 2) },
       uReveal: { value: opts.reveal ?? 1 },
@@ -158,5 +176,8 @@ export function addPointAttributes(geometry, data = {}) {
 
   geometry.setAttribute('temperature', new THREE.BufferAttribute(temperature, 1));
   geometry.setAttribute('aRandom', new THREE.BufferAttribute(random, 1));
+  // 모프 목표: 평소엔 지금 모양과 같게 둔다 (morph.js가 전환할 때 바꾼다)
+  geometry.setAttribute('aTarget', geometry.getAttribute('position').clone());
+  geometry.setAttribute('aTargetTemperature', new THREE.BufferAttribute(temperature.slice(), 1));
   return geometry;
 }
