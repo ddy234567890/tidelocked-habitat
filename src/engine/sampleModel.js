@@ -15,12 +15,17 @@ import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
  *   const positions = await sampleModel('/models/habitat.glb', 30000);
  *   const geometry = new THREE.BufferGeometry();
  *   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
- *   addPointAttributes(geometry, { temperature });
+ *   addPointAttributes(geometry, { color: colors });
  *   scene.add(new THREE.Points(geometry, createPointMaterial()));
  *
  * - 메시가 여러 개면 겉넓이 비율대로 점을 나눠 뽑는다 (큰 부분에 점이 더 많이).
  * - 위치는 모델 안의 위치·회전·크기를 모두 적용한 좌표다 (모델 파일 기준, 장면 배치 전).
  * - 같은 경로를 여러 번 불러도 파일은 한 번만 내려받는다.
+ * - 모델 원래 색이 필요하면 colors 배열(길이 N*3)을 넘긴다. 받은 색은 palette.js 의 toneColors 로
+ *   프로젝트 색 규칙에 맞춘다 (원래 색을 그대로 쓰면 안 된다):
+ *     const colors = new Float32Array(N * 3);
+ *     const positions = await sampleModel(url, N, { colors });
+ *     toneColors(positions, colors);
  */
 
 const loader = new GLTFLoader();
@@ -34,20 +39,23 @@ function loadModel(url) {
 /**
  * @param {string} url    .glb 경로 (예: '/models/habitat.glb')
  * @param {number} count  뽑을 점 개수 N
+ * @param {object} [opts]
+ * @param {Float32Array} [opts.colors]  길이 N*3. 주면 점마다 모델 원래 색(정점 색 × 재질 색)을 채운다
  * @returns {Promise<Float32Array>} 길이 N*3 의 위치 배열
  */
-export async function sampleModel(url, count) {
+export async function sampleModel(url, count, opts) {
   const root = await loadModel(url);
-  return sampleObject(root, count);
+  return sampleObject(root, count, opts);
 }
 
 /**
  * 이미 불러온 Object3D(메시 묶음)에서 점 N개를 뽑는다. 코드로 만든 도형에도 쓸 수 있다.
  * @param {THREE.Object3D} root
  * @param {number} count
+ * @param {object} [opts]  sampleModel 과 같음
  * @returns {Float32Array}
  */
-export function sampleObject(root, count) {
+export function sampleObject(root, count, { colors } = {}) {
   root.updateWorldMatrix(true, true);
 
   // 메시마다 월드 좌표 기준 겉넓이를 잰다
@@ -72,14 +80,21 @@ export function sampleObject(root, count) {
 
   const positions = new Float32Array(count * 3);
   const v = new THREE.Vector3();
+  const n0 = new THREE.Vector3();
+  const c = new THREE.Color();
   let i = 0;
   for (const { mesh, count: n } of parts) {
     if (!n) continue;
     const sampler = new MeshSurfaceSampler(mesh).build();
+    const hasVertexColor = !!mesh.geometry.getAttribute('color');
+    const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+    const base = material?.color ?? new THREE.Color(1, 1, 1);
     for (let k = 0; k < n; k++, i++) {
-      sampler.sample(v);
+      c.setRGB(1, 1, 1);
+      sampler.sample(v, n0, hasVertexColor ? c : undefined);
       v.applyMatrix4(mesh.matrixWorld);
       positions.set([v.x, v.y, v.z], i * 3);
+      if (colors) colors.set([c.r * base.r, c.g * base.g, c.b * base.b], i * 3);
     }
   }
   return positions;
