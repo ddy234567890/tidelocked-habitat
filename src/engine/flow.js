@@ -72,7 +72,7 @@ export function createFlow(opts) {
   const colorAttr = geometry.getAttribute('aColor');
   const targetColor = geometry.getAttribute('aTargetColor');
 
-  // 스캔라인 드러내기 범위를 경로 높이에 맞춘다 (기본 -1~1 밖의 점이 잘리지 않게)
+  // 점이 매 프레임 움직이므로 스캔라인 범위는 자동 대신 경로 높이(흩어지는 여유 포함)로 정해 둔다
   const bounds = new THREE.Box3().setFromPoints(table);
   const material = createPointMaterial({
     size: opts.size ?? 7,
