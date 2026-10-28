@@ -15,8 +15,10 @@
       html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
       #viewport { width: 100%; height: 100%; display: block; background: #000; }
       /* 데모용 버튼 (composer가 생기면 지운다) */
-      #demo-ui { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
-      #demo-ui .row { display: flex; gap: 8px; }
+      #demo-ui { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(100% - 32px, 900px); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      #demo-ui .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
+      #demo-ui .row span { color: var(--muted); font: 13px system-ui, sans-serif; min-width: 3em; }
+      #stats { position: fixed; top: 16px; left: 16px; color: var(--hi); font: 14px system-ui, sans-serif; background: var(--panel); border: 1px solid var(--line-dim); border-radius: 8px; padding: 8px 12px; }
       #demo-ui button { font: 14px system-ui, sans-serif; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
       #demo-ui button:hover { color: var(--hi); }
       #demo-ui button[aria-pressed="true"] { background: var(--panel-picked); border-color: var(--cream); color: var(--cream); }
@@ -24,20 +26,8 @@
   </head>
   <body>
     <canvas id="viewport"></canvas>
-    <div id="demo-ui">
-      <div class="row">
-        <button data-shot="overview" aria-pressed="true">전체</button>
-        <button data-shot="top" aria-pressed="false">위</button>
-        <button data-shot="side" aria-pressed="false">옆</button>
-        <button data-shot="close" aria-pressed="false">가까이</button>
-      </div>
-      <div class="row">
-        <button data-shape="sphere" aria-pressed="true">구</button>
-        <button data-shape="box" aria-pressed="false">박스</button>
-        <button data-shape="cylinder" aria-pressed="false">원기둥</button>
-        <button data-shape="habitat" aria-pressed="false">시험 모델</button>
-      </div>
-    </div>
+    <div id="stats"></div>
+    <div id="demo-ui"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
