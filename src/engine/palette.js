@@ -1,17 +1,15 @@
 /**
  * 점 색 규칙 (CLAUDE.md "색" 규칙을 코드로 옮긴 것)
  *
- * "거주 지역 관측" 화면과 같은 색을 쓴다. 빨강·초록·보라는 쓰지 않는다.
+ * "거주 지역 관측" 화면과 같은 색을 쓴다 (색만 가져왔고 점 크기·모양은 공통 셰이더 그대로). 빨강·초록·보라는 쓰지 않는다.
  *   파랑 단계  #121F5C → #2E4DBD → #73A8FF → #D1E6FF   blue(0~1)
  *   크림      #F2EBDB   창문, 출입구 같은 밝은 부분, 산소 흐름
  *   주황      #FF993D   땅속 공간, 빈 산소통, 내쉰 공기, 깜빡이는 등
  *
- * 점은 더하기 섞기로 그려지므로, 겹치면 밝아진다. 점 하나하나는 어둡게 둔다.
  * 색 배열은 모두 점마다 r, g, b 3칸인 Float32Array (0~1) 이다.
  *
  * 사용법:
  *   모델 점      sampleModel(url, N, { colors }) → toneColors(positions, colors)
- *   직접 만든 점  색을 정한 뒤 scanify(positions, colors) 로 질감을 맞춘다
  *   온도 표시     temperatureColor(°C) → 밤 쪽 파랑 ↔ 낮 쪽 주황
  */
 
@@ -98,29 +96,6 @@ export function toneColors(positions, colors, opts = {}) {
   const gain = mean0 / (mean1 / n || 1);
   for (let i = 0; i < n * 3; i++) colors[i] = Math.min(1, colors[i] * gain);
   return colors;
-}
-
-/**
- * 직접 만든 점(기계, 파이프, 차, 통로 등)의 질감을 모델 점과 맞춘다.
- * 위치를 ±jitter 흐트러뜨리고, 점을 (copies)배로 늘리고, 밝기를 dim × (0.45~1.55)로 낮춘다.
- * 점 개수가 copies 배가 되므로, 모프할 모양끼리는 같은 copies 를 쓴다.
- * @returns {{ positions: Float32Array, colors: Float32Array }}
- */
-export function scanify(positions, colors, { jitter = 0.07, copies = 3, dim = 0.42, random = Math.random } = {}) {
-  const n = positions.length / 3;
-  const outP = new Float32Array(n * copies * 3);
-  const outC = new Float32Array(n * copies * 3);
-  let o = 0;
-  for (let i = 0; i < n; i++) {
-    for (let k = 0; k < copies; k++, o += 3) {
-      const g = dim * (0.45 + 1.1 * random());
-      for (let j = 0; j < 3; j++) {
-        outP[o + j] = positions[i * 3 + j] + (random() - 0.5) * 2 * jitter;
-        outC[o + j] = colors[i * 3 + j] * g;
-      }
-    }
-  }
-  return { positions: outP, colors: outC };
 }
 
 /** 점마다 주변 점들이 얼마나 면이 아닌 모서리·윤곽에 가까운지 (0 = 평평한 면) */

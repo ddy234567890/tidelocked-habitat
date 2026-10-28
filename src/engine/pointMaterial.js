@@ -23,7 +23,7 @@ import * as THREE from 'three';
  *
  * Attributes (점마다)
  *   position     vec3   위치
- *   aColor       vec3   색 (palette.js 로 만든다). 더하기 섞기라 어둡게 둘수록 겹친 곳이 자연스럽다
+ *   aColor       vec3   색 r,g,b 0~1 (palette.js 로 만든다)
  *   aRandom      float  0~1 난수. 반짝임 위상 등에 쓰는 점별 시드
  *   aTarget, aTargetColor  모프 전환 목표 위치·색 (morph.js가 관리)
  *
@@ -33,7 +33,6 @@ import * as THREE from 'three';
  *   uScatter       모프 중간에 흩어지는 거리 (월드 단위)
  *   uSize          기본 점 크기 (카메라 거리 1 기준 픽셀)
  *   uPixelRatio    renderer.getPixelRatio()
- *   uFocus         초점 거리. 이보다 가까우면 진하게, 멀면 흐리게
  *   uReveal        0 = 모두 숨김, 1 = 모두 보임. 아래→위 스캔라인
  *   uRevealMin/Max 스캔라인이 지나가는 월드 y 범위
  *   uRevealEdge    스캔라인 띠 두께 (월드 단위)
@@ -53,7 +52,6 @@ const vertexShader = /* glsl */ `
   uniform float uTime;
   uniform float uSize;
   uniform float uPixelRatio;
-  uniform float uFocus;
   uniform float uTwinkle;
 
   varying vec3 vColor;
@@ -72,7 +70,6 @@ const vertexShader = /* glsl */ `
     vec4 worldPos = modelMatrix * vec4(p, 1.0);
     vec4 mvPosition = viewMatrix * worldPos;
     gl_Position = projectionMatrix * mvPosition;
-    float dist = max(-mvPosition.z, 0.001);
 
     // 은은한 반짝임: 점마다 다른 위상과 속도
     float phase = aRandom * 6.2831853;
@@ -80,11 +77,9 @@ const vertexShader = /* glsl */ `
     vTwinkle = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * speed + phase));
 
     // 카메라 거리에 따른 크기 감쇠
-    gl_PointSize = uSize * uPixelRatio * (0.85 + 0.3 * vTwinkle) / dist;
+    gl_PointSize = uSize * uPixelRatio * (0.85 + 0.3 * vTwinkle) / max(-mvPosition.z, 0.001);
 
-    // 거리 밝기: 가까우면 진하게, 멀면 흐리게
-    float depthShade = clamp(1.55 - 0.6 * dist / uFocus, 0.4, 1.35);
-    vColor = mix(aColor, aTargetColor, uMorph) * depthShade;
+    vColor = mix(aColor, aTargetColor, uMorph);
     vWorldY = worldPos.y;
   }
 `;
@@ -102,17 +97,18 @@ const fragmentShader = /* glsl */ `
   varying float vWorldY;
 
   void main() {
-    // 둥근 점
-    vec2 d = gl_PointCoord - 0.5;
-    if (dot(d, d) > 0.25) discard;
+    // 둥근 점, 가장자리 부드럽게
+    float d = length(gl_PointCoord - 0.5);
+    if (d > 0.5) discard;
+    float alpha = smoothstep(0.5, 0.15, d);
 
     // 아래→위 스캔라인 드러내기
     float scanY = mix(uRevealMin - uRevealEdge, uRevealMax + uRevealEdge, uReveal);
     if (vWorldY > scanY) discard;
     float edge = 1.0 - smoothstep(0.0, uRevealEdge, scanY - vWorldY);
 
-    vec3 color = vColor * (0.6 + 0.4 * vTwinkle) + uRevealColor * edge * 0.5;
-    gl_FragColor = vec4(color * uOpacity, 1.0);
+    vec3 color = mix(vColor, uRevealColor, edge * 0.7);
+    gl_FragColor = vec4(color * (0.6 + 0.4 * vTwinkle), alpha * uOpacity);
   }
 `;
 
@@ -121,7 +117,6 @@ const fragmentShader = /* glsl */ `
  * @param {object} [opts]
  * @param {number} [opts.size=3]          기본 점 크기
  * @param {number} [opts.pixelRatio]      기본값 window.devicePixelRatio (최대 2)
- * @param {number} [opts.focus=5]         초점 거리 (거리 밝기 기준)
  * @param {number} [opts.reveal=1]        시작 uReveal 값
  * @param {number} [opts.revealMin=-1]    스캔라인 시작 y
  * @param {number} [opts.revealMax=1]     스캔라인 끝 y
@@ -140,7 +135,6 @@ export function createPointMaterial(opts = {}) {
       uScatter: { value: 0 },
       uSize: { value: opts.size ?? 3 },
       uPixelRatio: { value: opts.pixelRatio ?? Math.min(window.devicePixelRatio, 2) },
-      uFocus: { value: opts.focus ?? 5 },
       uReveal: { value: opts.reveal ?? 1 },
       uRevealMin: { value: opts.revealMin ?? -1 },
       uRevealMax: { value: opts.revealMax ?? 1 },
@@ -166,7 +160,7 @@ export function createPointMaterial(opts = {}) {
 export function addPointAttributes(geometry, data = {}) {
   const count = geometry.getAttribute('position').count;
 
-  const color = data.color ?? new Float32Array(count * 3).map((_, i) => [0.18, 0.3, 0.74][i % 3] * 0.42);
+  const color = data.color ?? new Float32Array(count * 3).map((_, i) => [0.18, 0.3, 0.74][i % 3]);
   const random = data.random ?? Float32Array.from({ length: count }, Math.random);
 
   geometry.setAttribute('aColor', new THREE.BufferAttribute(color, 3));

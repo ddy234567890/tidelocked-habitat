@@ -14,18 +14,15 @@
       }
       html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
       #viewport { width: 100%; height: 100%; display: block; background: #000; }
-      /* 비네트: 화면 가장자리를 배경색으로 살짝 어둡게 */
-      #vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgb(2 4 12 / 0.85) 100%); }
       /* 데모용 버튼 (composer가 생기면 지운다) */
       #demo-ui { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 8px; }
-      #demo-ui button { font: 14px system-ui, sans-serif; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+      #demo-ui button { font: 14px system-ui, sans-serif; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
       #demo-ui button:hover { color: var(--hi); }
       #demo-ui button[aria-pressed="true"] { background: var(--panel-picked); border-color: var(--cream); color: var(--cream); }
     </style>
   </head>
   <body>
     <canvas id="viewport"></canvas>
-    <div id="vignette"></div>
     <div id="demo-ui">
       <button data-shape="sphere" aria-pressed="true">구</button>
       <button data-shape="box" aria-pressed="false">박스</button>
