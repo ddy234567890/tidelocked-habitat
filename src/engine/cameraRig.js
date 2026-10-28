@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import { easings } from './morph.js';
 
 /**
- * 카메라 프리셋 + 제한된 드래그 (카드 e04)
+ * 카메라 프리셋 + 드래그 둘러보기 (카드 e04)
  *
  * 이름 붙은 카메라 샷을 등록해 두고 goTo(name)으로 부드럽게 옮겨 간다.
- * 사용자는 드래그로 지금 샷 기준으로 자유롭게 둘러볼 수 있고, 손을 떼면 천천히 제자리로 돌아온다.
+ * 사용자는 드래그로 지금 샷 기준으로 자유롭게 둘러볼 수 있고, 손을 떼면 그 각도에 머문다.
+ * 다른 샷으로 goTo 하면 돌려 둔 각도는 이동하는 동안 함께 풀린다.
  * 선지 JSON 의 cameraShot 값이 여기 등록한 샷 이름이다.
  *
  * 사용법:
@@ -24,7 +25,7 @@ import { easings } from './morph.js';
  *   duration   샷 이동 시간, 초 (기본 1.8)
  *   easing     morph.js 의 easings 이름 또는 함수 (기본 'inOutCubic')
  *   maxAngle   드래그 허용 각도, 도 (기본 없음 = 제한 없이 회전. 숫자를 주면 좌우·상하 ±그 각도까지만)
- *   returnTime 손을 뗀 뒤 제자리로 돌아오는 빠르기, 초 (기본 1.2, 클수록 천천히)
+ *   returnTime 주면 손을 뗀 뒤 이 시간(초)에 걸쳐 샷 각도로 천천히 돌아온다 (기본 없음 = 그 자리에 머묾)
  *
  * - prefers-reduced-motion 이면 샷 이동과 되돌아오기를 바로 한다.
  */
@@ -41,7 +42,7 @@ export function createCameraRig(camera, element, opts = {}) {
   const duration = opts.duration ?? 1.8;
   const easing = typeof opts.easing === 'function' ? opts.easing : easings[opts.easing ?? 'inOutCubic'];
   const maxAngle = opts.maxAngle == null ? Infinity : opts.maxAngle * DEG;
-  const returnTime = opts.returnTime ?? 1.2;
+  const returnTime = opts.returnTime ?? null;
 
   const shots = new Map();
   // 지금 기준 자세 (샷 사이를 옮겨 가는 중이면 그 중간값)
@@ -102,6 +103,8 @@ export function createCameraRig(camera, element, opts = {}) {
 
     const time = o.instant || reducedMotion.matches ? 0 : o.duration ?? duration;
     if (time <= 0) {
+      yaw = 0;
+      pitch = 0;
       pose.position.copy(shot.position);
       pose.target.copy(shot.target);
       pose.fov = shot.fov;
@@ -110,7 +113,7 @@ export function createCameraRig(camera, element, opts = {}) {
     }
     return new Promise((resolve) => {
       move = {
-        from: { position: pose.position.clone(), target: pose.target.clone(), fov: pose.fov },
+        from: { position: pose.position.clone(), target: pose.target.clone(), fov: pose.fov, yaw: wrap(yaw), pitch },
         to: shot,
         start: performance.now(),
         time,
@@ -134,15 +137,20 @@ export function createCameraRig(camera, element, opts = {}) {
       pose.position.lerpVectors(move.from.position, move.to.position, k);
       pose.target.lerpVectors(move.from.target, move.to.target, k);
       pose.fov = THREE.MathUtils.lerp(move.from.fov, move.to.fov, k);
+      // 돌려 둔 각도도 이동하는 동안 함께 풀어 새 샷 각도에 맞춘다
+      if (!dragging) {
+        yaw = move.from.yaw * (1 - k);
+        pitch = move.from.pitch * (1 - k);
+      }
       if (t >= 1) {
         move.resolve();
         move = null;
       }
     }
 
-    // 손을 떼면 드래그 각도가 천천히 0으로 돌아온다 (여러 바퀴 돌렸어도 가까운 쪽으로)
-    if (!dragging) {
-      yaw = Math.atan2(Math.sin(yaw), Math.cos(yaw));
+    // returnTime 을 줬으면 손을 뗀 뒤 드래그 각도가 천천히 0으로 돌아온다 (여러 바퀴 돌렸어도 가까운 쪽으로)
+    if (!dragging && !move && returnTime !== null) {
+      yaw = wrap(yaw);
       const keep = reducedMotion.matches ? 0 : Math.exp(-dt / (returnTime / 3));
       yaw *= keep;
       pitch *= keep;
@@ -162,6 +170,11 @@ export function createCameraRig(camera, element, opts = {}) {
       camera.fov = pose.fov;
       camera.updateProjectionMatrix();
     }
+  }
+
+  // 각도를 -180°~180° 로 접는다 (여러 바퀴 돌린 만큼 되감지 않게)
+  function wrap(a) {
+    return Math.atan2(Math.sin(a), Math.cos(a));
   }
 
   return {
