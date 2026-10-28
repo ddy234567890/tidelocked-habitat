@@ -31,12 +31,25 @@ export function height(x, z, amp = 1.6, flat = true) {
 }
 
 /**
- * 별빛을 받은 지표의 밝기. 별을 향한 비탈은 밝고, 반대쪽 비탈과 언덕 뒤는 그림자가 진다.
+ * 별빛을 받은 지표의 밝기 (평지·용암동굴의 기본 지형용).
+ * 별을 향한 비탈은 밝고, 반대쪽 비탈과 언덕 뒤는 그림자가 진다.
  * @param {number[]} L  starDirection() 으로 얻은 별 방향 단위벡터
  * @returns {{ y: number, lit: number }}  y = 그 자리 지표 높이, lit = 0(그림자) ~ 1(환함)
  */
 export function sunlight(x, z, L, amp = 1.6, flat = true) {
-  const h = (px, pz) => height(px, pz, amp, flat);
+  return lightOn((px, pz) => height(px, pz, amp, flat), x, z, L);
+}
+
+/**
+ * 어떤 높이 함수든 같은 방식으로 별빛을 계산한다. 다른 모양의 땅(능선 등)도 이 함수로 그림자가 진다.
+ * @param {(x: number, z: number) => number} h  땅 높이 함수
+ * @param {object} [opts]
+ * @param {number} [opts.reach=3.5]  그림자를 찾으려고 별 쪽으로 걸어가는 최대 거리. 별이 낮고 능선이 높을수록 길게
+ * @param {number} [opts.grow=1.12]  걸음 폭이 걸을수록 커지는 비율
+ * @param {number} [opts.add=0]      걸음마다 더하는 폭. 좁은 능선을 건너뛰지 않게 하려면 이 값을 준다
+ */
+export function lightOn(h, x, z, L, opts = {}) {
+  const { reach = 3.5, grow = 1.12, add = 0 } = opts;
   const y = h(x, z);
 
   // 비탈 기울기 → 법선. 별을 향한 비탈일수록 밝다 (편평한 땅이 기준)
@@ -52,7 +65,7 @@ export function sunlight(x, z, L, amp = 1.6, flat = true) {
   const dz = L[2] / lh;
   const slope = L[1] / lh;
   let shadow = 0;
-  for (let t = 0.1; t < 3.5; t *= 1.12) {
+  for (let t = 0.1; t < reach; t = t * grow + add) {
     const gap = h(x + dx * t, z + dz * t) - (y + t * slope);
     if (gap > 0) shadow = Math.max(shadow, Math.min(1, gap / 0.04));
     if (shadow >= 1) break;
@@ -61,8 +74,8 @@ export function sunlight(x, z, L, amp = 1.6, flat = true) {
   return { y, lit };
 }
 
-/** 0~1 값 노이즈 (격자 난수를 부드럽게 이은 것) */
-function noise(x, z, seed) {
+/** 0~1 값 노이즈 (격자 난수를 부드럽게 이은 것). 어떤 무대에서든 잔 기복을 만들 때 쓴다 */
+export function noise(x, z, seed) {
   const ix = Math.floor(x);
   const iz = Math.floor(z);
   const fx = fade(x - ix);

@@ -1,5 +1,6 @@
 import { buildPlain } from './plain.js';
 import { buildLavaTube } from './lavaTube.js';
+import { buildRidge } from './ridge.js';
 
 /**
  * 위치 무대 목록. 선지 JSON 의 layers.location.<id>.stage 값이 여기 이름이다.
@@ -10,6 +11,7 @@ import { buildLavaTube } from './lavaTube.js';
 const stages = {
   plain: buildPlain,
   lava_tube: buildLavaTube,
+  ridge: buildRidge,
 };
 
 export function buildStage(name, count, def) {
