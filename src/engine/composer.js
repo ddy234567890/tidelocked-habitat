@@ -130,17 +130,27 @@ export function createComposer({ scene, data, rig }) {
     }
     slot.id = id;
     slot.points.material.uniforms.uSize.value = shape.size ?? (kind === 'overlay' ? 6 : 8); // 무대마다 점 크기가 다를 수 있다
+    setShake(slot.points, null); // 모양이 바뀌는 동안은 떨림을 끈다
     await slot.morph.to(shape.positions, { color: shape.colors });
+    if (slot.id === id) setShake(slot.points, shape.shake); // 그 사이 다른 선택이 들어오지 않았으면 새 모양의 떨림을 켠다
   }
 
   function makePoints(shape, kind, size) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(shape.positions.slice(), 3));
-    addPointAttributes(geometry, { color: shape.colors.slice() });
+    addPointAttributes(geometry, { color: shape.colors.slice(), shake: shape.shake?.slice() });
     const material = createPointMaterial({ size: size ?? (kind === 'overlay' ? 6 : 8), reveal: 0 });
     const points = new THREE.Points(geometry, material);
     scene.add(points);
     return points;
+  }
+
+  /** 점마다 떨림 세기(aShake)를 바꾼다. null 이면 모두 가만히 */
+  function setShake(points, values) {
+    const attribute = points.geometry.getAttribute('aShake');
+    if (values) attribute.array.set(values);
+    else attribute.array.fill(0);
+    attribute.needsUpdate = true;
   }
 
   function dispose(points) {
@@ -202,8 +212,9 @@ async function buildLayer(kind, id, def) {
   const count = LAYER_POINTS[kind];
   let positions;
   let colors;
+  let shake; // 점마다 떨림 세기 (있으면)
   if (def.stage) {
-    ({ positions, colors } = buildStage(def.stage, count, def));
+    ({ positions, colors, shake } = buildStage(def.stage, count, def));
   } else if (def.asset) {
     colors = new Float32Array(count * 3);
     positions = await sampleModel(def.asset, count, { colors });
@@ -221,7 +232,7 @@ async function buildLayer(kind, id, def) {
   }
 
   if (!def.stage) toneColors(positions, colors); // 무대는 온도 색으로 이미 칠해서 온다
-  return { positions, colors, size: def.pointSize };
+  return { positions, colors, shake, size: def.pointSize };
 }
 
 /** 에셋이 아직 없는 레이어의 박스 자리표시. id 마다 크기가 조금씩 달라 전환이 눈에 보인다 */

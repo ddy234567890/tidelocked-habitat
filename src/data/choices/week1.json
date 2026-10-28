@@ -2,13 +2,13 @@
   "week": 1,
   "cameraShots": {
     "A_overview": { "position": [-3.2, 1.1, 5.5], "target": [0, 0.35, -1.5], "fov": 45 },
-    "B_section": { "position": [5, 1, 2.5], "target": [0, -0.2, 0], "fov": 40 },
+    "B_section": { "position": [1.4, -0.3, 9], "target": [0, -1, -0.6], "fov": 50 },
     "C_ridge": { "position": [-4, 2.8, 4.5], "target": [0, 0.4, 0], "fov": 42 }
   },
   "layers": {
     "location": {
       "plain": { "label": "평지", "asset": null, "stage": "plain", "pointSize": 12, "temperature": [55, 66], "star": { "azimuth": 40, "elevation": 6 } },
-      "lava_tube": { "label": "용암동굴", "asset": null },
+      "lava_tube": { "label": "용암동굴", "asset": null, "stage": "lava_tube", "pointSize": 10, "temperature": [25, 30], "star": { "azimuth": 40, "elevation": 6 } },
       "ridge": { "label": "능선 (고지대)", "asset": null }
     },
     "module": {
@@ -38,7 +38,7 @@
       "label": "위치",
       "choices": [
         { "id": "A", "label": "평지", "location": "plain", "cameraShot": "A_overview", "stats": { "temperature": 60, "oxygen": null, "energy": null } },
-        { "id": "B", "label": "용암동굴", "location": "lava_tube", "cameraShot": "B_section", "stats": { "temperature": null, "oxygen": null, "energy": null } },
+        { "id": "B", "label": "용암동굴", "location": "lava_tube", "cameraShot": "B_section", "stats": { "temperature": 28, "oxygen": null, "energy": null } },
         { "id": "C", "label": "능선 (고지대)", "location": "ridge", "cameraShot": "C_ridge", "stats": { "temperature": null, "oxygen": null, "energy": null } }
       ]
     },
