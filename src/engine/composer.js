@@ -26,7 +26,11 @@ import { buildStage } from '../scenes/locations/index.js';
  *   cameraShots  { 샷이름: { position, target, fov } }  rig 에 등록된다
  *   layers       { location|module|overlay: { 레이어id: { label, asset, position?, scale? } } }
  *                asset 이 .glb 경로면 그 모델을, null 이면 박스 자리표시를 그린다
+ *                parts: [{ asset, position?, scale?, rotation? }] 를 주면 모델 여러 개를 한 레이어로 묶는다
+ *                (rotation 은 세로축 기준 도). 점은 크기(scale²)에 비례해 나눈다
  *                stage 가 있으면(위치 무대) src/scenes/locations 의 그 무대가 점과 색을 직접 만든다
+ *                motion: "inflate" 면 공기를 넣은 것처럼 납작한 데서 부풀어 오르며 나타나고, 평소에는 천천히 숨 쉬듯 부푼다
+ *                (점 위치는 그대로 두고 레이어 전체 크기만 움직인다. 셰이더는 그대로)
  *                pointSize 를 주면 그 레이어의 점 크기(uSize)를 바꾼다. 셰이더는 그대로고 값만 다르다
  *   steps[]      { id, label, choices[] }  선택 단계 (위치 → 주거 → 산소)
  *     choice     { id, label, location?, module?, overlays?, cameraShot?, stats, requires?, hidden? }
@@ -125,10 +129,12 @@ export function createComposer({ scene, data, rig }) {
     if (!slot) {
       const points = makePoints(shape, kind, shape.size);
       slots[kind] = { id, points, morph: createMorph(points, { duration: 1.8 }) };
+      startMotion(slots[kind], shape.motion, 0.08);
       await reveal(points, 1);
       return;
     }
     slot.id = id;
+    startMotion(slot, shape.motion, 0.55);
     slot.points.material.uniforms.uSize.value = shape.size ?? (kind === 'overlay' ? 6 : 8); // 무대마다 점 크기가 다를 수 있다
     setShake(slot.points, null); // 모양이 바뀌는 동안은 떨림을 끈다
     await slot.morph.to(shape.positions, { color: shape.colors });
@@ -159,10 +165,33 @@ export function createComposer({ scene, data, rig }) {
     points.material.dispose();
   }
 
+  /** 레이어 움직임을 시작한다. from: 부풀기 시작할 때 높이 비율 (새로 나타나면 거의 납작하게) */
+  function startMotion(slot, motion, from) {
+    slot.motion = motion ?? null;
+    slot.motionStart = performance.now();
+    slot.motionFrom = from;
+    if (!slot.motion) slot.points.scale.set(1, 1, 1);
+  }
+
   /** 매 프레임 부른다 */
   function update(seconds) {
     const all = [slots.location?.points, slots.module?.points, ...overlays.values()];
     for (const p of all) if (p) p.material.uniforms.uTime.value = seconds;
+
+    for (const slot of [slots.location, slots.module]) {
+      if (slot?.motion !== 'inflate') continue;
+      if (reducedMotion.matches) {
+        slot.points.scale.set(1, 1, 1);
+        continue;
+      }
+      // 부풀어 오르기: 살짝 넘쳤다가 자리 잡는다. 납작할 때는 옆으로 퍼져 있다
+      const t = Math.min((performance.now() - slot.motionStart) / 1400, 1);
+      const grow = slot.motionFrom + (1 - slot.motionFrom) * easeOutBack(t);
+      // 숨쉬기: 아주 천천히 부풀었다 줄어든다
+      const breath = 0.018 * Math.sin(seconds * 1.3);
+      const spread = 1 + (1 - grow) * 0.18;
+      slot.points.scale.set(spread * (1 - breath * 0.4), grow * (1 + breath), spread * (1 - breath * 0.4));
+    }
   }
 
   return { apply, update, availableChoices, resolve: (selection) => resolve(data, selection) };
@@ -183,6 +212,11 @@ export function resolve(data, selection) {
     Object.assign(stats, choice.stats);
   }
   return { layers, stats, cameraShot };
+}
+
+function easeOutBack(t) {
+  const c = 1.9;
+  return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2;
 }
 
 function isAvailable(choice, selection) {
@@ -215,6 +249,8 @@ async function buildLayer(kind, id, def) {
   let shake; // 점마다 떨림 세기 (있으면)
   if (def.stage) {
     ({ positions, colors, shake } = buildStage(def.stage, count, def));
+  } else if (def.parts?.length) {
+    ({ positions, colors } = await sampleParts(def.parts, count));
   } else if (def.asset) {
     colors = new Float32Array(count * 3);
     positions = await sampleModel(def.asset, count, { colors });
@@ -232,7 +268,39 @@ async function buildLayer(kind, id, def) {
   }
 
   if (!def.stage) toneColors(positions, colors); // 무대는 온도 색으로 이미 칠해서 온다
-  return { positions, colors, shake, size: def.pointSize };
+  return { positions, colors, shake, size: def.pointSize, motion: def.motion };
+}
+
+/** 모델 여러 개를 각자 자리에 놓고 점 count 개를 나눠 뽑는다 (합은 정확히 count) */
+async function sampleParts(parts, count) {
+  const weights = parts.map((p) => (p.scale ?? 1) ** 2);
+  const total = weights.reduce((a, b) => a + b, 0);
+  const counts = weights.map((w) => Math.floor((w / total) * count));
+  counts[0] += count - counts.reduce((a, b) => a + b, 0);
+
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const v = new THREE.Vector3();
+  const m = new THREE.Matrix4();
+  let offset = 0;
+  for (let k = 0; k < parts.length; k++) {
+    const part = parts[k];
+    const n = counts[k];
+    if (!n) continue;
+    const c = new Float32Array(n * 3);
+    const p = await sampleModel(part.asset, n, { colors: c });
+    m.compose(
+      new THREE.Vector3().fromArray(part.position ?? [0, 0, 0]),
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), THREE.MathUtils.degToRad(part.rotation ?? 0)),
+      new THREE.Vector3().setScalar(part.scale ?? 1),
+    );
+    for (let i = 0; i < n; i++) {
+      v.fromArray(p, i * 3).applyMatrix4(m).toArray(positions, (offset + i) * 3);
+    }
+    colors.set(c, offset * 3);
+    offset += n;
+  }
+  return { positions, colors };
 }
 
 /** 에셋이 아직 없는 레이어의 박스 자리표시. id 마다 크기가 조금씩 달라 전환이 눈에 보인다 */
