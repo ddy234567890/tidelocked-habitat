@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "make:test-model": "node scripts/make-test-model.mjs",
-    "normalize:models": "node scripts/normalize-models.mjs"
+    "normalize:models": "node scripts/normalize-models.mjs",
+    "make:inflatable": "node scripts/make-inflatable-model.mjs"
   },
   "dependencies": {
     "three": "^0.186.1"

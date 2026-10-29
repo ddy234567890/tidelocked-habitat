@@ -12,7 +12,7 @@
       "ridge": { "label": "능선 (고지대)", "asset": null, "stage": "ridge", "pointSize": 11, "temperature": [12, 66], "star": { "azimuth": 40, "elevation": 6 } }
     },
     "module": {
-      "inflatable": {"label": "팽창식 모듈", "parts": [{"asset": "/models/dome.glb", "position": [0, 0, 0], "scale": 1.1}, {"asset": "/models/tube-connector.glb", "position": [0.85, 0, 0.1], "scale": 0.45, "rotation": 0}, {"asset": "/models/cloche.glb", "position": [1.45, 0, 0.2], "scale": 0.7}, {"asset": "/models/cloche.glb", "position": [-1.2, 0, 0.25], "scale": 0.6}]},
+      "inflatable": {"label": "팽창식 모듈", "asset": "/models/inflatable.glb", "position": [0.1, 0, 0], "scale": 3.4, "motion": "inflate"},
       "earth_print": {"label": "흙 3D 프린팅 집", "parts": [{"asset": "/models/house-cylinder.glb", "position": [0, 0, 0], "scale": 1.1}, {"asset": "/models/house-cylinder.glb", "position": [1.25, 0, 0.3], "scale": 0.7, "rotation": 40}]},
       "cave_modules": {"label": "동굴 속 모듈", "position": [0, -1.45, -0.2], "parts": [{"asset": "/models/house-long.glb", "position": [0.5, 0, 0], "scale": 0.6}, {"asset": "/models/lander-base.glb", "position": [1.6, 0, 0], "scale": 0.5}, {"asset": "/models/house-cylinder.glb", "position": [2.4, 0, 0], "scale": 0.4}]},
       "cave_sealed": {"label": "동굴 통째 밀폐", "asset": null, "position": [-1.9, -0.45, -0.2], "scale": 0.5},
