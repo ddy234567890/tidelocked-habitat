@@ -12,24 +12,24 @@
       "ridge": { "label": "능선 (고지대)", "asset": null, "stage": "ridge", "pointSize": 11, "temperature": [12, 66], "star": { "azimuth": 40, "elevation": 6 } }
     },
     "module": {
-      "inflatable": { "label": "팽창식 모듈", "asset": null },
-      "earth_print": { "label": "흙 3D 프린팅 집", "asset": null },
-      "cave_modules": { "label": "동굴 속 모듈", "asset": null },
-      "cave_sealed": { "label": "동굴 통째 밀폐", "asset": null },
-      "tower": { "label": "탑형 집", "asset": null },
-      "solar_village": { "label": "발전소 + 비탈 마을", "asset": null },
-      "ice_base": { "label": "얼음 옆 기지", "asset": null }
+      "inflatable": {"label": "팽창식 모듈", "parts": [{"asset": "/models/dome.glb", "position": [0, 0, 0], "scale": 1.1}, {"asset": "/models/tube-connector.glb", "position": [0.85, 0, 0.1], "scale": 0.45, "rotation": 0}, {"asset": "/models/cloche.glb", "position": [1.45, 0, 0.2], "scale": 0.7}, {"asset": "/models/cloche.glb", "position": [-1.2, 0, 0.25], "scale": 0.6}]},
+      "earth_print": {"label": "흙 3D 프린팅 집", "parts": [{"asset": "/models/house-cylinder.glb", "position": [0, 0, 0], "scale": 1.1}, {"asset": "/models/house-cylinder.glb", "position": [1.25, 0, 0.3], "scale": 0.7, "rotation": 40}]},
+      "cave_modules": {"label": "동굴 속 모듈", "position": [0, -1.45, -0.2], "parts": [{"asset": "/models/house-long.glb", "position": [0.5, 0, 0], "scale": 0.6}, {"asset": "/models/lander-base.glb", "position": [1.6, 0, 0], "scale": 0.5}, {"asset": "/models/house-cylinder.glb", "position": [2.4, 0, 0], "scale": 0.4}]},
+      "cave_sealed": {"label": "동굴 통째 밀폐", "asset": null, "position": [-1.9, -0.45, -0.2], "scale": 0.5},
+      "tower": {"label": "탑형 집", "parts": [{"asset": "/models/silo-house.glb", "position": [0, 0, 0], "scale": 1.4}, {"asset": "/models/silo.glb", "position": [0.75, 0, 0.75], "scale": 0.8}]},
+      "solar_village": {"label": "발전소 + 비탈 마을", "parts": [{"asset": "/models/solar-panel-stand.glb", "position": [0.75, 0, 0.75], "scale": 0.55, "rotation": 45}, {"asset": "/models/solar-panel.glb", "position": [0.35, 0, 0.35], "scale": 0.5, "rotation": 45}, {"asset": "/models/house-cylinder.glb", "position": [-0.2, 0, -0.2], "scale": 0.45}, {"asset": "/models/house-cylinder.glb", "position": [-0.65, 0, -0.65], "scale": 0.4}, {"asset": "/models/house-long.glb", "position": [0, 0, 0.55], "scale": 0.4, "rotation": 45}]},
+      "ice_base": {"label": "얼음 옆 기지", "parts": [{"asset": "/models/cargo-depot.glb", "position": [-0.6, 0, -0.6], "scale": 0.8, "rotation": 45}, {"asset": "/models/water-tank-floor.glb", "position": [0.1, 0, -0.1], "scale": 0.5}]}
     },
     "overlay": {
-      "concentrator": { "label": "바깥 공기 농축", "asset": null },
-      "electrolysis": { "label": "물 전기분해", "asset": null },
-      "ice_electrolysis": { "label": "얼음 녹여 전기분해", "asset": null },
-      "algae": { "label": "조류 기르기", "asset": null },
-      "wall_algae": { "label": "바깥벽 조류", "asset": null },
-      "candle": { "label": "산소 캔들", "asset": null },
-      "tank": { "label": "산소 탱크 비축", "asset": null },
-      "central_pipe": { "label": "중앙 생산 후 관 공급", "asset": null },
-      "per_house": { "label": "집마다 작은 장치", "asset": null }
+      "concentrator": {"label": "바깥 공기 농축", "asset": "/models/vent.glb", "scale": 0.5},
+      "electrolysis": {"label": "물 전기분해", "asset": "/models/water-tank.glb", "scale": 0.6},
+      "ice_electrolysis": {"label": "얼음 녹여 전기분해", "asset": "/models/water-tank-floor.glb", "scale": 0.55},
+      "algae": {"label": "조류 기르기", "asset": "/models/glass-box.glb", "scale": 0.55},
+      "wall_algae": {"label": "바깥벽 조류", "asset": null},
+      "candle": {"label": "산소 캔들", "asset": "/models/pickup-tank.glb", "scale": 0.3},
+      "tank": {"label": "산소 탱크 비축", "asset": "/models/gas-tank.glb", "scale": 0.45},
+      "central_pipe": {"label": "중앙 생산 후 관 공급", "asset": "/models/water-tower-b.glb", "scale": 0.6},
+      "per_house": {"label": "집마다 작은 장치", "asset": "/models/machine.glb", "scale": 0.3}
     }
   },
   "steps": [
