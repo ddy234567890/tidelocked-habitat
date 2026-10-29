@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { createPointMaterial, addPointAttributes } from './pointMaterial.js';
 import { sampleModel, sampleObject } from './sampleModel.js';
 import { createMorph } from './morph.js';
-import { toneColors } from './palette.js';
+import { toneColors, CREAM, AMBER, blue } from './palette.js';
+import { createFlow } from './flow.js';
 import { buildStage } from '../scenes/locations/index.js';
 
 /**
@@ -27,10 +28,15 @@ import { buildStage } from '../scenes/locations/index.js';
  *   layers       { location|module|overlay: { 레이어id: { label, asset, position?, scale? } } }
  *                asset 이 .glb 경로면 그 모델을, null 이면 박스 자리표시를 그린다
  *                parts: [{ asset, position?, scale?, rotation? }] 를 주면 모델 여러 개를 한 레이어로 묶는다
- *                (rotation 은 세로축 기준 도). 점은 크기(scale²)에 비례해 나눈다
+ *                (rotation 은 세로축 기준 도). 점은 크기(scale², 또는 weight)에 비례해 나눈다
+ *                asset 대신 box: [가로, 높이, 두께] 를 주면 바닥이 position 에 닿는 상자를 그린다 (세운 패널·벽 같은 단순한 모양)
  *                stage 가 있으면(위치 무대) src/scenes/locations 의 그 무대가 점과 색을 직접 만든다
  *                motion: "inflate" 면 공기를 넣은 것처럼 납작한 데서 부풀어 오르며 나타나고, 평소에는 천천히 숨 쉬듯 부푼다
  *                (점 위치는 그대로 두고 레이어 전체 크기만 움직인다. 셰이더는 그대로)
+ *                flows: [{ path: [[x,y,z]…], color?: "cream"|"amber"|"blue", speed?, count?, size? }] 를 주면 그 레이어가 있는 동안
+ *                경로를 따라 흐르는 점(flow.js)을 함께 그린다. 산소는 크림, 전기는 파랑, 내쉰 공기는 주황
+ *                labelAt: [x,y,z] 이 레이어 이름표를 붙일 자리 (데모 화면이 쓴다)
+ *                오버레이에 position 을 주면 그 자리에 그대로 놓는다 (주지 않으면 임시 자리에 줄지어 놓는다)
  *                pointSize 를 주면 그 레이어의 점 크기(uSize)를 바꾼다. 셰이더는 그대로고 값만 다르다
  *   steps[]      { id, label, choices[] }  선택 단계 (위치 → 주거 → 산소)
  *     choice     { id, label, location?, module?, overlays?, cameraShot?, stats, requires?, hidden? }
@@ -59,6 +65,7 @@ export function createComposer({ scene, data, rig }) {
   const cache = new Map(); // "kind:id" → Promise<{ positions, colors }>
   const slots = { location: null, module: null }; // { id, points, morph }
   const overlays = new Map(); // id → points
+  const flows = new Map(); // "kind:id:번호" → flow
   let applySeq = 0;
 
   function load(kind, id) {
@@ -107,13 +114,43 @@ export function createComposer({ scene, data, rig }) {
     layers.overlays.forEach((id, i) => {
       if (overlays.has(id)) return;
       const points = makePoints(overlayShapes[i], 'overlay', overlayShapes[i].size);
-      points.position.set(1.6 + i * 0.7, 0, 0.9); // 연결점(anchor)은 e06/w07 에서 정한다
+      // JSON 에 자리가 없으면 임시 자리에 줄지어 놓는다 (연결점 anchor 는 w07 에서 정한다)
+      if (!data.layers.overlay[id]?.position) points.position.set(1.6 + i * 0.7, 0, 0.9);
       overlays.set(id, points);
       jobs.push(reveal(points, 1));
     });
 
+    jobs.push(...syncFlows(layers));
+
     await Promise.all(jobs);
     return resolved;
+  }
+
+  /** 지금 레이어들이 가진 flows 만 남기고, 빠진 것은 지우고 새로 생긴 것은 나타나게 한다 */
+  function syncFlows(layers) {
+    const wanted = new Map();
+    const add = (kind, id) => {
+      (data.layers[kind]?.[id]?.flows ?? []).forEach((f, i) => wanted.set(`${kind}:${id}:${i}`, f));
+    };
+    if (layers.location) add('location', layers.location);
+    if (layers.module) add('module', layers.module);
+    for (const id of layers.overlays) add('overlay', id);
+
+    const jobs = [];
+    for (const [key, flow] of flows) {
+      if (wanted.has(key)) continue;
+      flows.delete(key);
+      jobs.push(reveal(flow.points, 0).then(() => flow.dispose()));
+    }
+    for (const [key, f] of wanted) {
+      if (flows.has(key)) continue;
+      const flow = createFlow({ path: f.path, color: FLOW_COLORS[f.color ?? 'cream'], speed: f.speed, count: f.count ?? 500, size: f.size ?? 11 });
+      flow.points.material.uniforms.uReveal.value = 0;
+      scene.add(flow.points);
+      flows.set(key, flow);
+      jobs.push(reveal(flow.points, 1));
+    }
+    return jobs;
   }
 
   async function setSlot(kind, id, shape) {
@@ -177,6 +214,7 @@ export function createComposer({ scene, data, rig }) {
   function update(seconds) {
     const all = [slots.location?.points, slots.module?.points, ...overlays.values()];
     for (const p of all) if (p) p.material.uniforms.uTime.value = seconds;
+    for (const flow of flows.values()) flow.update(seconds);
 
     for (const slot of [slots.location, slots.module]) {
       if (slot?.motion !== 'inflate') continue;
@@ -213,6 +251,8 @@ export function resolve(data, selection) {
   }
   return { layers, stats, cameraShot };
 }
+
+const FLOW_COLORS = { cream: CREAM, amber: AMBER, blue: blue(0.8) };
 
 function easeOutBack(t) {
   const c = 1.9;
@@ -273,7 +313,7 @@ async function buildLayer(kind, id, def) {
 
 /** 모델 여러 개를 각자 자리에 놓고 점 count 개를 나눠 뽑는다 (합은 정확히 count) */
 async function sampleParts(parts, count) {
-  const weights = parts.map((p) => (p.scale ?? 1) ** 2);
+  const weights = parts.map((p) => p.weight ?? (p.scale ?? 1) ** 2);
   const total = weights.reduce((a, b) => a + b, 0);
   const counts = weights.map((w) => Math.floor((w / total) * count));
   counts[0] += count - counts.reduce((a, b) => a + b, 0);
@@ -288,7 +328,7 @@ async function sampleParts(parts, count) {
     const n = counts[k];
     if (!n) continue;
     const c = new Float32Array(n * 3);
-    const p = await sampleModel(part.asset, n, { colors: c });
+    const p = part.box ? sampleBox(part.box, n, c) : await sampleModel(part.asset, n, { colors: c });
     m.compose(
       new THREE.Vector3().fromArray(part.position ?? [0, 0, 0]),
       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), THREE.MathUtils.degToRad(part.rotation ?? 0)),
@@ -301,6 +341,13 @@ async function sampleParts(parts, count) {
     offset += n;
   }
   return { positions, colors };
+}
+
+/** 바닥 가운데가 원점인 상자 표면에서 점 n 개 */
+function sampleBox([w, h, d], n, colors) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d));
+  mesh.position.y = h / 2;
+  return sampleObject(mesh, n, { colors });
 }
 
 /** 에셋이 아직 없는 레이어의 박스 자리표시. id 마다 크기가 조금씩 달라 전환이 눈에 보인다 */
