@@ -17,7 +17,8 @@ export function starDirection({ azimuth = 40, elevation = 7 } = {}) {
 
 /**
  * 별을 이루는 점 무리를 positions/colors 의 start 번째 점부터 count 개 채운다.
- * 가운데는 크림색, 가장자리는 주황으로 번지고, 가운데로 갈수록 점이 촘촘하다.
+ * 표면 약 3,000K 의 붉은 주황빛 별이라 가운데도 주황 쪽 크림, 가장자리는 주황으로 번진다 (빨강은 쓰지 않는 색 규칙이라 주황까지).
+ * 가운데로 갈수록 점이 촘촘하다.
  * @param {Float32Array} positions
  * @param {Float32Array} colors
  * @param {number} start  채우기 시작할 점 번호 (배열 칸 번호가 아니다)
@@ -40,7 +41,8 @@ export function fillStar(positions, colors, start, count, starDef, rand) {
     const o = (start + i) * 3;
     for (let j = 0; j < 3; j++) {
       positions[o + j] = L[j] * dist + a[j] * u + b[j] * v;
-      colors[o + j] = (CREAM[j] + (AMBER[j] - CREAM[j]) * k * 0.8) * (1 - 0.35 * k);
+      const core = CREAM[j] + (AMBER[j] - CREAM[j]) * 0.6;
+      colors[o + j] = (core + (AMBER[j] - core) * k) * (1 - 0.35 * k);
     }
   }
 }

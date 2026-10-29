@@ -1,11 +1,10 @@
 import * as THREE from 'three';
 import { createCameraRig } from './engine/cameraRig.js';
 import { createComposer } from './engine/composer.js';
-import { createFlow } from './engine/flow.js';
 import { createLabels } from './engine/labels.js';
 import week1 from './data/choices/week1.json';
 
-// 데모 장면: 레이어 조합기(e05) + 파티클 흐름(e06) + HUD 라벨(e07) 확인용. 1주차 선지를 버튼으로 골라 장면을 조합한다.
+// 데모 장면: 레이어 조합기(e05) + HUD 라벨(e07) 확인용. 흐름(e06)은 JSON 레이어의 flows 로 그려진다. 1주차 선지를 버튼으로 골라 장면을 조합한다.
 const canvas = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -61,29 +60,23 @@ function render() {
   const show = (v, unit) => (v == null ? '미정' : `${v}${unit}`);
   statsBox.textContent = `온도 ${show(stats.temperature, '°C')} · 산소 ${show(stats.oxygen, '%')} · 에너지 ${show(stats.energy, '')}`;
 
-  // 라벨: 위치 무대에는 SITE 표시, 주거·산소 장치가 있으면 그 위에 두 번째 표시
+  // 라벨: 위치 무대에는 SITE 표시, 주거·산소 장치가 있으면 그 위에 두 번째 표시. 자리는 JSON 레이어의 labelAt
   const choiceOf = (stepId) => week1.steps.find((s) => s.id === stepId).choices.find((c) => c.id === selection[stepId]);
+  const { layers } = composer.resolve(selection);
+  const labelAt = (kind, id, fallback) => week1.layers[kind]?.[id]?.labelAt ?? fallback;
   siteTag.setText(`SITE ${selection.location} · ${choiceOf('location').label}`);
+  siteTag.setPosition(labelAt('location', layers.location, [-1.2, 0, 1.2]));
   moduleTag?.remove();
-  moduleTag = selection.module ? labels.add({ position: [0, 0.9, 0], text: choiceOf('module').label, variant: 'amber' }) : null;
+  moduleTag = selection.module
+    ? labels.add({ position: labelAt('module', layers.module, [0, 0.9, 0]), text: choiceOf('module').label, variant: 'amber' })
+    : null;
   oxygenTag?.remove();
   oxygenTag = selection.oxygen
-    ? labels.add({ position: [1.6, 0.4, 0.9], text: choiceOf('oxygen').label, variant: 'amber', offset: [-50, 40] })
+    ? labels.add({ position: labelAt('overlay', layers.overlays[0], [1.6, 0.4, 0.9]), text: choiceOf('oxygen').label, variant: 'amber', offset: [-50, 40] })
     : null;
 
   composer.apply(selection);
 }
-
-// 흐름 시험: 오버레이 자리에서 주거 쪽으로 산소가 흐르는 관. 버튼으로 중간을 끊는다
-const flow = createFlow({ path: [[1.6, 0.25, 0.9], [1.4, 1.1, 0.6], [0.6, 1.3, 0.2], [0, 0.6, 0]], count: 700 });
-scene.add(flow.points);
-labels.add({ position: [1.2, 1.25, 0.45], text: '산소 흐름', offset: [36, -30] });
-const breakButton = document.getElementById('break-flow');
-breakButton.addEventListener('click', () => {
-  flow.setBroken(flow.broken === null ? 0.5 : null);
-  breakButton.setAttribute('aria-pressed', String(flow.broken !== null));
-  breakButton.textContent = flow.broken === null ? '관 끊기' : '관 잇기';
-});
 
 rig.goTo(week1.steps[0].choices[0].cameraShot, { instant: true });
 render();
@@ -101,7 +94,6 @@ const start = performance.now();
 renderer.setAnimationLoop(() => {
   const seconds = (performance.now() - start) / 1000;
   composer.update(seconds);
-  flow.update(seconds);
   rig.update();
   labels.update();
   renderer.render(scene, camera);

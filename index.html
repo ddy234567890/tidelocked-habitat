@@ -19,16 +19,14 @@
       #demo-ui .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
       #demo-ui .row span { color: var(--muted); font: 13px system-ui, sans-serif; min-width: 3em; }
       #stats { position: fixed; top: 16px; left: 16px; color: var(--hi); font: 14px system-ui, sans-serif; background: var(--panel); border: 1px solid var(--line-dim); border-radius: 8px; padding: 8px 12px; }
-      #flow-ui { position: fixed; top: 16px; right: 16px; }
-      #demo-ui button, #flow-ui button { font: 14px system-ui, sans-serif; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
-      #demo-ui button:hover, #flow-ui button:hover { color: var(--hi); }
-      #demo-ui button[aria-pressed="true"], #flow-ui button[aria-pressed="true"] { background: var(--panel-picked); border-color: var(--cream); color: var(--cream); }
+      #demo-ui button { font: 14px system-ui, sans-serif; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+      #demo-ui button:hover { color: var(--hi); }
+      #demo-ui button[aria-pressed="true"] { background: var(--panel-picked); border-color: var(--cream); color: var(--cream); }
     </style>
   </head>
   <body>
     <canvas id="viewport"></canvas>
     <div id="stats"></div>
-    <div id="flow-ui"><button id="break-flow" aria-pressed="false">관 끊기</button></div>
     <div id="demo-ui"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
