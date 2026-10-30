@@ -1,0 +1,5 @@
+{
+  "plain": {"seed": 31415, "temperature": [15, 25], "star": {"azimuth": -72, "elevation": 9}, "relief": 2, "rocks": 1},
+  "lavaTube": {"seed": 27182, "temperature": [18, 22], "star": {"azimuth": -72, "elevation": 9}, "relief": 2, "rocks": 1},
+  "ridge": {"seed": 16180, "temperature": [-2, 20], "star": {"azimuth": -72, "elevation": 9}, "relief": 2, "rocks": 1}
+}
