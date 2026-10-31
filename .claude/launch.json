@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "terrain-v4",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "experiments/teegarden-terrain-v4", "run", "dev", "--", "--port", "5174", "--strictPort"],
+      "port": 5174,
+      "url": "http://127.0.0.1:5174"
     }
   ]
 }
