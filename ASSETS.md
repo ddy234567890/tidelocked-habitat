@@ -11,6 +11,7 @@
 ![돔·기지·캡슐·높은 건물](docs/model-previews/1-domes-bases-towers.png)
 ![물탱크·산소통·유리 통·기계](docs/model-previews/2-tanks-glass-machines.png)
 ![통로·배관·에너지](docs/model-previews/3-pipes-energy.png)
+![NVIDIA SimReady (CC-BY)](docs/model-previews/4-simready-ccby.png)
 
 ## 돔
 
@@ -96,3 +97,25 @@
 | solar-panel.glb | Solar Panel Ground | https://poly.pizza/m/LbGiYP5iJu | Quaternius | CC0 | 발전소 + 비탈 마을 |
 | solar-panel-stand.glb | Solar Panel | https://poly.pizza/m/ah89Y79JdT | Quaternius | CC0 | 발전소 + 비탈 마을 |
 | satellite-dish.glb | Satellite Dish | https://poly.pizza/m/IDRrztoAMB | Kenney | CC0 | 미정 |
+
+## NVIDIA SimReady (CC-BY 4.0)
+
+> ⚠️ 이 표의 모델은 CC0이 아니라 **CC-BY 4.0**이에요. 게임에 쓰면 크레딧에 꼭 이렇게 적어 주세요:
+> **"3D models: NVIDIA SimReady Assets (CC BY 4.0) — https://huggingface.co/datasets/nvidia/simready-assets"**
+
+- 원본은 `.usd` 형식이라 `scripts/usd-to-glb.py`로 `.glb`로 바꾼 뒤 `npm run normalize:models`로 정리했어요.
+- 바꾼 원본이 커서(최대 10MB) `raw/` 폴더에는 넣지 않았어요. 다시 만들려면 출처 URL에서 받아 변환하면 돼요.
+- 원래 물건(쓰레기통, 소화 실린더 등)과 다른 이름을 붙였어요. 모양이 주거지 부품처럼 보여서 골랐어요.
+
+| 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 어울리는 쓰임 | 쓰는 선지 |
+|---|---|---|---|---|---|---|
+| pod.glb | trashCan_domed_blue_b01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/trashCan_domed_blue_b01 | NVIDIA | CC-BY 4.0 | 세로형 캡슐 | 미정 |
+| silo-tank.glb | serviceTool_waste_oil_tank_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/serviceTool_waste_oil_tank_a01 | NVIDIA | CC-BY 4.0 | 작은 사일로 | 미정 |
+| cylinder-tank.glb | fireProtection_suppressionCylinder_fixed_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fireProtection_suppressionCylinder_fixed_a01 | NVIDIA | CC-BY 4.0 | 가로형 산소통 | 미정 |
+| cylinder-tank-b.glb | fireProtection_suppressionCylinder_fixed_b01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fireProtection_suppressionCylinder_fixed_b01 | NVIDIA | CC-BY 4.0 | 산소통 | 미정 |
+| pressure-pot.glb | equipment_paintPressurePot_tank_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_paintPressurePot_tank_a01 | NVIDIA | CC-BY 4.0 | 압력 탱크 | 미정 |
+| compressor-tank.glb | equipment_airCompressor_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_airCompressor_a01 | NVIDIA | CC-BY 4.0 | 다리 달린 가로형 탱크 | 미정 |
+| tank-box.glb | ibcTank_steel_stainless_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/ibcTank_steel_stainless_a01 | NVIDIA | CC-BY 4.0 | 사각 물탱크 | 미정 |
+| compressor.glb | airSystem_compressor_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/airSystem_compressor_a01 | NVIDIA | CC-BY 4.0 | 생명유지 기계 | 미정 |
+| duct-straight.glb | hvac_vent_system_straight_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_straight_a01 | NVIDIA | CC-BY 4.0 | 곧은 통로 | 미정 |
+| duct-corner.glb | hvac_vent_system_corner_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_corner_a01 | NVIDIA | CC-BY 4.0 | 꺾인 통로 | 미정 |
