@@ -127,6 +127,7 @@
 
 - 출처: Kenney **Space Kit** (CC0, 크레딧 의무 없음) — 받은 묶음 하나에서 골랐어요.
 - 원래 이름은 Kenney 묶음 안의 파일 이름이에요.
+- **크기는 자동으로 맞춰져요.** 정리 도구는 모든 모델의 가장 긴 변을 1로 바꿔서 원래 크기 차이가 사라지는데, 이 33개는 `src/data/modelSizes.json`에 원래 크기 비율이 적혀 있어서 조합기가 놓을 때 자동으로 곱해요. 선지 JSON에서 `scale: 1`이면 "원래 크기"예요 (막사는 크게, 산소 기계는 작게). 더 키우거나 줄이고 싶을 때만 scale을 바꾸면 돼요.
 - 와이어프레임에는 기존 모델 중 삼각형이 많은 것(SimReady 10개·inflatable은 3만~5만 개)은 선이 너무 빽빽해서 맞지 않아요. 기존 모델 중 가벼운 것(예: machine, solar-panel, satellite-dish, space-platform, lander-base, water-tank, gas-tank, dome 등 1,500개 이하)은 함께 써도 괜찮아요.
 
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 삼각형 | 어울리는 선지 |

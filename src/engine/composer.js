@@ -5,6 +5,7 @@ import { createMorph } from './morph.js';
 import { toneColors, CREAM, AMBER, blue } from './palette.js';
 import { createFlow } from './flow.js';
 import { buildStage } from '../scenes/locations/index.js';
+import modelSizes from '../data/modelSizes.json';
 
 /**
  * 레이어 조합기 (카드 e05)
@@ -38,6 +39,8 @@ import { buildStage } from '../scenes/locations/index.js';
  *                labelAt: [x,y,z] 이 레이어 이름표를 붙일 자리 (데모 화면이 쓴다)
  *                오버레이에 position 을 주면 그 자리에 그대로 놓는다 (주지 않으면 임시 자리에 줄지어 놓는다)
  *                pointSize 를 주면 그 레이어의 점 크기(uSize)를 바꾼다. 셰이더는 그대로고 값만 다르다
+ *                src/data/modelSizes.json 에 있는 모델(Kenney 묶음)은 실제 크기 비율을 scale 에 자동으로 곱한다.
+ *                그래서 scale: 1 이면 "원래 크기"이고, 막사와 산소 기계를 같은 scale 로 놓아도 크기 차이가 그대로 보인다
  *   steps[]      { id, label, choices[] }  선택 단계 (위치 → 주거 → 산소)
  *     choice     { id, label, location?, module?, overlays?, cameraShot?, stats, requires?, hidden? }
  *                requires: { 단계id: [선지id…] }  그 선지를 고른 경우에만 보인다
@@ -49,6 +52,10 @@ import { buildStage } from '../scenes/locations/index.js';
 
 // 레이어 종류마다 점 개수는 고정 (같은 종류끼리 모프하려면 같아야 한다)
 export const LAYER_POINTS = { location: 30000, module: 15000, overlay: 2500 };
+
+/** JSON 의 scale 에 모델의 실제 크기 비율을 곱한 값 (목록에 없는 모델은 그대로) */
+const sizeOf = (asset) => modelSizes.sizes[asset] ?? 1;
+const realScale = (def) => (def.scale ?? 1) * (def.asset ? sizeOf(def.asset) : 1);
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const starDir = new THREE.Vector3(1, 0.6, 0.3).normalize(); // 별은 고정
@@ -299,7 +306,7 @@ async function buildLayer(kind, id, def) {
     colors = litColors(positions);
   }
 
-  const scale = def.scale ?? 1;
+  const scale = def.parts?.length ? (def.scale ?? 1) : realScale(def);
   const [x, y, z] = def.position ?? [0, 0, 0];
   for (let i = 0; i < positions.length; i += 3) {
     positions[i] = positions[i] * scale + x;
@@ -313,7 +320,7 @@ async function buildLayer(kind, id, def) {
 
 /** 모델 여러 개를 각자 자리에 놓고 점 count 개를 나눠 뽑는다 (합은 정확히 count) */
 async function sampleParts(parts, count) {
-  const weights = parts.map((p) => p.weight ?? (p.scale ?? 1) ** 2);
+  const weights = parts.map((p) => p.weight ?? realScale(p) ** 2);
   const total = weights.reduce((a, b) => a + b, 0);
   const counts = weights.map((w) => Math.floor((w / total) * count));
   counts[0] += count - counts.reduce((a, b) => a + b, 0);
@@ -332,7 +339,7 @@ async function sampleParts(parts, count) {
     m.compose(
       new THREE.Vector3().fromArray(part.position ?? [0, 0, 0]),
       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), THREE.MathUtils.degToRad(part.rotation ?? 0)),
-      new THREE.Vector3().setScalar(part.scale ?? 1),
+      new THREE.Vector3().setScalar(part.box ? (part.scale ?? 1) : realScale(part)),
     );
     for (let i = 0; i < n; i++) {
       v.fromArray(p, i * 3).applyMatrix4(m).toArray(positions, (offset + i) * 3);
