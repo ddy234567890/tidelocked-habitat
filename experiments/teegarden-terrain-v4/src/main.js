@@ -1,9 +1,12 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import definitions from './sites.json';
+import definitions from './sites.json' with { type: 'json' };
 import { buildPlain } from './plain.js';
 import { buildLavaTube } from './lavaTube.js';
 import { buildRidge } from './ridge.js';
+import { buildSurroundings, joinPoints } from './surroundings.js';
+import { availableChoices, choose, resolve, siteLetter } from './choices.js';
+import { buildModule, buildOverlay } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
 import { orange } from './palette.js';
@@ -15,8 +18,8 @@ const POINT_SIZE = 0.075;
 const BUILDERS = { plain: buildPlain, lavaTube: buildLavaTube, ridge: buildRidge };
 const COPY = {
   plain: { letter: 'A', title: '현무암 평원', text: '낮게 겹친 용암엽과 오래된 충돌 흔적. 중앙의 평탄면을 거주 후보지로 남겼습니다.', tag: '주거 후보지', sub: '중앙 평탄면', position: [0, 0, 0] },
-  lavaTube: { letter: 'B', title: '용암동굴', text: '폭이 달라지는 공동과 용암 선반. 지표의 붕괴공 아래로 잔해가 쌓입니다.', tag: '용암 유동 통로', sub: '붕괴공 · 비대칭 벽 · 퇴적 바닥', position: [2, -2, -0.5] },
-  ridge: { letter: 'C', title: '황혼 능선', text: '마른 완사면을 넘어 굽은 침식 홈과 퇴적 부채, 얼음 골짜기와 낮은 지맥으로 이어집니다.', tag: '거주 가능한 정상 띠', sub: '높이 0 · 반폭 0.45', position: [0, 0, 0] }
+  lavaTube: { letter: 'B', title: '용암동굴', text: '아치 입구에서 내려가 큰 방과 좁은 목이 번갈아 이어지고, 옆 굴이 갈라집니다. 천장에서 떨어진 바위가 큰 방 바닥에 쌓여 있습니다.', tag: '용암 유동 통로', sub: '아치 입구 · 큰 방 · 옆 굴 · 바위 더미', position: [2, -2, -0.5] },
+  ridge: { letter: 'C', title: '황혼 능선', text: '굽이치는 마루에서 마른 완사면과 곁가지 능선이 갈라져 내려가고, 반대편은 침식 홈과 퇴적 부채, 얼음 골짜기와 낮은 지맥으로 이어집니다.', tag: '거주 가능한 정상 띠', sub: '높이 0 · 반폭 0.45', position: [0, 0, 0] }
 };
 const $ = selector => document.querySelector(selector);
 const host = $('#canvas-host'), stage = $('#stage');
@@ -81,6 +84,153 @@ try {
   scene.add(planet);
   const localGroup = new THREE.Group();
   localGroup.scale.setScalar(LOCAL_SCALE); localGroup.visible = false; scene.add(localGroup);
+  // 선지로 고른 주거 모듈·산소 장치. 지형과 같은 지역 좌표·같은 머티리얼을 쓴다
+  const assetGroup = new THREE.Group(); localGroup.add(assetGroup);
+  let selection = {}, decided = {}, moduleLayer = null, assetToken = 0, focusTween = null;
+  const overlayLayers = new Map(), reveals = [];
+  function dropLayer(layer) { if (!layer) return; assetGroup.remove(layer.points); layer.points.geometry.dispose(); }
+  function clearAssets() {
+    assetToken++; selection = {}; decided = {}; focusTween = null;
+    dropLayer(moduleLayer); moduleLayer = null;
+    overlayLayers.forEach(dropLayer); overlayLayers.clear(); reveals.length = 0;
+  }
+  function addLayer(data) {
+    const points = new THREE.Points(geometryFrom(data), material);
+    assetGroup.add(points); fadePoints(points, 0);
+    reveals.push({ points, start: performance.now() });
+    return points;
+  }
+  // 선택 상태에 맞춰 레이어를 맞춘다: 바뀐 것만 새로 만들고 점이 아래에서 위로 채워진다
+  async function syncAssets() {
+    const token = ++assetToken, site = currentSite, layers = resolve(selection);
+    const view = site === 'lavaTube' && caveInterior && !localSection ? 'interior' : 'section';
+    const moduleKey = layers.module && layers.module + ':' + view;
+    let added = false;
+    if (moduleLayer?.key !== moduleKey) {
+      dropLayer(moduleLayer); moduleLayer = null;
+      overlayLayers.forEach(dropLayer); overlayLayers.clear(); // 바깥벽 조류처럼 모듈을 따라가는 오버레이가 있다
+      if (layers.module) {
+        const data = await buildModule(site, layers.module, view);
+        if (token !== assetToken) return;
+        moduleLayer = { key: moduleKey, data, points: addLayer(data) }; added = true;
+      }
+    }
+    for (const [id, layer] of overlayLayers) if (!layers.overlays.includes(id)) { dropLayer(layer); overlayLayers.delete(id); }
+    for (const id of layers.overlays) {
+      if (overlayLayers.has(id)) continue;
+      const data = await buildOverlay(site, id, moduleLayer?.data.positions);
+      if (token !== assetToken) return;
+      if (data.positions.length) { overlayLayers.set(id, { points: addLayer(data) }); added = true; }
+      if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spot };
+    }
+    if (added) focusAssets();
+  }
+  // 단계별 선지: 1단계 지대(아래 A·B·C 카드) → 2단계 거주 방식 → 3단계 산소 생성 방식
+  function renderStep(stepId, element, visible) {
+    element.hidden = !visible;
+    const nav = element.querySelector('nav');
+    if (!visible) return nav.replaceChildren();
+    nav.replaceChildren(...availableChoices(stepId, selection).map(choice => {
+      const button = document.createElement('button');
+      button.className = 'site choice'; button.dataset.step = stepId; button.dataset.choice = choice.id;
+      const active = selection[stepId] === choice.id;
+      button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
+      const letter = document.createElement('b'); letter.textContent = choice.id.replace('O_', '');
+      if (stepId === 'oxygen') letter.textContent = String(availableChoices(stepId, selection).indexOf(choice) + 1);
+      const label = document.createElement('span'), small = document.createElement('small');
+      small.textContent = stepId === 'module' ? 'HOUSING' : 'OXYGEN'; label.append(small, choice.label);
+      const arrow = document.createElement('i'); arrow.textContent = '↗';
+      button.append(letter, label, arrow);
+      button.addEventListener('click', () => {
+        if (transition || selection[stepId] === choice.id) return;
+        selection = choose(selection, stepId, choice.id); renderSteps(true); syncAssets();
+      });
+      return button;
+    }));
+  }
+  // 결정 버튼: 결정한 단계의 카드 줄은 접고 다음 단계를 연다. 화면이 복잡해지지 않게 결정한 항목은 한 줄 요약으로만 남긴다
+  function decideButton(stepId) {
+    const button = document.createElement('button');
+    button.className = 'decide'; button.disabled = !selection[stepId];
+    button.textContent = { location: '지대', module: '거주 방식', oxygen: '산소 생성 방식' }[stepId] + ' 결정';
+    button.addEventListener('click', () => {
+      if (transition || !selection[stepId]) return;
+      decided[stepId] = true; renderSteps(true);
+      if (stepId === 'oxygen') focusAssets(); // 최종 결정: 주거와 산소 장치를 함께 담는다
+    });
+    return button;
+  }
+  const choiceLabel = stepId => availableChoices(stepId, selection).find(c => c.id === selection[stepId])?.label;
+  // 1단계 지대 카드는 누르면 그 지역으로 날아가 둘러볼 수 있고, '지대 결정'을 눌러야 다음 단계가 열린다
+  function renderSteps(local) {
+    if (local) selection.location = siteLetter(currentSite);
+    const sites = $('nav.sites');
+    sites.querySelector('.decide')?.remove();
+    if (local && !decided.location) sites.append(decideButton('location'));
+    sites.hidden = $('#step-location-title').hidden = Boolean(local && decided.location);
+    renderStep('module', $('#step-module'), local && decided.location && !decided.module);
+    renderStep('oxygen', $('#step-oxygen'), local && decided.module && !decided.oxygen);
+    for (const stepId of ['module', 'oxygen']) {
+      const nav = $('#step-' + stepId + ' nav');
+      if (nav.childElementCount) nav.append(decideButton(stepId));
+    }
+    const summary = $('#decided');
+    summary.hidden = !(local && decided.location);
+    if (!summary.hidden) summary.textContent = '결정 · ' + COPY[currentSite].title
+      + (decided.module ? ' / ' + choiceLabel('module') : '') + (decided.oxygen ? ' / ' + choiceLabel('oxygen') : '');
+  }
+  // 거주 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.
+  // 산소 선지를 누르면 그 장치로, 산소 생성 방식을 결정하면 주거와 산소 장치를 함께 담도록 다시 맞춘다.
+  // FOCUS 는 모듈 점을 아직 못 만든 경우의 지대별 자리다 (지역 단위)
+  const FOCUS = { plain: [[0, 0.6, 0], 4.2], lavaTube: [[3.6, -3.4, -1.1], 6.5], ridge: [[-1.6, -0.6, 0], 5.5] };
+  const FOCUS_ELEVATION = 28 * Math.PI / 180;
+  const FOCUS_ZOOM = { plain: 1, lavaTube: 0.6, ridge: 1 }; // 동굴 속은 더 가까이 (벽에 가리지 않게 거리만 줄인다)
+  const ORBIT_SPEED = 0.25; // OrbitControls 기준. 2.0 이면 30초에 한 바퀴, 0.25 면 약 4분
+  function focusAssets() {
+    if (mode !== 'local' || transition) return;
+    if (currentSite === 'lavaTube' && (caveInterior || localSection)) {
+      // 동굴 안에서는 돌 수 없으므로 전체 보기로 나와서 다가간다
+      caveInterior = false; localSection = false;
+      $('#cave-view').textContent = '동굴 내부로'; $('#section').textContent = '단면 보기';
+      buildLocal(currentSite); fadePoints(localPoints, 1); setPose(localPose());
+      if (moduleLayer) return syncAssets(); // 봉쇄막은 보기마다 모양이 달라 다시 만든 뒤 그 범위로 다가간다
+    }
+    // 비출 레이어: 산소를 결정했으면 주거 + 산소, 산소 선지를 골랐으면 그 장치, 아니면 주거 모듈
+    const overlays = [...overlayLayers.values()];
+    const shown = decided.oxygen ? [moduleLayer, ...overlays] : selection.oxygen && overlays.length ? overlays : [moduleLayer];
+    const [anchor, size] = FOCUS[currentSite], center = new THREE.Vector3(...anchor);
+    let radius = size;
+    const box = new THREE.Box3();
+    for (const layer of shown) if (layer) box.union(new THREE.Box3().setFromBufferAttribute(layer.points.geometry.getAttribute('position')));
+    if (!box.isEmpty()) {
+      box.getCenter(center);
+      radius = Math.max(shown === overlays ? 2.2 : 3, box.getSize(new THREE.Vector3()).length() * 0.75);
+    }
+    const target = localGroup.localToWorld(center);
+    // 지금 보는 방위는 두고, 높이는 FOCUS_ELEVATION 만큼만 올려 비스듬히 내려다본다 (위에서 곧장 보면 모델이 납작해 보인다)
+    const up = sites[currentSite].normal, flat = camera.position.clone().sub(controls.target);
+    if (shown === overlays && moduleLayer) {
+      // 산소 장치를 볼 때는 가까운 주거 모듈 점들의 반대편에서 본다: 모듈이 장치 뒤에 있어 가리지 않는다 (지역 좌표로 잰다)
+      const device = localGroup.worldToLocal(target.clone()), p = moduleLayer.points.geometry.getAttribute('position').array;
+      const near = new THREE.Vector3();
+      let count = 0;
+      for (let i = 0; i < p.length; i += 3) {
+        if (Math.hypot(p[i] - device.x, p[i + 2] - device.z) > 4) continue;
+        near.x += p[i]; near.z += p[i + 2]; count++;
+      }
+      if (count) {
+        const away = new THREE.Vector3(device.x - near.x / count, 0, device.z - near.z / count);
+        // 동굴은 절개면 쪽(+z)에서만 안이 보인다
+        if (currentSite === 'lavaTube') away.z = Math.max(away.z, Math.hypot(away.x, away.z) * 0.8);
+        if (away.lengthSq() > 1e-6) flat.copy(localGroup.localToWorld(device.clone().add(away)).sub(target));
+      }
+    }
+    flat.addScaledVector(up, -flat.dot(up)).normalize();
+    const direction = flat.multiplyScalar(Math.cos(FOCUS_ELEVATION)).addScaledVector(up, Math.sin(FOCUS_ELEVATION));
+    const position = target.clone().addScaledVector(direction, radius * 2.3 * FOCUS_ZOOM[currentSite] * LOCAL_SCALE);
+    focusTween = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
+    controls.autoRotate = false;
+  }
 
   // A와 B는 사용자 표시 위치, C는 기존 위치다. 실제 경위도 자료는 아니다.
   const sun = new THREE.Vector3(PLANET_SUN.x, PLANET_SUN.y, PLANET_SUN.z).normalize();
@@ -163,13 +313,14 @@ try {
       $('#interaction').textContent = '행성 위 A · B · C를 선택해 접근하세요';
       $('#build-time').textContent = 'TEEGARDEN b / ORBITAL VIEW';
     }
-    document.querySelectorAll('.site').forEach(button => {
+    document.querySelectorAll('.site[data-site]').forEach(button => {
       const active = local && button.dataset.site === currentSite;
       button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
     });
+    renderSteps(local && !transition);
   }
   function blockButtons(blocked) {
-    document.querySelectorAll('[data-site], #back, #section, #cave-view').forEach(button => button.disabled = blocked);
+    document.querySelectorAll('[data-site], #back, #section, #cave-view, .choice, .decide').forEach(button => button.disabled = blocked);
   }
   function beginFlight(destination, returning = false, extras = {}) {
     controls.enabled = false;
@@ -190,14 +341,19 @@ try {
     const inside = name === 'lavaTube' && caveInterior && !localSection;
     const key = name + (inside ? ':interior' : '');
     let data = cache.get(key), cached = Boolean(data);
-    if (!data) { data = BUILDERS[name](POINT_COUNT, { ...definitions[name], view: inside ? 'interior' : 'section' }); cache.set(key, data); }
-    const elapsed = performance.now() - start;
+    if (!data) {
+      data = BUILDERS[name](POINT_COUNT, { ...definitions[name], view: inside ? 'interior' : 'section' });
+      // 동굴 내부에서는 주변 지형이 보이지 않으므로 붙이지 않는다. 동굴 절개면 앞쪽은 비운다.
+      if (!inside) data = joinPoints(data, buildSurroundings(name, definitions[name], name === 'lavaTube'));
+      cache.set(key, data);
+    }
+    const total = data.positions.length / 3, elapsed = performance.now() - start;
     if (localPoints) { localGroup.remove(localPoints); localPoints.geometry.dispose(); }
     localPoints = new THREE.Points(geometryFrom(data), material); localGroup.add(localPoints);
     const site = sites[name]; localGroup.position.copy(site.position); localGroup.quaternion.copy(site.rotation);
     localGroup.visible = true; fadePoints(localPoints, 0);
-    $('#build-time').textContent = cached ? '30,000 POINTS / CACHED' : '30,000 POINTS / ' + elapsed.toFixed(1) + ' ms';
-    window.terrainDiagnostics = { site: name, count: POINT_COUNT, buildMs: elapsed, relief: definitions[name].relief, materialCount: 1, cached };
+    $('#build-time').textContent = total.toLocaleString('en-US') + ' POINTS / ' + (cached ? 'CACHED' : elapsed.toFixed(1) + ' ms');
+    window.terrainDiagnostics = { site: name, count: total, buildMs: elapsed, relief: definitions[name].relief, materialCount: 1, cached };
   }
   function selectSite(name) {
     if (transition) return;
@@ -205,10 +361,12 @@ try {
       if (currentSite === name) return;
       return switchLocalSite(name);
     }
+    clearAssets();
     currentSite = name; localSection = false; caveInterior = name === 'lavaTube'; $('#section').textContent = '단면 보기';
     buildLocal(name); beginFlight(localPose());
   }
   function switchLocalSite(name) {
+    clearAssets(); renderSteps(false);
     const startTarget = controls.target.clone();
     const outgoing = new THREE.Group();
     outgoing.position.copy(localGroup.position); outgoing.quaternion.copy(localGroup.quaternion); outgoing.scale.copy(localGroup.scale);
@@ -224,6 +382,7 @@ try {
   }
   function returnToPlanet() {
     if (transition || mode === 'planet') return;
+    clearAssets(); renderSteps(false);
     fadePoints(planet, 0);
     beginFlight(overviewPose(), true);
   }
@@ -233,7 +392,7 @@ try {
   $('#section').addEventListener('click', () => {
     if (transition) return;
     localSection = !localSection;
-    if (currentSite === 'lavaTube') { buildLocal(currentSite); fadePoints(localPoints, 1); }
+    if (currentSite === 'lavaTube') { buildLocal(currentSite); fadePoints(localPoints, 1); syncAssets(); }
     setPose(localPose(localSection));
     $('#section').textContent = localSection ? '투시 보기' : '단면 보기';
   });
@@ -242,7 +401,7 @@ try {
     caveInterior = !caveInterior; localSection = false;
     $('#section').textContent = '단면 보기';
     $('#cave-view').textContent = caveInterior ? '동굴 전체 보기' : '동굴 내부로';
-    buildLocal(currentSite); fadePoints(localPoints, 1);
+    buildLocal(currentSite); fadePoints(localPoints, 1); syncAssets();
     setPose(localPose());
   });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') returnToPlanet(); });
@@ -325,7 +484,21 @@ try {
         transition = null; blockButtons(false); uiMode(mode === 'local'); $('#travel-status').hidden = true;
       }
     } else {
+      if (focusTween) {
+        const t = clamp((time - focusTween.start) / 1400), e = t * t * (3 - 2 * t);
+        camera.position.lerpVectors(focusTween.fromPosition, focusTween.position, e);
+        controls.target.lerpVectors(focusTween.fromTarget, focusTween.target, e);
+        if (t >= 1) { focusTween = null; controls.autoRotate = !reducedMotion; controls.autoRotateSpeed = ORBIT_SPEED; }
+      }
       controls.update(); stage.dataset.phase = 'idle';
+      if (reveals.length) {
+        prepareProjection();
+        for (let i = reveals.length - 1; i >= 0; i--) {
+          const progress = clamp((time - reveals[i].start) / 900);
+          assemblePoints(reveals[i].points, progress, 'in');
+          if (progress >= 1) reveals.splice(i, 1);
+        }
+      }
     }
     backgroundStars(backgroundAmount);
     stage.dataset.mode = transition ? transition.kind === 'site' ? 'travelling' : 'flying' : mode;
