@@ -17,10 +17,10 @@
 
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 선지 |
 |---|---|---|---|---|---|
-| dome.glb | Geodesic Dome | https://poly.pizza/m/T7Ge6maWq4 | Quaternius | CC0 | 팽창식 모듈 |
+| dome.glb | Geodesic Dome | https://poly.pizza/m/T7Ge6maWq4 | Quaternius | CC0 | 미정 |
 | base-large.glb | Base Large | https://poly.pizza/m/UyH95ZAeJ2 | Quaternius | CC0 | 미정 |
-| cloche.glb | Cloche | https://poly.pizza/m/Qz9XMYysBQ | MilkAndBanana | CC0 | 팽창식 모듈 |
-| house-cylinder.glb | House Cylinder | https://poly.pizza/m/VQF43DYGQO | Quaternius | CC0 | 흙 3D 프린팅 집, 동굴 속 모듈, 발전소 + 비탈 마을 |
+| cloche.glb | Cloche | https://poly.pizza/m/Qz9XMYysBQ | MilkAndBanana | CC0 | 미정 |
+| house-cylinder.glb | House Cylinder | https://poly.pizza/m/VQF43DYGQO | Quaternius | CC0 | 흙 3D 프린팅 집, 발전소 + 비탈 마을 |
 
 ## 착륙선·기지
 
@@ -52,8 +52,8 @@
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 선지 |
 |---|---|---|---|---|---|
 | water-tank.glb | Water Tank | https://poly.pizza/m/XVB8vUbnZb | Quaternius | CC0 | 물 전기분해 |
-| water-tank-floor.glb | Water Tank Floor | https://poly.pizza/m/xgsh3kWbAM | Quaternius | CC0 | 얼음 옆 기지, 얼음 녹여 전기분해 |
-| water-tower-b.glb | Watertower | https://poly.pizza/m/WGSUkExDJ4 | Kay Lousberg | CC0 | 중앙 생산 후 관 공급 |
+| water-tank-floor.glb | Water Tank Floor | https://poly.pizza/m/xgsh3kWbAM | Quaternius | CC0 | 얼음 옆 기지 |
+| water-tower-b.glb | Watertower | https://poly.pizza/m/WGSUkExDJ4 | Kay Lousberg | CC0 | 미정 |
 | barrel.glb | Barrel | https://poly.pizza/m/ONdghDBByN | Quaternius | CC0 | 미정 |
 | barrel-b.glb | Barrel | https://poly.pizza/m/orjMeJQfFD | Kenney | CC0 | 미정 |
 | water-bottle.glb | Water Bottle | https://poly.pizza/m/KpxDpidn1Z | Quaternius | CC0 | 미정 |
@@ -63,7 +63,7 @@
 
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 선지 |
 |---|---|---|---|---|---|
-| gas-tank.glb | Gas Tank | https://poly.pizza/m/RoCvKBGkoC | Quaternius | CC0 | 산소 탱크 비축 |
+| gas-tank.glb | Gas Tank | https://poly.pizza/m/RoCvKBGkoC | Quaternius | CC0 | 미정 |
 | propane-tank.glb | Propane Tank | https://poly.pizza/m/3revwBHxDC | Quaternius | CC0 | 미정 |
 | pickup-tank.glb | Pickup Tank | https://poly.pizza/m/c6E9QTukqK | Quaternius | CC0 | 산소 캔들 |
 
@@ -79,23 +79,23 @@
 
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 선지 |
 |---|---|---|---|---|---|
-| machine.glb | Washing Machine | https://poly.pizza/m/UFxsKNSl8W | Quaternius | CC0 | 집마다 작은 장치 |
+| machine.glb | Washing Machine | https://poly.pizza/m/UFxsKNSl8W | Quaternius | CC0 | 미정 |
 | machine-b.glb | Can Fridge | https://poly.pizza/m/8OHbykvREu | Quaternius | CC0 | 미정 |
-| vent.glb | Vent | https://poly.pizza/m/UDFcnJ0U73 | Quaternius | CC0 | 바깥 공기 농축 |
+| vent.glb | Vent | https://poly.pizza/m/UDFcnJ0U73 | Quaternius | CC0 | 미정 |
 
 ## 통로·배관
 
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 선지 |
 |---|---|---|---|---|---|
-| tube-connector.glb | Connector | https://poly.pizza/m/0OKxctiaBw | Quaternius | CC0 | 팽창식 모듈 |
+| tube-connector.glb | Connector | https://poly.pizza/m/0OKxctiaBw | Quaternius | CC0 | 미정 |
 | pipes.glb | Pipes | https://poly.pizza/m/GB6AFkoiZb | Quaternius | CC0 | 미정 |
 
 ## 에너지·통신
 
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 선지 |
 |---|---|---|---|---|---|
-| solar-panel.glb | Solar Panel Ground | https://poly.pizza/m/LbGiYP5iJu | Quaternius | CC0 | 발전소 + 비탈 마을 |
-| solar-panel-stand.glb | Solar Panel | https://poly.pizza/m/ah89Y79JdT | Quaternius | CC0 | 발전소 + 비탈 마을 |
+| solar-panel.glb | Solar Panel Ground | https://poly.pizza/m/LbGiYP5iJu | Quaternius | CC0 | 미정 |
+| solar-panel-stand.glb | Solar Panel | https://poly.pizza/m/ah89Y79JdT | Quaternius | CC0 | 미정 |
 | satellite-dish.glb | Satellite Dish | https://poly.pizza/m/IDRrztoAMB | Kenney | CC0 | 미정 |
 
 ## NVIDIA SimReady (CC-BY 4.0)
@@ -109,13 +109,13 @@
 
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 어울리는 쓰임 | 쓰는 선지 |
 |---|---|---|---|---|---|---|
-| pod.glb | trashCan_domed_blue_b01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/trashCan_domed_blue_b01 | NVIDIA | CC-BY 4.0 | 세로형 캡슐 | 미정 |
-| silo-tank.glb | serviceTool_waste_oil_tank_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/serviceTool_waste_oil_tank_a01 | NVIDIA | CC-BY 4.0 | 작은 사일로 | 미정 |
+| pod.glb | trashCan_domed_blue_b01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/trashCan_domed_blue_b01 | NVIDIA | CC-BY 4.0 | 세로형 캡슐 | 동굴 속 모듈 |
+| silo-tank.glb | serviceTool_waste_oil_tank_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/serviceTool_waste_oil_tank_a01 | NVIDIA | CC-BY 4.0 | 작은 사일로 | 중앙 생산 후 관 공급 |
 | cylinder-tank.glb | fireProtection_suppressionCylinder_fixed_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fireProtection_suppressionCylinder_fixed_a01 | NVIDIA | CC-BY 4.0 | 가로형 산소통 | 미정 |
-| cylinder-tank-b.glb | fireProtection_suppressionCylinder_fixed_b01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fireProtection_suppressionCylinder_fixed_b01 | NVIDIA | CC-BY 4.0 | 산소통 | 미정 |
-| pressure-pot.glb | equipment_paintPressurePot_tank_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_paintPressurePot_tank_a01 | NVIDIA | CC-BY 4.0 | 압력 탱크 | 미정 |
-| compressor-tank.glb | equipment_airCompressor_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_airCompressor_a01 | NVIDIA | CC-BY 4.0 | 다리 달린 가로형 탱크 | 미정 |
-| tank-box.glb | ibcTank_steel_stainless_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/ibcTank_steel_stainless_a01 | NVIDIA | CC-BY 4.0 | 사각 물탱크 | 미정 |
-| compressor.glb | airSystem_compressor_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/airSystem_compressor_a01 | NVIDIA | CC-BY 4.0 | 생명유지 기계 | 미정 |
-| duct-straight.glb | hvac_vent_system_straight_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_straight_a01 | NVIDIA | CC-BY 4.0 | 곧은 통로 | 미정 |
-| duct-corner.glb | hvac_vent_system_corner_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_corner_a01 | NVIDIA | CC-BY 4.0 | 꺾인 통로 | 미정 |
+| cylinder-tank-b.glb | fireProtection_suppressionCylinder_fixed_b01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/fireProtection_suppressionCylinder_fixed_b01 | NVIDIA | CC-BY 4.0 | 산소통 | 산소 탱크 비축 |
+| pressure-pot.glb | equipment_paintPressurePot_tank_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_paintPressurePot_tank_a01 | NVIDIA | CC-BY 4.0 | 압력 탱크 | 물 전기분해, 얼음 녹여 전기분해 |
+| compressor-tank.glb | equipment_airCompressor_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/equipment_airCompressor_a01 | NVIDIA | CC-BY 4.0 | 다리 달린 가로형 탱크 | 바깥 공기 농축 |
+| tank-box.glb | ibcTank_steel_stainless_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/ibcTank_steel_stainless_a01 | NVIDIA | CC-BY 4.0 | 사각 물탱크 | 집마다 작은 장치 |
+| compressor.glb | airSystem_compressor_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/airSystem_compressor_a01 | NVIDIA | CC-BY 4.0 | 생명유지 기계 | 바깥 공기 농축 |
+| duct-straight.glb | hvac_vent_system_straight_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_straight_a01 | NVIDIA | CC-BY 4.0 | 곧은 통로 | 바깥 공기 농축, 중앙 생산 후 관 공급 |
+| duct-corner.glb | hvac_vent_system_corner_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_corner_a01 | NVIDIA | CC-BY 4.0 | 꺾인 통로 | 중앙 생산 후 관 공급 |

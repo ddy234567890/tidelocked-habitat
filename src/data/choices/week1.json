@@ -14,22 +14,22 @@
     "module": {
       "inflatable": {"label": "팽창식 모듈", "asset": "/models/inflatable.glb", "position": [0.1, 0, 0], "scale": 3.4, "motion": "inflate"},
       "earth_print": {"label": "흙 3D 프린팅 집", "parts": [{"asset": "/models/house-cylinder.glb", "position": [0, 0, 0], "scale": 1.1}, {"asset": "/models/house-cylinder.glb", "position": [1.25, 0, 0.3], "scale": 0.7, "rotation": 40}]},
-      "cave_modules": {"label": "동굴 속 모듈", "position": [0, -1.45, -0.2], "parts": [{"asset": "/models/house-long.glb", "position": [0.5, 0, 0], "scale": 0.6}, {"asset": "/models/lander-base.glb", "position": [1.6, 0, 0], "scale": 0.5}, {"asset": "/models/house-cylinder.glb", "position": [2.4, 0, 0], "scale": 0.4}]},
+      "cave_modules": {"label": "동굴 속 모듈", "labelAt": [0.35, -0.85, -0.3], "position": [0, -1.3, -0.3], "parts": [{"asset": "/models/pod.glb", "position": [-0.35, 0, 0], "scale": 0.55}, {"asset": "/models/house-long.glb", "position": [0.35, 0, 0], "scale": 0.5}, {"asset": "/models/pod.glb", "position": [2.2, 0, 0], "scale": 0.5}, {"asset": "/models/lander-base.glb", "position": [2.75, 0, 0], "scale": 0.4}]},
       "cave_sealed": {"label": "동굴 통째 밀폐", "asset": null, "position": [-1.9, -0.45, -0.2], "scale": 0.5},
       "tower": {"label": "탑형 집", "labelAt": [0.46, 1.45, 0.39], "parts": [{"asset": "/models/silo-house.glb", "position": [0.46, 0, 0.39], "scale": 1.4}, {"asset": "/models/silo.glb", "position": [1.22, 0, 0.96], "scale": 0.8}]},
       "solar_village": {"label": "발전소 + 비탈 마을", "labelAt": [1.4, -0.1, -0.58], "parts": [{"box": [0.05, 0.32, 0.05], "position": [0, 0, 0], "rotation": 140, "weight": 0.15}, {"box": [0.8, 0.5, 0.03], "position": [0, 0.3, 0], "rotation": 140, "weight": 0.9}, {"box": [0.05, 0.32, 0.05], "position": [0.54, 0, 0.45], "rotation": 140, "weight": 0.15}, {"box": [0.8, 0.5, 0.03], "position": [0.54, 0.3, 0.45], "rotation": 140, "weight": 0.9}, {"box": [0.05, 0.32, 0.05], "position": [1.07, 0, 0.9], "rotation": 140, "weight": 0.15}, {"box": [0.8, 0.5, 0.03], "position": [1.07, 0.3, 0.9], "rotation": 140, "weight": 0.9}, {"asset": "/models/house-cylinder.glb", "position": [1.4, -0.59, -0.58], "scale": 0.45}, {"asset": "/models/house-long.glb", "position": [2.41, -0.94, -0.85], "scale": 0.45, "rotation": 50}, {"asset": "/models/house-cylinder.glb", "position": [2.38, -1.26, -2.05], "scale": 0.4}, {"asset": "/models/house-cylinder.glb", "position": [1.33, -0.98, -1.89], "scale": 0.35}]},
       "ice_base": {"label": "얼음 옆 기지", "labelAt": [-1.59, -1.6, 1.27], "parts": [{"asset": "/models/cargo-depot.glb", "position": [-1.59, -2.05, 1.27], "scale": 0.6, "rotation": 50}, {"asset": "/models/water-tank-floor.glb", "position": [-0.99, -2.05, 1.72], "scale": 0.35}, {"box": [0.05, 0.32, 0.05], "position": [-0.31, 0, -0.26], "rotation": 140, "weight": 0.15}, {"box": [0.8, 0.5, 0.03], "position": [-0.31, 0.3, -0.26], "rotation": 140, "weight": 0.9}], "flows": [{"path": [[-1.59, -1.99, 1.27], [-1.43, -1.99, 1.08], [-1.21, -1.69, 0.82], [-0.95, -0.78, 0.51], [-0.69, -0.02, 0.2], [-0.5, 0.06, -0.03], [-0.31, 0.06, -0.26]], "color": "blue", "speed": 0.35, "count": 420}]}
     },
     "overlay": {
-      "concentrator": {"label": "바깥 공기 농축", "asset": "/models/vent.glb", "scale": 0.5},
-      "electrolysis": {"label": "물 전기분해", "asset": "/models/water-tank.glb", "scale": 0.6},
-      "ice_electrolysis": {"label": "얼음 녹여 전기분해", "asset": "/models/water-tank-floor.glb", "position": [-0.74, -2.05, 2.44], "scale": 0.45, "labelAt": [-1.08, -1.95, 1.9], "flows": [{"path": [[-1.04, -2, 1.94], [-0.83, -1.93, 2.31], [-0.39, -1.97, 2.02], [-0.07, -1.49, 1.64], [0.22, -0.44, 1.29], [0.44, 0.05, 1.03], [0.67, 0.08, 0.76]], "color": "cream", "speed": 0.5, "count": 700}]},
+      "concentrator": {"label": "바깥 공기 농축", "parts": [{"asset": "/models/compressor.glb", "position": [0, 0, 0], "scale": 0.45}, {"asset": "/models/compressor-tank.glb", "position": [0.45, 0, 0.15], "scale": 0.45}, {"asset": "/models/duct-straight.glb", "position": [-0.38, 0, 0], "scale": 0.3}]},
+      "electrolysis": {"label": "물 전기분해", "parts": [{"asset": "/models/water-tank.glb", "position": [0, 0, 0], "scale": 0.5}, {"asset": "/models/pressure-pot.glb", "position": [0.42, 0, 0.05], "scale": 0.35}]},
+      "ice_electrolysis": {"label": "얼음 녹여 전기분해", "asset": "/models/pressure-pot.glb", "position": [-0.74, -2.05, 2.44], "scale": 0.4, "labelAt": [-1.08, -1.95, 1.9], "flows": [{"path": [[-1.04, -2, 1.94], [-0.83, -1.93, 2.31], [-0.39, -1.97, 2.02], [-0.07, -1.49, 1.64], [0.22, -0.44, 1.29], [0.44, 0.05, 1.03], [0.67, 0.08, 0.76]], "color": "cream", "speed": 0.5, "count": 700}]},
       "algae": {"label": "조류 기르기", "asset": "/models/glass-box.glb", "scale": 0.55},
       "wall_algae": {"label": "바깥벽 조류", "asset": null},
       "candle": {"label": "산소 캔들", "asset": "/models/pickup-tank.glb", "scale": 0.3},
-      "tank": {"label": "산소 탱크 비축", "asset": "/models/gas-tank.glb", "scale": 0.45},
-      "central_pipe": {"label": "중앙 생산 후 관 공급", "asset": "/models/water-tower-b.glb", "scale": 0.6},
-      "per_house": {"label": "집마다 작은 장치", "asset": "/models/machine.glb", "scale": 0.3}
+      "tank": {"label": "산소 탱크 비축", "asset": "/models/cylinder-tank-b.glb", "scale": 0.5},
+      "central_pipe": {"label": "중앙 생산 후 관 공급", "parts": [{"asset": "/models/silo-tank.glb", "position": [0, 0, 0], "scale": 0.55}, {"asset": "/models/duct-corner.glb", "position": [0.42, 0, 0], "scale": 0.3}, {"asset": "/models/duct-straight.glb", "position": [0.75, 0, 0.1], "scale": 0.3, "rotation": 90}]},
+      "per_house": {"label": "집마다 작은 장치", "asset": "/models/tank-box.glb", "scale": 0.3}
     }
   },
   "steps": [
@@ -59,15 +59,15 @@
       "id": "oxygen",
       "label": "산소",
       "choices": [
-        { "id": "O_concentrator", "label": "바깥 공기 농축", "overlays": ["concentrator"], "stats": {} },
-        { "id": "O_electrolysis", "label": "물 전기분해", "overlays": ["electrolysis"], "stats": {} },
-        { "id": "O_ice", "label": "얼음 녹여 전기분해", "requires": { "location": ["C"] }, "overlays": ["ice_electrolysis"], "stats": {} },
-        { "id": "O_algae", "label": "조류 기르기", "overlays": ["algae"], "stats": {} },
-        { "id": "O_wall_algae", "label": "바깥벽 조류", "overlays": ["wall_algae"], "stats": {} },
-        { "id": "O_candle", "label": "산소 캔들", "overlays": ["candle"], "stats": {} },
-        { "id": "O_tank", "label": "산소 탱크 비축", "overlays": ["tank"], "stats": {} },
-        { "id": "O_central", "label": "중앙 생산 후 관 공급", "requires": { "module": ["C2"] }, "overlays": ["central_pipe"], "stats": {} },
-        { "id": "O_per_house", "label": "집마다 작은 장치", "requires": { "module": ["C2"] }, "overlays": ["per_house"], "stats": {} }
+        {"id": "O_concentrator", "label": "바깥 공기 농축", "requires": {"module": ["A1", "A2", "B1"]}, "overlays": ["concentrator"], "stats": {}},
+        {"id": "O_electrolysis", "label": "물 전기분해", "requires": {"module": ["A2", "B1", "B2", "C1"]}, "overlays": ["electrolysis"], "stats": {}},
+        {"id": "O_ice", "label": "얼음 녹여 전기분해", "requires": {"module": ["C3"]}, "overlays": ["ice_electrolysis"], "stats": {}},
+        {"id": "O_algae", "label": "조류 기르기", "requires": {"module": ["A1", "B2"]}, "overlays": ["algae"], "stats": {}},
+        {"id": "O_wall_algae", "label": "바깥벽 조류", "requires": {"module": ["C1"]}, "overlays": ["wall_algae"], "stats": {}},
+        {"id": "O_candle", "label": "산소 캔들", "requires": {"module": ["A1"]}, "overlays": ["candle"], "stats": {}},
+        {"id": "O_tank", "label": "산소 탱크 비축", "requires": {"module": ["C3"]}, "overlays": ["tank"], "stats": {}},
+        {"id": "O_central", "label": "중앙 생산 후 관 공급", "requires": {"module": ["C2"]}, "overlays": ["central_pipe"], "stats": {}},
+        {"id": "O_per_house", "label": "집마다 작은 장치", "requires": {"module": ["C2"]}, "overlays": ["per_house"], "stats": {}}
       ]
     }
   ]
