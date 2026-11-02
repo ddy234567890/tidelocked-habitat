@@ -80,21 +80,21 @@ export function sunlight(x, y, z, surface, star) {
 }
 
 // 30,000개의 점마다 그림자를 추적하지 않고 작은 격자에서 한 번만 계산한다.
-export function surfaceGrid(surface, star) {
-  const data = new Float32Array((GRID + 1) ** 2);
+export function surfaceGrid(surface, star, extent = EXTENT, size = GRID) {
+  const data = new Float32Array((size + 1) ** 2);
   const lighting = new Float32Array(data.length);
-  for (let z = 0; z <= GRID; z++) for (let x = 0; x <= GRID; x++)
-    data[z * (GRID + 1) + x] = surface((x / GRID * 2 - 1) * EXTENT.x, (z / GRID * 2 - 1) * EXTENT.z);
+  for (let z = 0; z <= size; z++) for (let x = 0; x <= size; x++)
+    data[z * (size + 1) + x] = surface((x / size * 2 - 1) * extent.x, (z / size * 2 - 1) * extent.z);
   const sample = (array, x, z) => {
-    const u = clamp((x / EXTENT.x + 1) * GRID / 2, 0, GRID - 0.00001);
-    const v = clamp((z / EXTENT.z + 1) * GRID / 2, 0, GRID - 0.00001);
-    const i = Math.floor(u), j = Math.floor(v), k = j * (GRID + 1) + i;
-    return lerp(lerp(array[k], array[k + 1], u - i), lerp(array[k + GRID + 1], array[k + GRID + 2], u - i), v - j);
+    const u = clamp((x / extent.x + 1) * size / 2, 0, size - 0.00001);
+    const v = clamp((z / extent.z + 1) * size / 2, 0, size - 0.00001);
+    const i = Math.floor(u), j = Math.floor(v), k = j * (size + 1) + i;
+    return lerp(lerp(array[k], array[k + 1], u - i), lerp(array[k + size + 1], array[k + size + 2], u - i), v - j);
   };
   const ground = (x, z) => sample(data, x, z);
-  for (let z = 0; z <= GRID; z++) for (let x = 0; x <= GRID; x++) {
-    const px = (x / GRID * 2 - 1) * EXTENT.x, pz = (z / GRID * 2 - 1) * EXTENT.z;
-    lighting[z * (GRID + 1) + x] = sunlight(px, ground(px, pz), pz, ground, star);
+  for (let z = 0; z <= size; z++) for (let x = 0; x <= size; x++) {
+    const px = (x / size * 2 - 1) * extent.x, pz = (z / size * 2 - 1) * extent.z;
+    lighting[z * (size + 1) + x] = sunlight(px, ground(px, pz), pz, ground, star);
   }
   return { ground, light: (x, z) => sample(lighting, x, z) };
 }

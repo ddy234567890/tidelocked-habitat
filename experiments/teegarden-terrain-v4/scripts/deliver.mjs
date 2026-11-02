@@ -9,7 +9,7 @@ import { buildPlanet } from '../src/planet.js';
 // 서버 없이 여는 미리보기와, 다른 모델링 도구로 옮길 포인트 파일을 만든다.
 const root = new URL('../', import.meta.url), target = new URL('deliverables/', root);
 await mkdir(target, { recursive: true });
-const result = await build({ entryPoints: [fileURLToPath(new URL('src/main.js', root))], absWorkingDir: process.cwd(), bundle: true, format: 'iife', minify: true, write: false });
+const result = await build({ entryPoints: [fileURLToPath(new URL('src/main.js', root))], absWorkingDir: process.cwd(), bundle: true, format: 'iife', minify: true, write: false, loader: { '.glb': 'dataurl' } });
 let html = await readFile(new URL('index.html', root), 'utf8');
 let css = await readFile(new URL('src/style.css', root), 'utf8');
 css = css.replace(/^@import[^\n]*\n/, '');
@@ -29,7 +29,7 @@ for (const [name, builder] of Object.entries({ planet: buildPlanet, plain: build
   }
   await writeFile(new URL(`${name}.ply`, target), lines.join('\n'));
 }
-const files = ['package.json', 'index.html', 'src/sites.json', 'src/palette.js', 'src/terrain.js', 'src/plain.js', 'src/lavaTube.js', 'src/ridge.js', 'src/planet.js', 'src/navigation.js', 'src/effects.js', 'src/main.js', 'src/style.css', 'tests/terrain.test.js', 'tests/navigation.test.js', 'tests/effects.test.js', 'scripts/deliver.mjs'];
+const files = ['package.json', 'index.html', 'src/sites.json', 'src/palette.js', 'src/terrain.js', 'src/plain.js', 'src/lavaTube.js', 'src/ridge.js', 'src/planet.js', 'src/surroundings.js', 'src/choices.json', 'src/choices.js', 'src/placement.js', 'src/navigation.js', 'src/effects.js', 'src/main.js', 'src/style.css', 'tests/terrain.test.js', 'tests/navigation.test.js', 'tests/effects.test.js', 'scripts/deliver.mjs'];
 let source = '# Teegarden b 독립 프로토타입 전체 코드\n\n2026-10-30 · v4.0 · 카메라 이동 후 홀로그램 구성. 각 파일의 전체 내용입니다.\n';
 for (const file of files) {
   const language = file.endsWith('.css') ? 'css' : file.endsWith('.html') ? 'html' : file.endsWith('.json') ? 'json' : 'js';

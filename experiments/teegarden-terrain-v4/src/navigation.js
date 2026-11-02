@@ -7,7 +7,8 @@ export const PIN_DISK = { plain: [-0.43, 0.52], lavaTube: [-0.30, -0.19] };
 export const LOCAL_SCALE = 0.025;
 export const LOCAL_VIEWS = {
   plain: [10.8, 12.8, 19.2], ridge: [10.8, 12.8, 19.2], lavaTube: [8.5, 3.6, 18.5],
-  inside: [-7.9, -2.7, -0.28], insideTarget: [0.8, -3.1, -1.25]
+  // 동굴 안쪽 수평 구간에서 입구 쪽(빛이 드는 쪽)을 바라본다.
+  inside: [9.6, -2.6, 0.15], insideTarget: [0.5, -2.9, -0.45]
 };
 export function siteFrame(name, def) {
   const sun = new THREE.Vector3(PLANET_SUN.x, PLANET_SUN.y, PLANET_SUN.z).normalize();
