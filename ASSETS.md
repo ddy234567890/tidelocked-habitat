@@ -119,3 +119,11 @@
 | compressor.glb | airSystem_compressor_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/airSystem_compressor_a01 | NVIDIA | CC-BY 4.0 | 생명유지 기계 | 미정 |
 | duct-straight.glb | hvac_vent_system_straight_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_straight_a01 | NVIDIA | CC-BY 4.0 | 곧은 통로 | 미정 |
 | duct-corner.glb | hvac_vent_system_corner_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_corner_a01 | NVIDIA | CC-BY 4.0 | 꺾인 통로 | 미정 |
+
+## 얼굴 (따로 만든 얼굴 패널 시안, `얼굴/` 폴더)
+
+- 게임 본체와 아직 연결하지 않은 시안이라 `public/models`가 아니라 `얼굴/models/face/`에 있어요.
+
+| 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 곳 |
+|---|---|---|---|---|---|
+| 얼굴/models/face/face.glb | Face | https://sketchfab.com/3d-models/face-ffde29cb64584cf1a939ac2b58d0a931 | 2on | CC-BY 4.0 | 대원 얼굴 패널 |

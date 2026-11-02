@@ -1,0 +1,193 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>얼굴 반응 테스트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+/* 왼쪽: 게임 화면 자리 + 좌측 하단 얼굴 패널 / 오른쪽: 개발용 조절·확인 */
+:root{
+  --bg:#050a1c; --panel:#0d1636; --panel-2:#121d45; --line:#26336b; --line-hi:#3b5bdb;
+  --fg:#e6eaff; --muted:#9aa5d6; --accent:#8fc1ff; --warm:#f2b84b; --danger:#ff6b5e; --ok:#5fd3a0;
+  --f:"IBM Plex Sans KR",system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg);margin:0}
+body{font-family:var(--f);font-size:14px;line-height:1.5;padding:16px max(16px,env(safe-area-inset-right)) 32px max(16px,env(safe-area-inset-left))}
+h1,h2,h3,p{margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+header .k{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--accent)}
+header h1{font-size:22px}
+header p{color:var(--muted);font-size:13px}
+
+/* 게임 화면 자리 */
+.game{position:relative;aspect-ratio:16/10;background:radial-gradient(120% 90% at 60% 30%,#0c1838 0%,#03061a 70%);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-height:420px}
+.game .ph{position:absolute;inset:0;display:grid;place-items:center;color:#2a376e;font-family:var(--mono);font-size:13px;letter-spacing:.2em}
+.face-panel{position:absolute;left:14px;bottom:14px;width:min(250px,46%);background:rgba(8,14,38,.86);border:1px solid rgba(143,193,255,.35);border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35)}
+.face-panel .top{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-bottom:1px solid rgba(143,193,255,.2);font-size:11px;letter-spacing:.12em;color:var(--accent);font-family:var(--mono)}
+.face-panel .top b{font-weight:600;color:var(--fg);letter-spacing:.04em;font-family:var(--f);font-size:12px}
+.face-stage{position:relative;height:250px;background:linear-gradient(#0b1430,#060b1f)}
+.face-stage[data-style="hologram"]{background:#000}
+.face-stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(143,193,255,.04) 0 1px,transparent 1px 3px)}
+.status{position:absolute;left:8px;top:8px;font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid rgba(143,193,255,.35);background:rgba(5,10,28,.75)}
+.status[data-lv="1"]{border-color:var(--warm);color:var(--warm)}
+.status[data-lv="2"]{border-color:var(--danger);color:var(--danger)}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(143,193,255,.2)}
+.chip{padding:6px 8px;border-right:1px solid rgba(143,193,255,.15);min-width:0}
+.chip:last-child{border-right:0}
+.chip small{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip strong{font-family:var(--mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.face-panel .foot{font-size:10px;color:#6f7bb0;padding:4px 10px 6px;border-top:1px solid rgba(143,193,255,.12)}
+
+/* 오른쪽 조절판 */
+aside{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.card h2{font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h2 span{font-weight:400;font-size:12px;color:var(--muted)}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button,.btn{background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:5px 10px;font-size:12.5px;cursor:pointer}
+.presets button:hover,.btn:hover{border-color:var(--accent)}
+.presets button[aria-pressed="true"]{border-color:var(--accent);background:#1b2a6b}
+.presets .draft{color:var(--muted)}
+.slider{display:grid;grid-template-columns:96px minmax(0,1fr) 84px;gap:8px;align-items:center}
+.slider label{font-size:13px}
+.slider output{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums}
+.slider.big label{font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent)}
+details{border-top:1px solid var(--line);padding-top:8px}
+summary{cursor:pointer;color:var(--muted);font-size:13px}
+details .inner{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{background:none;border:0;padding:4px 10px;font-size:12.5px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:#1b2a6b;color:var(--fg)}
+
+/* 개발용 표시 */
+.dev table{width:100%;border-collapse:collapse;font-size:12.5px}
+.dev td{padding:3px 0;border-bottom:1px solid rgba(38,51,107,.6);vertical-align:top}
+.dev td.v{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:8px}
+.tag{font-family:var(--mono);font-size:10px;padding:0 5px;border-radius:4px;margin-left:6px;vertical-align:1px}
+.tag.sci{background:#123a2c;color:#7fe3b4}
+.tag.game{background:#3a2c12;color:#f2c879}
+.tag.mix{background:#232c5a;color:#b5c4ff}
+.bars{display:grid;grid-template-columns:110px minmax(0,1fr) 46px;gap:4px 8px;align-items:center;font-size:12px}
+.bar{height:6px;background:var(--panel-2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.bar.w i{background:var(--warm)}.bar.d i{background:var(--danger)}
+.bars .n{font-family:var(--mono);text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.lv{font-size:11px;padding:0 6px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.lv[data-lv="1"]{color:var(--warm);border-color:#6b5a26}.lv[data-lv="2"]{color:var(--danger);border-color:#6b2a26}
+.flags{display:flex;flex-wrap:wrap;gap:6px}
+.flag{font-size:11.5px;padding:1px 8px;border-radius:99px;border:1px solid #6b2a26;color:var(--danger)}
+.note{font-size:12px;color:var(--muted)}
+.map{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.map table{width:100%;border-collapse:collapse;font-size:12px}
+.map td,.map th{padding:3px 8px;border-bottom:1px solid rgba(38,51,107,.6);text-align:left}
+.map th{position:sticky;top:0;background:var(--panel-2);font-weight:600}
+.map select{width:100%;background:#080c1c;border:1px solid var(--line);border-radius:5px;padding:1px 4px;font-size:12px}
+.map tr.miss td:first-child{color:var(--warm)}
+.drop{border:1px dashed var(--line);border-radius:8px;padding:10px;text-align:center;color:var(--muted);font-size:12.5px}
+.drop.on{border-color:var(--accent);color:var(--fg)}
+@media (max-width:980px){.wrap{grid-template-columns:minmax(0,1fr)}.game{aspect-ratio:auto;min-height:0;height:400px}}
+@media (max-width:520px){.slider{grid-template-columns:80px minmax(0,1fr) 72px}.face-panel{width:min(230px,70%)}}
+</style>
+<div class="wrap">
+  <header>
+    <span class="k">DEV · FACE PANEL</span>
+    <h1>얼굴 반응 테스트</h1>
+    <p>환경 → 보호장비·실내 → 신체 상태 → 얼굴. 게임용 근사 모델이에요 (의학적으로 검증된 시뮬레이션이 아님).</p>
+  </header>
+
+  <section aria-label="게임 화면 미리보기">
+    <div class="game">
+      <div class="ph">GAME VIEW</div>
+      <div class="face-panel" id="face-panel">
+        <div class="top"><b>대원 상태</b><span>BIO · LIVE</span></div>
+        <div class="face-stage" id="face-stage" role="img" aria-label="대원 얼굴. 환경에 따라 표정이 바뀌어요.">
+          <span class="status" id="status" data-lv="0">정상</span>
+        </div>
+        <div class="chips">
+          <div class="chip"><small>SpO₂ (추정)</small><strong id="c-spo2">–</strong></div>
+          <div class="chip"><small>체온 (추정)</small><strong id="c-core">–</strong></div>
+          <div class="chip"><small>호흡</small><strong id="c-rr">–</strong></div>
+        </div>
+        <div class="foot">게임용 근사값 · 의료 기기 아님</div>
+      </div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h2>환경 조절 <span>슬라이더 = 게임 스탯 자리</span></h2>
+      <div class="presets" id="presets" role="group" aria-label="상황 바로 넣기">
+        <button data-p="normal">정상</button>
+        <button data-p="lowO2">호흡곤란 · 산소 10%</button>
+        <button data-p="lowP">호흡곤란 · 기압 40 kPa</button>
+        <button data-p="heat">고온</button>
+        <button data-p="suit">우주복 · 바깥 진공</button>
+        <button data-p="cold" class="draft">추위 (초안)</button>
+        <button data-p="pressure" class="draft">압력 급변 (초안)</button>
+        <button data-p="tired" class="draft">피로 (초안)</button>
+      </div>
+      <div id="main-sliders"></div>
+      <details>
+        <summary>추가 입력 · 습도, 활동량, 노출 시간, 실내, 우주복</summary>
+        <div class="inner">
+          <div id="more-sliders"></div>
+          <div class="row">위치
+            <div class="seg" role="group" aria-label="위치"><button data-loc="outdoor" aria-pressed="true">실외</button><button data-loc="habitat" aria-pressed="false">실내 (거주지)</button></div>
+          </div>
+          <div class="row"><label><input type="checkbox" id="suit-worn"> 우주복 착용</label></div>
+          <div id="suit-sliders"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card dev">
+      <h2>신체 상태 <span>개발용 · 0.1초마다 계산</span></h2>
+      <table><tbody id="dev-table"></tbody></table>
+      <div class="bars" id="sev-bars"></div>
+      <div class="flags" id="flags"></div>
+      <p class="note"><span class="tag sci">SCI</span> 알려진 생리학 관계식 <span class="tag mix">근사</span> 관계식 + 게임 조정 <span class="tag game">GAME</span> 연출용 조정값</p>
+    </div>
+
+    <div class="card dev">
+      <h2>얼굴 출력 <span>블렌드셰이프 · 효과</span></h2>
+      <div class="bars" id="w-bars"></div>
+      <div class="row">보기
+        <div class="seg" role="group" aria-label="보기 방식"><button data-style="surface" aria-pressed="false">표면</button><button data-style="hologram" aria-pressed="true">홀로그램 (점)</button></div>
+      </div>
+      <div class="row" id="pt-row">점 밀도
+        <div class="seg" role="group" aria-label="점 밀도"><button data-density="0" aria-pressed="false">보통</button><button data-density="1" aria-pressed="true">촘촘</button></div>
+        <span class="note" id="pt-count"></span>
+      </div>
+      <div id="pt-sliders"></div>
+    </div>
+
+    <div class="card">
+      <h2>얼굴 모델 <span id="model-name">불러오는 중…</span></h2>
+      <p class="note" id="model-sum"></p>
+      <div class="map"><table><thead><tr><th>기준 이름 (ARKit)</th><th>모델 안의 이름</th></tr></thead><tbody id="map-body"></tbody></table></div>
+      <label class="drop" id="drop">.glb 파일을 여기에 끌어다 놓거나 눌러서 고르기
+        <input type="file" id="file" accept=".glb,model/gltf-binary" hidden></label>
+      <div class="row">
+        <button class="btn" data-model="models/face/face.glb">스캔 모델로</button>
+        <button class="btn" id="use-temp">임시 모델로</button>
+        <button class="btn" id="export-temp">임시 모델 .glb 저장</button>
+        <button class="btn" id="copy-map">매핑 JSON 복사</button>
+      </div>
+    </div>
+  </aside>
+</div>
+<script type="module" src="main.js"></script>
+
+</body></html>
