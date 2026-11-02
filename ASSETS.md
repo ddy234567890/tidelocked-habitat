@@ -12,6 +12,7 @@
 ![물탱크·산소통·유리 통·기계](docs/model-previews/2-tanks-glass-machines.png)
 ![통로·배관·에너지](docs/model-previews/3-pipes-energy.png)
 ![NVIDIA SimReady (CC-BY)](docs/model-previews/4-simready-ccby.png)
+![1주차 와이어프레임용 (Kenney)](docs/model-previews/5-week1-wireframe.png)
 
 ## 돔
 
@@ -119,3 +120,47 @@
 | compressor.glb | airSystem_compressor_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/airSystem_compressor_a01 | NVIDIA | CC-BY 4.0 | 생명유지 기계 | 미정 |
 | duct-straight.glb | hvac_vent_system_straight_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_straight_a01 | NVIDIA | CC-BY 4.0 | 곧은 통로 | 미정 |
 | duct-corner.glb | hvac_vent_system_corner_a01 | https://huggingface.co/datasets/nvidia/simready-assets/tree/main/hvac_vent_system_corner_a01 | NVIDIA | CC-BY 4.0 | 꺾인 통로 | 미정 |
+
+## 1주차 와이어프레임용 (Kenney Space Kit, CC0)
+
+1주차 플레이테스트 선지(위치 A·B·C, 짓는 방식 A-1~C-2, 공기 O-1~O-3)에 맞춰 고른 **아주 가벼운 모델**이에요 (모두 500개 이하 삼각형). 와이어프레임으로 그려도 선이 뭉치지 않아요.
+
+- 출처: Kenney **Space Kit** (CC0, 크레딧 의무 없음) — 받은 묶음 하나에서 골랐어요.
+- 원래 이름은 Kenney 묶음 안의 파일 이름이에요.
+- 와이어프레임에는 기존 모델 중 삼각형이 많은 것(SimReady 10개·inflatable은 3만~5만 개)은 선이 너무 빽빽해서 맞지 않아요. 기존 모델 중 가벼운 것(예: machine, solar-panel, satellite-dish, space-platform, lander-base, water-tank, gas-tank, dome 등 1,500개 이하)은 함께 써도 괜찮아요.
+
+| 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 삼각형 | 어울리는 선지 |
+|---|---|---|---|---|---|---|
+| crater.glb | crater | https://kenney.nl/assets/space-kit | Kenney | CC0 | 60 | 위치 · 땅 꾸미기 |
+| crater-large.glb | craterLarge | https://kenney.nl/assets/space-kit | Kenney | CC0 | 60 | 위치 · 땅 꾸미기 |
+| rocks-small.glb | rocks_smallA | https://kenney.nl/assets/space-kit | Kenney | CC0 | 60 | 위치 · 땅 꾸미기 |
+| rock-large.glb | rock_largeA | https://kenney.nl/assets/space-kit | Kenney | CC0 | 176 | 위치 · 땅 꾸미기 |
+| rock-large-b.glb | rock_largeB | https://kenney.nl/assets/space-kit | Kenney | CC0 | 172 | 위치 · 땅 꾸미기 |
+| mound.glb | meteor_half | https://kenney.nl/assets/space-kit | Kenney | CC0 | 44 | 위치 · 땅 꾸미기 / A-2 |
+| hangar-round.glb | hangar_roundA | https://kenney.nl/assets/space-kit | Kenney | CC0 | 166 | A-1 텐트처럼 빨리 펼치기 |
+| hangar-round-glass.glb | hangar_roundGlass | https://kenney.nl/assets/space-kit | Kenney | CC0 | 113 | A-1 텐트처럼 빨리 펼치기 |
+| hangar-small.glb | hangar_smallA | https://kenney.nl/assets/space-kit | Kenney | CC0 | 280 | A-1 텐트처럼 빨리 펼치기 |
+| hangar-round-b.glb | hangar_roundB | https://kenney.nl/assets/space-kit | Kenney | CC0 | 166 | A-2 흙 이불 덮기 |
+| hangar-large.glb | hangar_largeA | https://kenney.nl/assets/space-kit | Kenney | CC0 | 412 | A-2 흙 이불 덮기 |
+| gate-airlock.glb | gate_simple | https://kenney.nl/assets/space-kit | Kenney | CC0 | 212 | B-1 입구 앞 마을 |
+| gate-complex.glb | gate_complex | https://kenney.nl/assets/space-kit | Kenney | CC0 | 460 | B-1 입구 앞 마을 |
+| tunnel-entrance.glb | pipe_entrance | https://kenney.nl/assets/space-kit | Kenney | CC0 | 126 | B-1 입구 앞 마을 |
+| corridor.glb | corridor | https://kenney.nl/assets/space-kit | Kenney | CC0 | 84 | B-2 깊은 굴속 마을 |
+| corridor-corner.glb | corridor_corner | https://kenney.nl/assets/space-kit | Kenney | CC0 | 110 | B-2 깊은 굴속 마을 |
+| corridor-split.glb | corridor_split | https://kenney.nl/assets/space-kit | Kenney | CC0 | 128 | B-2 깊은 굴속 마을 |
+| corridor-window.glb | corridor_window | https://kenney.nl/assets/space-kit | Kenney | CC0 | 190 | B-2 깊은 굴속 마을 |
+| platform-low.glb | platform_low | https://kenney.nl/assets/space-kit | Kenney | CC0 | 156 | C-1 계단식 한 동네 |
+| platform-high.glb | platform_high | https://kenney.nl/assets/space-kit | Kenney | CC0 | 236 | C-1 계단식 한 동네 |
+| stairs.glb | stairs | https://kenney.nl/assets/space-kit | Kenney | CC0 | 208 | C-1 계단식 한 동네 |
+| structure-closed.glb | structure_closed | https://kenney.nl/assets/space-kit | Kenney | CC0 | 264 | C-1 계단식 한 동네 |
+| structure.glb | structure | https://kenney.nl/assets/space-kit | Kenney | CC0 | 168 | C-2 흩어진 마을 |
+| structure-detailed.glb | structure_detailed | https://kenney.nl/assets/space-kit | Kenney | CC0 | 232 | C-2 흩어진 마을 |
+| supports-high.glb | supports_high | https://kenney.nl/assets/space-kit | Kenney | CC0 | 312 | C-2 흩어진 마을 |
+| generator-large.glb | machine_generatorLarge | https://kenney.nl/assets/space-kit | Kenney | CC0 | 126 | O-1 큰 산소 기계 한 대 |
+| tank-large.glb | machine_barrelLarge | https://kenney.nl/assets/space-kit | Kenney | CC0 | 192 | O-1 큰 산소 기계 한 대 |
+| recycler.glb | machine_barrel | https://kenney.nl/assets/space-kit | Kenney | CC0 | 338 | O-2 숨 재활용 기계 |
+| pipe-straight.glb | pipe_straight | https://kenney.nl/assets/space-kit | Kenney | CC0 | 80 | O-2 숨 재활용 기계 |
+| pipe-split.glb | pipe_split | https://kenney.nl/assets/space-kit | Kenney | CC0 | 142 | O-2 숨 재활용 기계 |
+| pipe-ring.glb | pipe_ring | https://kenney.nl/assets/space-kit | Kenney | CC0 | 144 | O-2 숨 재활용 기계 |
+| generator-small.glb | machine_generator | https://kenney.nl/assets/space-kit | Kenney | CC0 | 406 | O-3 작은 산소 기계 여러 대 |
+| air-unit-small.glb | machine_wireless | https://kenney.nl/assets/space-kit | Kenney | CC0 | 174 | O-3 작은 산소 기계 여러 대 |
