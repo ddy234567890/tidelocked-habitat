@@ -15,6 +15,9 @@ import { buildStarfield, buildTransitSurface, transitionTiming, assemblyBrightne
 
 const POINT_COUNT = 30000;
 const POINT_SIZE = 0.075;
+const LINE_NEAR = 16; // 에셋 선 점: 카메라가 이 거리(지역 단위)보다 가까우면 점을 거리에 비례해 줄인다
+const LINE_BASE = 0.5; // 에셋 선 점은 지형 점의 이 비율로 늘 가늘게 그린다
+const LINE_MIN = 0.5; // 가까이에서 더 줄이는 가장 작은 비율. LINE_BASE × LINE_MIN × POINT_SIZE 가 placement.js EDGE_SPACING 의 1.5배보다 커야 선이 끊기지 않는다
 const BUILDERS = { plain: buildPlain, lavaTube: buildLavaTube, ridge: buildRidge };
 const COPY = {
   plain: { letter: 'A', title: '현무암 평원', text: '낮게 겹친 용암엽과 오래된 충돌 흔적. 중앙의 평탄면을 거주 후보지로 남겼습니다.', tag: '주거 후보지', sub: '중앙 평탄면', position: [0, 0, 0] },
@@ -40,8 +43,18 @@ try {
   controls.autoRotate = false;
   // 행성·지역·별에 같은 머티리얼 하나만 사용한다. 전환도 좌표와 색 버퍼로 처리한다.
   const material = new THREE.PointsMaterial({ size: POINT_SIZE, vertexColors: true, transparent: true, opacity: 0.92, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+  // 선지 에셋의 선 점(lineWeight 1)은 카메라에 가까울수록 원근만큼 커지지 않게 줄여, 다가가면 선이 가늘고 또렷해진다.
+  // 같은 머티리얼에 attribute 하나와 uniform 두 개만 더한다. 지형·별(lineWeight 0)은 그대로다
+  // 선 점은 서로 겹쳐 그려져 더하기 블렌딩으로 밝아지므로, 점이 작아진 만큼만 밝게 해 멀리서나 가까이서나 같은 밝기로 보이게 한다
+  const lineUniforms = { uLineNear: { value: LINE_NEAR * LOCAL_SCALE }, uLineMin: { value: LINE_MIN }, uLineBase: { value: LINE_BASE } };
+  material.onBeforeCompile = shader => {
+    Object.assign(shader.uniforms, lineUniforms);
+    shader.vertexShader = 'attribute float lineWeight;\nuniform float uLineNear;\nuniform float uLineMin;\nuniform float uLineBase;\n' + shader.vertexShader.replace('#include <fog_vertex>',
+      '#include <fog_vertex>\nfloat lineSize = uLineBase * clamp(-mvPosition.z / uLineNear, uLineMin, 1.0);\n'
+      + 'gl_PointSize *= mix(1.0, lineSize, lineWeight);\nvColor.rgb *= mix(1.0, uLineBase * uLineMin / lineSize, lineWeight);');
+  };
   const color = new THREE.Color();
-  function geometryFrom(data) {
+  function geometryFrom(data, lineWeight = 0) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.BufferAttribute(data.positions, 3));
     const linear = new Float32Array(data.colors.length);
@@ -52,6 +65,7 @@ try {
     geometry.setAttribute('color', new THREE.BufferAttribute(linear, 3));
     geometry.setAttribute('aColor', geometry.getAttribute('color'));
     geometry.setAttribute('shake', new THREE.BufferAttribute(data.shake ?? new Float32Array(data.positions.length / 3), 1));
+    geometry.setAttribute('lineWeight', new THREE.BufferAttribute(new Float32Array(data.positions.length / 3).fill(lineWeight), 1));
     geometry.userData.baseColor = linear.slice();
     const seeded = mulberry32(44701);
     geometry.userData.revealSeeds = Float32Array.from({ length: linear.length / 3 }, () => seeded());
@@ -93,9 +107,10 @@ try {
     assetToken++; selection = {}; decided = {}; focusTween = null;
     dropLayer(moduleLayer); moduleLayer = null;
     overlayLayers.forEach(dropLayer); overlayLayers.clear(); reveals.length = 0;
+    $('#legend').hidden = true;
   }
   function addLayer(data) {
-    const points = new THREE.Points(geometryFrom(data), material);
+    const points = new THREE.Points(geometryFrom(data, 1), material);
     assetGroup.add(points); fadePoints(points, 0);
     reveals.push({ points, start: performance.now() });
     return points;
@@ -123,6 +138,8 @@ try {
       if (data.positions.length) { overlayLayers.set(id, { points: addLayer(data) }); added = true; }
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spots ?? data.spot };
     }
+    $('#legend').hidden = !moduleLayer;
+    $('#legend-oxygen').hidden = !overlayLayers.size;
     if (added) focusAssets();
   }
   // 단계별 선지: 1단계 위치(아래 A·B·C 카드) → 2단계 짓는 방식 → 3단계 숨 쉴 공기
@@ -431,7 +448,9 @@ try {
       temporary.set(...COPY[currentSite].position);
       localGroup.localToWorld(temporary); projected.copy(temporary).project(camera);
       const x = (projected.x + 1) * host.clientWidth / 2, y = (1 - projected.y) * host.clientHeight / 2;
-      $('#landmark').style.display = projected.z < 1 && x > 30 && x < host.clientWidth - 150 && y > 160 ? 'block' : 'none';
+      // 주거 모듈이 놓이면 지명 표지는 건물 위에 겹치므로 숨긴다. 왼쪽 위 제목·설명 글과 겹쳐도 숨긴다
+      const head = $('.heading'), underHeading = x < head.offsetLeft + head.offsetWidth + 10 && y - 54 < head.offsetTop + head.offsetHeight;
+      $('#landmark').style.display = !moduleLayer && !underHeading && projected.z < 1 && x > 30 && x < host.clientWidth - 150 && y > 160 ? 'block' : 'none';
       $('#landmark').style.left = x + 8 + 'px'; $('#landmark').style.top = y - 54 + 'px';
     }
   }

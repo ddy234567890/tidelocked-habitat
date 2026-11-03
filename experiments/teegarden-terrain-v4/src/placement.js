@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { choiceData, placeAt, overlaySpot, findSpot, occupancy, siteLetter } from './choices.js';
 import { buildCaveSeal } from './lavaTube.js';
-import { toneColors, cream, blue } from './palette.js';
+import { toneColors, cream, blue, orange } from './palette.js';
 import definitions from './sites.json' with { type: 'json' };
 import modelSizes from './modelSizes.json' with { type: 'json' };
 import { mulberry32 } from './terrain.js';
@@ -49,13 +49,16 @@ const MODELS = {
 };
 // 와이어프레임: 모델의 면을 채우지 않고 모서리 선을 따라 점을 촘촘히 늘어놓는다. 머티리얼은 지형과 같은 하나 그대로다.
 // EDGE_ANGLE 보다 덜 꺾인 모서리(둥근 면을 이루는 잔 선)는 그리지 않아 선이 뭉치지 않는다
-export const EDGE_SPACING = 0.03; // 선 위 점 간격 (지역 단위). 점 크기보다 작아서 끊기지 않은 선으로 보인다
+// 가까이 가면 선 점이 작아지므로(main.js LINE_MIN) 간격도 그만큼 촘촘해야 끊기지 않는다
+export const EDGE_SPACING = 0.01; // 선 위 점 간격 (지역 단위). 흔들림(최대 1.5칸) 을 더해도 가장 작아진 점(0.019)보다 작아서 끊기지 않은 선으로 보인다
 const EDGE_ANGLE = 14; // 이 각도(도) 이상 꺾인 모서리만 선으로 그린다 (둥근 지붕의 마디는 남는다)
 const LINE_FLOOR = 0.45; // 재질 색을 흰색 쪽으로 이만큼 당긴다
 const ROOF_REACH = 1.4; // 집마다 두는 장치가 집 벽에서 이보다 멀어지면 지붕 위에 올린다
 const LINE_MIN = 0.55; // 선 점의 가장 어두운 밝기 (파랑 단계 기준)
-const MAX_POINTS = 24000; // 한 레이어의 상한
+const MAX_POINTS = 60000; // 한 레이어의 상한
 const GAIN = { module: 0.95, overlay: 1 }; // 선은 가늘어서 면보다 밝게 둔다
+const KIND_TINT = { module: cream, overlay: orange }; // 지형은 파랑, 주거 모듈은 크림, 산소 장치는 주황
+const TINT_RANGE = { module: [0.3, 0.25], overlay: [0.35, 0.15] }; // [가장 어두운 밝기, 밝기 폭]. 한 점 기준이라 겹쳐 그려지면 약 2배로 밝아진다
 export const LAYER_POINTS = { seal: 9000, coat: 1800 };
 
 const loader = new GLTFLoader();
@@ -153,6 +156,10 @@ async function sampleParts(site, parts, kind, spot, seed, { spacing = EDGE_SPACI
     const c = out.colors.subarray(i, i + 3), l = lum(c);
     if (l < min) for (let j = 0; j < 3; j++) c[j] = Math.max(c[j] * (min / (l || 1)), floor[j] * (1 - l / min));
     for (let j = 0; j < 3; j++) c[j] = Math.min(1, c[j] * gain);
+    // 선지로 더해진 것은 지형(파랑)과 구분되게 색을 바꾼다: 주거는 크림, 산소 장치는 주황. 밝기 차이는 그대로 둔다.
+    // 선 점은 촘촘해서 더하기 블렌딩으로 겹쳐 밝아지므로, 한 점은 어둡게 둬야 주황이 흰색으로 날아가지 않는다
+    const [low, span] = TINT_RANGE[kind];
+    c.set(KIND_TINT[kind](low + span * Math.min(1, lum(c) / (lum(blue(1)) || 1))));
   }
   out.blocks = Float32Array.from(blocks);
   return out;
