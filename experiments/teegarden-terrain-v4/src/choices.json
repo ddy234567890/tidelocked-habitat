@@ -1,11 +1,17 @@
 {
-  "source": "메인 게임 src/data/choices/week1.json (2026-10-31)의 단계·선지·레이어를 이 시안의 지형 단위로 옮겼다",
+  "source": "1주차 선지는 플레이테스트 페이지 「기지 5주 플레이테스트」(https://claude.ai/artifact/24Cr489hQUyHoz1W29BB8f) 1주차의 갈래를 따른다: ① 위치 A·B·C → ② 위치마다 짓는 방식 2개 → ③ 숨 쉴 공기 3개(모든 위치 공통)",
   "notes": {
     "position": "[x, z] 이면 높이는 그 자리 지형(A·C 지표, B 동굴 바닥)에 자동으로 맞춘다. [x, y, z] 이면 그대로 쓴다",
     "crest": "true 면 x 를 C 능선 마루에서 잰다 (굽은 마루를 따라간다)",
-    "special": "caveSeal: 동굴 테두리를 따라 막는 봉쇄막, wallCoat: 고른 주거 모듈 겉면을 덮는 조류층",
+    "scale": "1 이 모델의 원래 크기다 (modelSizes.json 의 크기 비율을 자동으로 곱한다)",
+    "lift": "바닥에서 띄우는 높이 (받침대 위에 올린 집 등)",
+    "home": "true 인 부품은 사람이 사는 집이다. O-3 처럼 집마다 장치를 두는 선지가 그 옆에 장치를 놓는다",
+    "overlay.parts": "산소 장치 묶음. 빈자리를 찾은 뒤 그 자리에서 offset [x, z] 만큼 떨어져 놓인다",
+    "overlay.perHome": "true 면 집(home)마다 장치를 하나씩 둔다",
+    "overlay.scaleAt": "지대(A·B·C)마다 장치 묶음 크기 배율. 좁은 동굴에서는 작게 둬야 바닥에 들어간다",
     "overlay.at": "지대(A·B·C)마다 놓을 자리. 없으면 slots 의 자리를 쓴다",
-    "spacing·gain": "레이어 점 간격(기본 0.062)과 밝기 배율(기본 모듈 0.74, 오버레이 0.66)"
+    "special": "caveSeal·wallCoat 는 이전 선지가 쓰던 특수 레이어로, 지금 1주차 선지에서는 쓰지 않는다",
+    "line": "선지 카드에 붙는 한 줄 설명 (플레이테스트 페이지 문구)"
   },
   "sites": {
     "plain": "A",
@@ -13,460 +19,134 @@
     "ridge": "C"
   },
   "slots": {
-    "A": [
-      2.6,
-      -1.5
-    ],
-    "B": [
-      5.0,
-      -0.8
-    ],
-    "C": [
-      0,
-      -1.8,
-      "crest"
-    ]
+    "A": [0.6, 3.6],
+    "B": [3.0, -1.0],
+    "C": [1.2, -2.6, "crest"]
   },
   "layers": {
     "module": {
-      "inflatable": {
-        "label": "팽창식 모듈",
+      "tent_deploy": {
+        "label": "텐트처럼 빨리 펼치기",
         "parts": [
-          {
-            "asset": "inflatable",
-            "position": [
-              0,
-              0
-            ],
-            "scale": 4.2
-          }
+          { "asset": "hangar-round", "position": [-0.6, 0], "home": true },
+          { "asset": "corridor", "position": [1.95, 0.2], "rotation": 90 },
+          { "asset": "hangar-round", "position": [3.9, 0.4], "scale": 0.7, "rotation": 30, "home": true }
         ]
       },
-      "earth_print": {
-        "label": "흙 3D 프린팅 집",
+      "soil_cover": {
+        "label": "흙 이불 덮기",
         "parts": [
-          {
-            "asset": "house-cylinder",
-            "position": [
-              -0.3,
-              -0.2
-            ],
-            "scale": 1.8
-          },
-          {
-            "asset": "house-cylinder",
-            "position": [
-              1.7,
-              0.9
-            ],
-            "scale": 1.1,
-            "rotation": 40
-          }
+          { "asset": "hangar-small", "position": [-1.6, 0], "scale": 0.85 },
+          { "asset": "mound", "position": [-1.6, 0], "scale": 4.6, "home": true },
+          { "asset": "hangar-small", "position": [2.9, 0.6], "scale": 0.85 },
+          { "asset": "mound", "position": [2.9, 0.6], "scale": 4.6, "rotation": 70, "home": true },
+          { "asset": "corridor", "position": [0.65, 0.3], "rotation": 90 },
+          { "asset": "gate-airlock", "position": [-1.6, 2.5] }
         ]
       },
-      "cave_modules": {
-        "label": "동굴 속 모듈",
+      "cave_entrance": {
+        "label": "입구 앞 마을",
         "parts": [
-          {
-            "asset": "house-long",
-            "position": [
-              0.6,
-              -1.3
-            ],
-            "scale": 1.6,
-            "rotation": 90
-          },
-          {
-            "asset": "tube-connector",
-            "position": [
-              1.65,
-              -1.3
-            ],
-            "scale": 0.8
-          },
-          {
-            "asset": "base-large",
-            "position": [
-              3.0,
-              -1.4
-            ],
-            "scale": 2.2
-          },
-          {
-            "asset": "tube-connector",
-            "position": [
-              4.25,
-              -1.3
-            ],
-            "scale": 0.8
-          },
-          {
-            "asset": "house-long",
-            "position": [
-              5.2,
-              -1.3
-            ],
-            "scale": 1.5,
-            "rotation": 90
-          },
-          {
-            "asset": "space-base-modules",
-            "position": [
-              9.9,
-              -1.4
-            ],
-            "scale": 2.4,
-            "rotation": 20
-          }
+          { "asset": "gate-complex", "position": [-5.4, -1.0], "rotation": 90 },
+          { "asset": "hangar-small", "position": [-3.6, -1.0], "scale": 0.75, "home": true },
+          { "asset": "corridor", "position": [-2.1, -1.0], "rotation": 90 },
+          { "asset": "structure-closed", "position": [-0.9, -1.0], "home": true }
         ]
       },
-      "cave_sealed": {
-        "label": "동굴 통째 밀폐",
+      "cave_deep": {
+        "label": "깊은 굴속 마을",
         "parts": [
-          {
-            "special": "caveSeal"
-          }
+          { "asset": "structure-closed", "position": [8.6, -1.0], "home": true },
+          { "asset": "corridor-split", "position": [9.8, -1.0], "rotation": 90 },
+          { "asset": "structure-closed", "position": [11.0, -1.0], "home": true },
+          { "asset": "corridor-window", "position": [9.8, -2.2] },
+          { "asset": "corridor", "position": [7.4, -1.0], "rotation": 90 },
+          { "asset": "corridor", "position": [6.2, -1.0], "rotation": 90 }
         ]
       },
-      "tower": {
-        "label": "탑형 집",
-        "spacing": 0.05,
-        "gain": 0.95,
+      "terrace": {
+        "label": "계단식 한 동네",
         "parts": [
-          {
-            "asset": "silo-house",
-            "position": [
-              0,
-              0.8
-            ],
-            "crest": true,
-            "scale": 2.4,
-            "rotation": 90
-          },
-          {
-            "asset": "silo",
-            "position": [
-              0,
-              3.0
-            ],
-            "crest": true,
-            "scale": 1.7,
-            "rotation": 90
-          }
+          { "asset": "structure-closed", "position": [0, 0], "crest": true, "home": true },
+          { "asset": "platform-low", "position": [1.5, 0], "crest": true },
+          { "asset": "structure-closed", "position": [1.5, 0], "crest": true, "lift": 0.6, "home": true },
+          { "asset": "platform-low", "position": [3.0, 0], "crest": true },
+          { "asset": "structure-closed", "position": [3.0, 0], "crest": true, "lift": 0.6, "home": true },
+          { "asset": "corridor", "position": [0, 1.2], "crest": true },
+          { "asset": "structure-closed", "position": [0, 2.4], "crest": true, "home": true },
+          { "asset": "stairs", "position": [0.75, -0.9], "crest": true, "rotation": -90 },
+          { "asset": "stairs", "position": [2.25, -0.9], "crest": true, "rotation": -90 }
         ]
       },
-      "solar_village": {
-        "label": "발전소 + 비탈 마을",
+      "scattered": {
+        "label": "흩어진 마을",
         "parts": [
-          {
-            "asset": "solar-panel-stand",
-            "position": [
-              -1.6,
-              -2.4
-            ],
-            "crest": true,
-            "scale": 1.0,
-            "rotation": 90
-          },
-          {
-            "asset": "solar-panel-stand",
-            "position": [
-              -1.6,
-              -0.8
-            ],
-            "crest": true,
-            "scale": 1.0,
-            "rotation": 90
-          },
-          {
-            "asset": "solar-panel-stand",
-            "position": [
-              -1.6,
-              0.8
-            ],
-            "crest": true,
-            "scale": 1.0,
-            "rotation": 90
-          },
-          {
-            "asset": "solar-panel-stand",
-            "position": [
-              -1.6,
-              2.4
-            ],
-            "crest": true,
-            "scale": 1.0,
-            "rotation": 90
-          },
-          {
-            "asset": "house-cylinder",
-            "position": [
-              -2.9,
-              0.4
-            ],
-            "crest": true,
-            "scale": 0.9
-          },
-          {
-            "asset": "house-long",
-            "position": [
-              -3.7,
-              -1.4
-            ],
-            "crest": true,
-            "scale": 1.0,
-            "rotation": 50
-          },
-          {
-            "asset": "house-cylinder",
-            "position": [
-              -4.4,
-              1.7
-            ],
-            "crest": true,
-            "scale": 0.8
-          }
+          { "asset": "structure-detailed", "position": [0, -4.2], "crest": true, "home": true },
+          { "asset": "structure-closed", "position": [0, 0.6], "crest": true, "home": true },
+          { "asset": "supports-high", "position": [2.6, 3.4], "crest": true },
+          { "asset": "structure-closed", "position": [2.6, 3.4], "crest": true, "lift": 1.2, "home": true },
+          { "asset": "structure-detailed", "position": [3.4, -2.0], "crest": true, "home": true }
         ]
       }
     },
     "overlay": {
-      "concentrator": {
-        "label": "바깥 공기 농축",
-        "asset": "vent",
-        "scale": 1.25
+      "big_machine": {
+        "label": "큰 산소 기계 한 대",
+        "scaleAt": { "B": 0.7 },
+        "parts": [
+          { "asset": "generator-large", "offset": [-0.5, 0] },
+          { "asset": "tank-large", "offset": [0.85, -0.5] },
+          { "asset": "tank-large", "offset": [0.85, 0.5] }
+        ]
       },
-      "electrolysis": {
-        "label": "물 전기분해",
-        "asset": "water-tank",
-        "scale": 1.38
+      "recycler": {
+        "label": "숨 재활용 기계",
+        "scaleAt": { "B": 0.75 },
+        "parts": [
+          { "asset": "recycler", "offset": [-0.45, -0.4] },
+          { "asset": "tank-large", "offset": [-0.45, 0.55] },
+          { "asset": "pipe-split", "offset": [0.5, -0.4], "scale": 0.7, "rotation": 90 },
+          { "asset": "pipe-ring", "offset": [0.5, 0.5], "scale": 0.7, "rotation": 90 }
+        ]
       },
-      "ice_electrolysis": {
-        "label": "얼음 녹여 전기분해",
-        "asset": "water-tank-floor",
-        "scale": 1.12,
-        "at": {
-          "C": [
-            4.8,
-            1.5,
-            "crest"
-          ]
-        }
-      },
-      "algae": {
-        "label": "조류 기르기",
-        "asset": "glass-box",
-        "scale": 1.25
-      },
-      "wall_algae": {
-        "label": "바깥벽 조류",
-        "special": "wallCoat"
-      },
-      "candle": {
-        "label": "산소 캔들",
-        "asset": "pickup-tank",
-        "scale": 0.75
-      },
-      "tank": {
-        "label": "산소 탱크 비축",
-        "asset": "gas-tank",
-        "scale": 1.12
-      },
-      "central_pipe": {
-        "label": "중앙 생산 후 관 공급",
-        "asset": "water-tower-b",
-        "scale": 1.75,
-        "at": {
-          "C": [
-            -1.0,
-            -3.6,
-            "crest"
-          ]
-        }
-      },
-      "per_house": {
-        "label": "집마다 작은 장치",
-        "asset": "machine",
-        "scale": 0.62,
-        "at": {
-          "C": [
-            -3.0,
-            -0.4,
-            "crest"
-          ]
-        }
+      "small_units": {
+        "label": "작은 산소 기계 여러 대",
+        "perHome": true,
+        "parts": [
+          { "asset": "air-unit-small", "offset": [0, 0] }
+        ]
       }
     }
   },
   "steps": [
     {
       "id": "location",
-      "label": "지대",
+      "label": "어디에 기지를 세울까?",
       "choices": [
-        {
-          "id": "A",
-          "label": "현무암 평원",
-          "site": "plain"
-        },
-        {
-          "id": "B",
-          "label": "용암동굴",
-          "site": "lavaTube"
-        },
-        {
-          "id": "C",
-          "label": "황혼 능선",
-          "site": "ridge"
-        }
+        { "id": "A", "label": "현무암 평원", "line": "넓고 밝지만, 늘 뜨거운 곳", "site": "plain" },
+        { "id": "B", "label": "용암동굴", "line": "바위 지붕 아래 숨는 곳", "site": "lavaTube" },
+        { "id": "C", "label": "황혼 능선", "line": "빛도 받고 그늘도 있는 비탈길", "site": "ridge" }
       ]
     },
     {
       "id": "module",
-      "label": "거주 방식",
+      "label": "기지를 어떻게 지을까?",
       "choices": [
-        {
-          "id": "A1",
-          "label": "팽창식 모듈",
-          "requires": {
-            "location": [
-              "A"
-            ]
-          },
-          "module": "inflatable"
-        },
-        {
-          "id": "A2",
-          "label": "흙 3D 프린팅 집",
-          "requires": {
-            "location": [
-              "A"
-            ]
-          },
-          "module": "earth_print"
-        },
-        {
-          "id": "B1",
-          "label": "동굴 속 모듈",
-          "requires": {
-            "location": [
-              "B"
-            ]
-          },
-          "module": "cave_modules"
-        },
-        {
-          "id": "B2",
-          "label": "동굴 통째 밀폐",
-          "requires": {
-            "location": [
-              "B"
-            ]
-          },
-          "module": "cave_sealed"
-        },
-        {
-          "id": "C1",
-          "label": "탑형 집",
-          "requires": {
-            "location": [
-              "C"
-            ]
-          },
-          "module": "tower"
-        },
-        {
-          "id": "C2",
-          "label": "발전소 + 비탈 마을",
-          "requires": {
-            "location": [
-              "C"
-            ]
-          },
-          "module": "solar_village"
-        }
+        { "id": "A1", "label": "텐트처럼 빨리 펼치기", "line": "오늘 바로 들어가 살 수 있어요", "requires": { "location": ["A"] }, "module": "tent_deploy" },
+        { "id": "A2", "label": "흙 이불 덮기", "line": "시간은 걸려도 시원하게", "requires": { "location": ["A"] }, "module": "soil_cover" },
+        { "id": "B1", "label": "입구 앞 마을", "line": "드나들기 쉬운 굴 입구", "requires": { "location": ["B"] }, "module": "cave_entrance" },
+        { "id": "B2", "label": "깊은 굴속 마을", "line": "가장 안전하지만 가장 먼 곳", "requires": { "location": ["B"] }, "module": "cave_deep" },
+        { "id": "C1", "label": "계단식 한 동네", "line": "모여 살면 편해요", "requires": { "location": ["C"] }, "module": "terrace" },
+        { "id": "C2", "label": "흩어진 마을", "line": "나눠 살면 덜 위험해요", "requires": { "location": ["C"] }, "module": "scattered" }
       ]
     },
     {
       "id": "oxygen",
-      "label": "산소 생성 방식",
+      "label": "숨 쉴 공기는 어떻게 지킬까?",
       "choices": [
-        {
-          "id": "O_concentrator",
-          "label": "바깥 공기 농축",
-          "overlays": [
-            "concentrator"
-          ]
-        },
-        {
-          "id": "O_electrolysis",
-          "label": "물 전기분해",
-          "overlays": [
-            "electrolysis"
-          ]
-        },
-        {
-          "id": "O_ice",
-          "label": "얼음 녹여 전기분해",
-          "requires": {
-            "location": [
-              "C"
-            ]
-          },
-          "overlays": [
-            "ice_electrolysis"
-          ]
-        },
-        {
-          "id": "O_algae",
-          "label": "조류 기르기",
-          "overlays": [
-            "algae"
-          ]
-        },
-        {
-          "id": "O_wall_algae",
-          "label": "바깥벽 조류",
-          "overlays": [
-            "wall_algae"
-          ]
-        },
-        {
-          "id": "O_candle",
-          "label": "산소 캔들",
-          "overlays": [
-            "candle"
-          ]
-        },
-        {
-          "id": "O_tank",
-          "label": "산소 탱크 비축",
-          "overlays": [
-            "tank"
-          ]
-        },
-        {
-          "id": "O_central",
-          "label": "중앙 생산 후 관 공급",
-          "requires": {
-            "module": [
-              "C2"
-            ]
-          },
-          "overlays": [
-            "central_pipe"
-          ]
-        },
-        {
-          "id": "O_per_house",
-          "label": "집마다 작은 장치",
-          "requires": {
-            "module": [
-              "C2"
-            ]
-          },
-          "overlays": [
-            "per_house"
-          ]
-        }
+        { "id": "O1", "label": "큰 산소 기계 한 대", "line": "간단하지만 물을 많이 먹어요", "overlays": ["big_machine"] },
+        { "id": "O2", "label": "숨 재활용 기계", "line": "내쉰 숨으로 물을 되찾아요", "overlays": ["recycler"] },
+        { "id": "O3", "label": "작은 산소 기계 여러 대", "line": "하나가 고장 나도 괜찮아요", "overlays": ["small_units"] }
       ]
     }
   ]

@@ -4,7 +4,7 @@ import { plainSurface } from './plain.js';
 import { ridgeSurface, ridgeCrest, ridgeFrame, TOP_HALF_WIDTH } from './ridge.js';
 import { caveSection, tubeFrame, PILLAR_SPOTS } from './lavaTube.js';
 
-// 단계별 선지: 지대(A·B·C) → 거주 방식 → 산소 생성 방식. 앞 단계를 고르면 다음 단계 선지가 열린다.
+// 단계별 선지 (플레이테스트 1주차 갈래): 위치(A·B·C) → 짓는 방식(위치마다 2개) → 숨 쉴 공기(3개). 앞 단계를 고르면 다음 단계 선지가 열린다.
 // 선택 상태는 { location, module, oxygen } 이다. 메인 게임 composer.js 의 resolve·requires 규칙과 같다.
 export { data as choiceData };
 export const STEP_IDS = data.steps.map(step => step.id);

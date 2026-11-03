@@ -28,6 +28,11 @@ node scripts/deliver.mjs
 - 카메라 이동 → 정지 → 1.05초 점 구성. 휠 조작에 스캔선 없음.
 - A/B/C 전환은 표면을 따른 연속 이동. 행성 궤도 우회 없음.
 
+## 1주차 와이어프레임 선지 (2026-11-03)
+- 선지 갈래는 플레이테스트 1주차(위치 3 → 짓는 방식 2씩 → 공기 3). 데이터 src/choices.json, 배치·와이어프레임 src/placement.js, 크기 비율 src/modelSizes.json.
+- 건물·장치는 Kenney Space Kit(CC0) 모델의 모서리 선을 점으로 그린다. 새 머티리얼 없음.
+- 자세한 내용은 README.md "1주차 와이어프레임 선지".
+
 ## 구조
 src/main.js: UI/렌더/전환. navigation.js: 카메라 경로. effects.js: 구성 시간/점 밝기.
 terrain.js: 공용 지형 함수. plain.js/lavaTube.js/ridge.js: 각 지형. planet.js: 행성.

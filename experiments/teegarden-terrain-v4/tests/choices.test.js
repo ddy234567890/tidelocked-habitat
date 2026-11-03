@@ -19,27 +19,31 @@ for (const step of choiceData.steps) for (const choice of step.choices) {
     for (const id of ids) assert.ok(step.choices.some(c => c.id === id), `${choice.id} 의 requires ${stepId}:${id}`);
   }
 }
-const assets = [...Object.values(layers.module).flatMap(l => l.parts), ...Object.values(layers.overlay)].map(p => p.asset).filter(Boolean);
+const assets = [...Object.values(layers.module).flatMap(l => l.parts), ...Object.values(layers.overlay).flatMap(l => l.parts ?? [l])].map(p => p.asset).filter(Boolean);
 for (const asset of new Set(assets)) {
   assert.ok(existsSync(new URL(`../src/models/${asset}.glb`, import.meta.url)), `모델 파일 ${asset}.glb`);
   assert.ok(placement.includes(`'./models/${asset}.glb'`), `placement.js 가 ${asset}.glb 를 불러온다`);
 }
 
+// 플레이테스트 1주차 갈래: 위치 3개 → 위치마다 짓는 방식 2개 → 공기 방식 3개(모든 위치 공통)
 // 앞 단계를 고르면 다음 단계 선지가 열리고, 앞 단계를 바꾸면 뒤 단계 선택은 지운다
-assert.deepEqual(availableChoices('module', { location: 'B' }).map(c => c.id), ['B1', 'B2']);
-assert.ok(!availableChoices('oxygen', { location: 'A', module: 'A1' }).some(c => c.id === 'O_ice'), 'C 전용 산소 선지는 A 에서 숨긴다');
-assert.ok(availableChoices('oxygen', { location: 'C', module: 'C2' }).some(c => c.id === 'O_central'));
-assert.ok(!availableChoices('oxygen', { location: 'C', module: 'C1' }).some(c => c.id === 'O_central'), 'C2 전용 선지');
+assert.deepEqual(availableChoices('location', {}).map(c => c.id), ['A', 'B', 'C']);
+for (const [letter, ids] of Object.entries({ A: ['A1', 'A2'], B: ['B1', 'B2'], C: ['C1', 'C2'] })) {
+  assert.deepEqual(availableChoices('module', { location: letter }).map(c => c.id), ids);
+  for (const id of ids) assert.deepEqual(availableChoices('oxygen', { location: letter, module: id }).map(c => c.id), ['O1', 'O2', 'O3']);
+}
+for (const step of choiceData.steps) for (const choice of step.choices) assert.ok(choice.label && choice.line, `${choice.id} 이름과 한 줄 설명`);
 let selection = choose({}, 'location', 'C');
 selection = choose(selection, 'module', 'C2');
-selection = choose(selection, 'oxygen', 'O_central');
-assert.deepEqual(resolve(selection), { module: 'solar_village', overlays: ['central_pipe'] });
+selection = choose(selection, 'oxygen', 'O3');
+assert.deepEqual(resolve(selection), { module: 'scattered', overlays: ['small_units'] });
 assert.deepEqual(choose(selection, 'location', 'A'), { location: 'A' }, '지대를 바꾸면 거주·산소 선택을 지운다');
 assert.deepEqual(choose(selection, 'module', 'C1'), { location: 'C', module: 'C1' });
 
 // 모든 자리는 그 지대의 바닥 위에 놓인다. B 는 동굴 안, C 탑은 정상 띠 안
 const siteOf = Object.fromEntries(Object.entries(choiceData.sites).map(([site, letter]) => [letter, site]));
-const moduleSite = { inflatable: 'A', earth_print: 'A', cave_modules: 'B', cave_sealed: 'B', tower: 'C', solar_village: 'C' };
+const moduleSite = { tent_deploy: 'A', soil_cover: 'A', cave_entrance: 'B', cave_deep: 'B', terrace: 'C', scattered: 'C' };
+assert.deepEqual(Object.keys(layers.module).sort(), Object.keys(moduleSite).sort());
 for (const [id, letter] of Object.entries(moduleSite)) for (const part of layers.module[id].parts) {
   if (part.special) continue;
   const site = siteOf[letter], [x, y, z] = placeAt(site, part.position, part.crest);
@@ -50,10 +54,13 @@ for (const [id, letter] of Object.entries(moduleSite)) for (const part of layers
     assert.ok(s && y >= s.bottom - 1e-6 && y < s.top, `${id} 는 동굴 안 바닥`);
   }
 }
-for (const part of layers.module.tower.parts) {
+for (const part of layers.module.terrace.parts.filter(p => p.position[0] === 0)) {
   const [x, y, z] = placeAt('ridge', part.position, part.crest);
-  assert.ok(Math.abs(ridgeFrame(x, z).u) <= 0.45 && y === 0, '탑형 집은 굽은 정상 띠 위');
+  assert.ok(Math.abs(ridgeFrame(x, z).u) <= 0.45 && y === 0, '계단식 동네의 맨 윗집은 굽은 정상 띠 위');
 }
+// 집(home)이 있어야 O-3 이 집마다 장치를 둔다
+for (const id of Object.keys(moduleSite)) assert.ok(layers.module[id].parts.some(p => p.home), `${id} 에 집이 있다`);
+assert.ok(layers.overlay.small_units.perHome, 'O-3 은 집마다 둔다');
 for (const [letter, site] of Object.entries(siteOf)) for (const id of Object.keys(layers.overlay)) {
   assert.ok(overlaySpot(site, id).every(Number.isFinite), `${letter} 오버레이 ${id} 자리`);
 }
@@ -88,4 +95,4 @@ for (const [letter, site] of Object.entries(siteOf)) for (const id of Object.key
     assert.ok(PILLAR_SPOTS.every(([px, pz]) => Math.hypot(moved[0] - px, moved[2] - pz) > device.r + 0.5), '기둥을 피한다');
   }
 }
-console.log('PASS: three steps, requires, reset on change, layer and model files, ground placement, cave seal shape, device spots clear of modules and terrain.');
+console.log('PASS: playtest week-1 branches (3 sites, 2 builds each, 3 air), requires, reset on change, layer and model files, ground placement, homes, cave seal shape, device spots clear of modules and terrain.');

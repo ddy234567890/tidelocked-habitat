@@ -118,14 +118,14 @@ try {
     for (const [id, layer] of overlayLayers) if (!layers.overlays.includes(id)) { dropLayer(layer); overlayLayers.delete(id); }
     for (const id of layers.overlays) {
       if (overlayLayers.has(id)) continue;
-      const data = await buildOverlay(site, id, moduleLayer?.data.positions);
+      const data = await buildOverlay(site, id, moduleLayer?.data);
       if (token !== assetToken) return;
       if (data.positions.length) { overlayLayers.set(id, { points: addLayer(data) }); added = true; }
-      if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spot };
+      if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spots ?? data.spot };
     }
     if (added) focusAssets();
   }
-  // 단계별 선지: 1단계 지대(아래 A·B·C 카드) → 2단계 거주 방식 → 3단계 산소 생성 방식
+  // 단계별 선지: 1단계 위치(아래 A·B·C 카드) → 2단계 짓는 방식 → 3단계 숨 쉴 공기
   function renderStep(stepId, element, visible) {
     element.hidden = !visible;
     const nav = element.querySelector('nav');
@@ -135,10 +135,10 @@ try {
       button.className = 'site choice'; button.dataset.step = stepId; button.dataset.choice = choice.id;
       const active = selection[stepId] === choice.id;
       button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
-      const letter = document.createElement('b'); letter.textContent = choice.id.replace('O_', '');
-      if (stepId === 'oxygen') letter.textContent = String(availableChoices(stepId, selection).indexOf(choice) + 1);
-      const label = document.createElement('span'), small = document.createElement('small');
-      small.textContent = stepId === 'module' ? 'HOUSING' : 'OXYGEN'; label.append(small, choice.label);
+      const letter = document.createElement('b'); letter.textContent = choice.id;
+      const label = document.createElement('span'), small = document.createElement('small'), line = document.createElement('em');
+      small.textContent = stepId === 'module' ? 'HOUSING' : 'OXYGEN'; line.textContent = choice.line ?? '';
+      label.append(small, choice.label, line);
       const arrow = document.createElement('i'); arrow.textContent = '↗';
       button.append(letter, label, arrow);
       button.addEventListener('click', () => {
@@ -152,7 +152,7 @@ try {
   function decideButton(stepId) {
     const button = document.createElement('button');
     button.className = 'decide'; button.disabled = !selection[stepId];
-    button.textContent = { location: '지대', module: '거주 방식', oxygen: '산소 생성 방식' }[stepId] + ' 결정';
+    button.textContent = { location: '위치', module: '짓는 방식', oxygen: '공기 방식' }[stepId] + ' 결정';
     button.addEventListener('click', () => {
       if (transition || !selection[stepId]) return;
       decided[stepId] = true; renderSteps(true);
@@ -179,8 +179,8 @@ try {
     if (!summary.hidden) summary.textContent = '결정 · ' + COPY[currentSite].title
       + (decided.module ? ' / ' + choiceLabel('module') : '') + (decided.oxygen ? ' / ' + choiceLabel('oxygen') : '');
   }
-  // 거주 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.
-  // 산소 선지를 누르면 그 장치로, 산소 생성 방식을 결정하면 주거와 산소 장치를 함께 담도록 다시 맞춘다.
+  // 짓는 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.
+  // 공기 선지를 누르면 그 장치로, 공기 방식을 결정하면 주거와 산소 장치를 함께 담도록 다시 맞춘다.
   // FOCUS 는 모듈 점을 아직 못 만든 경우의 지대별 자리다 (지역 단위)
   const FOCUS = { plain: [[0, 0.6, 0], 4.2], lavaTube: [[3.6, -3.4, -1.1], 6.5], ridge: [[-1.6, -0.6, 0], 5.5] };
   const FOCUS_ELEVATION = 28 * Math.PI / 180;
