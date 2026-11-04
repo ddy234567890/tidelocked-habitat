@@ -501,7 +501,7 @@ try {
     if (!transition) setPose(mode === 'planet' ? overviewPose() : localPose(localSection));
   }).observe(host);
   // 주소 뒤에 ?week=2&site=lavaTube 를 붙이면 그 주차부터 바로 본다. 앞 주차는 단계마다 첫 선지를 고른 것으로 친다
-  const jump = new URLSearchParams(location.search);
+  const jump = new URLSearchParams(window.startParams ?? location.search);
   let startWeek = Number(jump.get('week')) || 1;
   function jumpToWeek() {
     for (const { steps } of WEEKS.slice(0, startWeek - 1)) for (const step of steps) {

@@ -28,7 +28,7 @@ $('#brief-year').textContent = 'YEAR ' + hud.year;
 $('#brief-temp').textContent = (now == null ? '' : `현재 기온은 ${now}°C예요. `) + `밤에는 ${night}°C까지 내려가고, 낮에는 ${day}°C까지 올라가요.`;
 $('#brief-o2').textContent = (hud.oxygen == null ? '산소 농도는 아직 측정 중이에요.' : `산소 농도는 ${hud.oxygen}%예요.`) + ' 그냥은 숨을 쉴 수 없어서 어떤 조치가 필요해 보여요.';
 
-if (new URLSearchParams(location.search).get('intro') === '0') {
+if (new URLSearchParams(window.startParams ?? location.search).get('intro') === '0') {
   intro.hidden = true;
 } else {
   const fill = $('#travel-fill'), rocket = $('#travel-rocket'), pct = $('#travel-pct'), bar = $('#travel-bar');

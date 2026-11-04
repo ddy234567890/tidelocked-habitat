@@ -90,9 +90,14 @@ export function tintLayer(levels, role) {
 
 const loader = new GLTFLoader();
 const models = new Map();
+// 한 파일로 묶으면 모델이 데이터 주소로 들어온다. 공유 링크에서는 fetch 가 막히므로 직접 풀어서 읽는다
+const loadGlb = url => {
+  if (!url.startsWith('data:')) return loader.loadAsync(url);
+  return loader.parseAsync(Uint8Array.from(atob(url.split(',')[1]), c => c.charCodeAt(0)).buffer, '');
+};
 const loadModel = name => {
   if (!MODELS[name]) throw new Error(`placement: 모델 '${name}' 이 없어요`);
-  if (!models.has(name)) models.set(name, loader.loadAsync(MODELS[name]).then(gltf => gltf.scene));
+  if (!models.has(name)) models.set(name, loadGlb(MODELS[name]).then(gltf => gltf.scene));
   return models.get(name);
 };
 
