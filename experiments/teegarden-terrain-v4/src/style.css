@@ -6,12 +6,12 @@
 .local .heading{background:linear-gradient(90deg,#07111df2 0%,#07111df2 calc(100% - 44px),#07111d00);padding:12px 52px 14px 0}
 .stage-bottom span{background:#07111df2;padding:3px 6px;text-shadow:0 1px 4px var(--bg)}
 .stage-bottom{left:-6px;right:-6px}
-/* 색 범례: 지형은 파랑, 선지로 더한 주거는 크림, 산소 장치는 주황 */
+/* 색 범례: 지형은 파랑, 방금 더한 선지는 크림, 그 전 선지는 주황 */
 .stage-bottom .legend{display:flex;align-items:center;gap:6px;color:var(--cream)}
 .stage-bottom .legend span{display:contents}
 .legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:6px}
 .legend i:first-child{margin-left:0}
-.legend .terrain{background:var(--blue)}.legend .module{background:var(--cream)}.legend .oxygen{background:var(--orange)}
+.legend .terrain{background:var(--blue)}.legend .new{background:var(--cream)}.legend .old{background:var(--orange)}
 @media(max-width:640px){.stage-bottom{flex-wrap:wrap;justify-content:center}.local .heading{padding-right:16px}}
 .landmark{text-shadow:0 0 4px var(--bg),0 0 10px var(--bg),0 0 16px var(--bg)}
 .local-nav button{background:#0a1a29f2}
