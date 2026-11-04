@@ -5,10 +5,10 @@ import { buildPlain } from './plain.js';
 import { buildLavaTube } from './lavaTube.js';
 import { buildRidge } from './ridge.js';
 import { buildSurroundings, joinPoints } from './surroundings.js';
-import { availableChoices, choose, resolve, siteLetter, choiceData } from './choices.js';
+import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor } from './choices.js';
 import hud from './hud.json' with { type: 'json' };
-import './intro.js';
-import { buildModule, buildOverlay } from './placement.js';
+import { openBriefing } from './intro.js';
+import { buildModule, buildOverlay, tintLayer, TINT } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
 import { orange } from './palette.js';
@@ -29,10 +29,10 @@ const COPY = {
 const $ = selector => document.querySelector(selector);
 const host = $('#canvas-host'), stage = $('#stage');
 
-// 선지 글은 choices.json 에서 읽어 카드에 채운다: 이름 · 한 줄 설명 · 얻는 것 · 감수할 것
-function fillCard(button, choice) {
+// 선지 글은 weeks/week1.json 에서 읽어 카드에 채운다: 이름 · 한 줄 설명 · 얻는 것 · 감수할 것
+function fillCard(button, choice, selection = {}) {
   button.querySelector('.name').textContent = choice.label;
-  button.querySelector('.line').textContent = choice.line ?? '';
+  button.querySelector('.line').textContent = [choice.line ?? '', ...textsFor(choice.extra, selection)].join(' ');
   button.querySelector('.effects').replaceChildren(...[['gain', '얻는 것', choice.gain], ['cost', '감수', choice.cost]].filter(row => row[2]).map(([kind, tag, text]) => {
     const item = document.createElement('li'), mark = document.createElement('i');
     item.className = kind; mark.textContent = tag; item.append(mark, text);
@@ -123,20 +123,33 @@ try {
   localGroup.scale.setScalar(LOCAL_SCALE); localGroup.visible = false; scene.add(localGroup);
   // 선지로 고른 주거 모듈·산소 장치. 지형과 같은 지역 좌표·같은 머티리얼을 쓴다
   const assetGroup = new THREE.Group(); localGroup.add(assetGroup);
-  let selection = {}, decided = {}, moduleLayer = null, assetToken = 0, focusTween = null;
+  let selection = {}, decided = {}, week = 1, moduleLayer = null, assetToken = 0, focusTween = null;
   const overlayLayers = new Map(), reveals = [];
   function dropLayer(layer) { if (!layer) return; assetGroup.remove(layer.points); layer.points.geometry.dispose(); }
   function clearAssets() {
-    assetToken++; selection = {}; decided = {}; focusTween = null;
+    assetToken++; selection = {}; decided = {}; week = 1; focusTween = null;
     dropLayer(moduleLayer); moduleLayer = null;
     overlayLayers.forEach(dropLayer); overlayLayers.clear(); reveals.length = 0;
     $('#legend').hidden = true;
   }
   function addLayer(data) {
-    const points = new THREE.Points(geometryFrom(data, 1), material);
+    const points = new THREE.Points(geometryFrom(data, TINT.new.weight), material);
     assetGroup.add(points); fadePoints(points, 0);
     reveals.push({ points, start: performance.now() });
     return points;
+  }
+  // 레이어 색만 바꾼다. 점이 채워지는 중이면 그 동작이 baseColor 를 읽어 알아서 새 색으로 그린다
+  function paintLayer(layer, role) {
+    if (!layer?.data.levels || layer.role === role) return;
+    layer.role = role;
+    const srgb = tintLayer(layer.data.levels, role), geometry = layer.points.geometry, base = geometry.userData.baseColor;
+    for (let i = 0; i < base.length; i += 3) {
+      color.setRGB(srgb[i], srgb[i + 1], srgb[i + 2], THREE.SRGBColorSpace);
+      color.toArray(base, i);
+    }
+    const weight = geometry.getAttribute('lineWeight');
+    weight.array.fill(TINT[role].weight); weight.needsUpdate = true;
+    if (!reveals.some(reveal => reveal.points === layer.points)) fadePoints(layer.points, 1);
   }
   // 선택 상태에 맞춰 레이어를 맞춘다: 바뀐 것만 새로 만들고 점이 아래에서 위로 채워진다
   async function syncAssets() {
@@ -156,13 +169,18 @@ try {
     for (const [id, layer] of overlayLayers) if (!layers.overlays.includes(id)) { dropLayer(layer); overlayLayers.delete(id); }
     for (const id of layers.overlays) {
       if (overlayLayers.has(id)) continue;
-      const data = await buildOverlay(site, id, moduleLayer?.data);
+      const data = await buildOverlay(site, id, moduleLayer?.data, [...overlayLayers.values()].map(layer => layer.data));
       if (token !== assetToken) return;
-      if (data.positions.length) { overlayLayers.set(id, { points: addLayer(data) }); added = true; }
+      if (data.positions.length) { overlayLayers.set(id, { data, points: addLayer(data) }); added = true; }
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spots ?? data.spot };
+      if (window.terrainDiagnostics) window.terrainDiagnostics.overlayRadius = { ...window.terrainDiagnostics.overlayRadius, [id]: data.footprint?.r };
     }
+    // 가장 최근에 더한 선지만 흰색으로, 그 전 선지는 주황으로 칠한다
+    const newest = [...overlayLayers.values()].at(-1);
+    paintLayer(moduleLayer, newest ? 'old' : 'new');
+    overlayLayers.forEach(layer => paintLayer(layer, layer === newest ? 'new' : 'old'));
     $('#legend').hidden = !moduleLayer;
-    $('#legend-oxygen').hidden = !overlayLayers.size;
+    $('#legend-old').hidden = !overlayLayers.size;
     if (added) focusAssets();
   }
   // 단계별 선지: 1단계 위치(아래 A·B·C 카드) → 2단계 짓는 방식 → 3단계 숨 쉴 공기
@@ -178,7 +196,7 @@ try {
       const letter = document.createElement('b'); letter.textContent = choice.id;
       const name = document.createElement('span'), line = document.createElement('em'), effects = document.createElement('ul');
       name.className = 'name'; line.className = 'line'; effects.className = 'effects';
-      button.append(letter, name, line, effects); fillCard(button, choice);
+      button.append(letter, name, line, effects); fillCard(button, choice, selection);
       button.addEventListener('click', () => {
         if (transition || selection[stepId] === choice.id) return;
         selection = choose(selection, stepId, choice.id); renderSteps(true); syncAssets();
@@ -190,7 +208,8 @@ try {
   function decideButton(stepId) {
     const button = document.createElement('button');
     button.className = 'decide'; button.disabled = !selection[stepId];
-    button.textContent = '▶ ' + { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[stepId] + ' 결정';
+    const short = { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[stepId] ?? ALL_STEPS.find(step => step.id === stepId).short;
+    button.textContent = '▶ ' + short + ' 결정';
     button.addEventListener('click', () => {
       if (transition || !selection[stepId]) return;
       decided[stepId] = true; renderSteps(true);
@@ -206,8 +225,14 @@ try {
     $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위 (시나리오)' : '밤 최저 / 낮 최고';
     $('#hud-o2').textContent = hud.oxygen == null ? '측정 중' : hud.oxygen + '%';
     $('#hud-o2-bar').style.width = (hud.oxygen ?? 0) + '%';
-    const entries = [local && decided.location ? siteLetter(currentSite) + ' ' + COPY[currentSite].title : '—', decided.module ? choiceLabel('module') : '—', decided.oxygen ? choiceLabel('oxygen') : '—'];
+    const entries = WEEKS[week - 1].steps.map(step => step.id === 'location'
+      ? (local && decided.location ? siteLetter(currentSite) + ' ' + COPY[currentSite].title : '—')
+      : decided[step.id] ? choiceLabel(step.id) : '—');
     entries.forEach((text, i) => { $('#hud-log-' + (i + 1)).textContent = '▶ LOG 0' + (i + 1) + ' ........ ' + text; });
+    document.querySelectorAll('#hud .tab').forEach((tab, i) => {
+      tab.hidden = i >= week; // 아직 오지 않은 주차는 탭을 보이지 않는다
+      tab.classList.toggle('on', i === week - 1); tab.setAttribute('aria-selected', String(i === week - 1));
+    });
   }
   // 1단계 지대 카드는 누르면 그 지역으로 날아가 둘러볼 수 있고, '지대 결정'을 눌러야 다음 단계가 열린다
   function renderSteps(local) {
@@ -222,10 +247,20 @@ try {
       const nav = $('#step-' + stepId + ' nav');
       if (nav.childElementCount) nav.append(decideButton(stepId));
     }
+    // 2주차부터: 지금 주차에서 아직 결정하지 않은 첫 단계를 연다. 앞 주차 선택은 selection 에 그대로 남아 있다
+    const { steps, situation, goal } = WEEKS[week - 1], open = local && week > 1 ? steps.find(step => !decided[step.id]) : null;
+    renderStep(open?.id, $('#step-week'), Boolean(open));
+    if (open) {
+      $('#step-week .step-title b').textContent = steps.indexOf(open) + 1;
+      $('#step-week .step-title span').textContent = open.label;
+      $('#week-situation').textContent = [goal, ...textsFor(situation, selection)].join(' ');
+      $('#step-week nav').append(decideButton(open.id));
+    }
+    $('#next-week').hidden = !(local && WEEKS[week] && steps.every(step => decided[step.id]));
+    $('#back').hidden = week > 1; // 결정은 되돌릴 수 없다. 2주차부터는 행성으로 돌아가 처음부터 고르지 않는다
     const summary = $('#decided');
     summary.hidden = !(local && decided.location);
-    if (!summary.hidden) summary.textContent = '결정 · ' + COPY[currentSite].title
-      + (decided.module ? ' / ' + choiceLabel('module') : '') + (decided.oxygen ? ' / ' + choiceLabel('oxygen') : '');
+    if (!summary.hidden) summary.textContent = '결정 · ' + [COPY[currentSite].title, ...ALL_STEPS.slice(1).filter(step => decided[step.id]).map(step => choiceLabel(step.id))].join(' / ');
     updateHud(local);
   }
   // 짓는 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.
@@ -245,8 +280,9 @@ try {
       if (moduleLayer) return syncAssets(); // 봉쇄막은 보기마다 모양이 달라 다시 만든 뒤 그 범위로 다가간다
     }
     // 비출 레이어: 산소를 결정했으면 주거 + 산소, 산소 선지를 골랐으면 그 장치, 아니면 주거 모듈
-    const overlays = [...overlayLayers.values()];
-    const shown = decided.oxygen ? [moduleLayer, ...overlays] : selection.oxygen && overlays.length ? overlays : [moduleLayer];
+    // 2주차부터는 방금 더한 장치만 비춘다
+    const overlays = [...overlayLayers.values()].slice(week > 1 ? -1 : 0);
+    const shown = week > 1 && overlays.length ? overlays : decided.oxygen ? [moduleLayer, ...overlays] : selection.oxygen && overlays.length ? overlays : [moduleLayer];
     const [anchor, size] = FOCUS[currentSite], center = new THREE.Vector3(...anchor);
     let radius = size;
     const box = new THREE.Box3();
@@ -280,6 +316,14 @@ try {
     focusTween = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
     controls.autoRotate = false;
   }
+
+  // 주차 브리핑: 다음 주로 넘어갈 때 뜨고, 왼쪽 주차 탭이나 브리핑의 탭으로 지난 주 것을 다시 본다
+  const showBrief = number => {
+    const shown = WEEKS[number - 1];
+    openBriefing(shown, textsFor(shown.situation, selection), week, showBrief);
+  };
+  document.querySelectorAll('#hud .tab').forEach((tab, i) => tab.addEventListener('click', () => showBrief(i + 1)));
+  $('#next-week').addEventListener('click', () => { week++; renderSteps(true); showBrief(week); });
 
   // A와 B는 사용자 표시 위치, C는 기존 위치다. 실제 경위도 자료는 아니다.
   const sun = new THREE.Vector3(PLANET_SUN.x, PLANET_SUN.y, PLANET_SUN.z).normalize();
@@ -349,15 +393,10 @@ try {
     $('#landmark').hidden = !local;
     if (local) {
       const text = COPY[currentSite];
-      $('#eyebrow').textContent = 'SURFACE EXPEDITION / SITE ' + text.letter;
-      $('#title').textContent = text.title; $('#description').textContent = text.text;
       $('#landmark').replaceChildren(document.createTextNode(text.tag));
       const sub = document.createElement('small'); sub.textContent = text.sub; $('#landmark').appendChild(sub);
       $('#interaction').textContent = '드래그 회전 · 휠 확대 · 우클릭 이동';
     } else {
-      $('#eyebrow').textContent = 'ORBITAL SURVEY / 지표 탐사';
-      $('#title').innerHTML = "Teegarden's<br>Star <em>b.</em>";
-      $('#description').innerHTML = '별이 지지 않는 세계.<br>황혼의 경계에서 우리의 거주지를 찾습니다.';
       $('#interaction').textContent = '행성 위 A · B · C를 선택해 접근하세요';
       $('#build-time').textContent = 'TEEGARDEN b / ORBITAL VIEW';
     }
@@ -463,6 +502,18 @@ try {
     renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
     if (!transition) setPose(mode === 'planet' ? overviewPose() : localPose(localSection));
   }).observe(host);
+  // 주소 뒤에 ?week=2&site=lavaTube 를 붙이면 그 주차부터 바로 본다. 앞 주차는 단계마다 첫 선지를 고른 것으로 친다
+  const jump = new URLSearchParams(window.startParams ?? location.search);
+  let startWeek = Number(jump.get('week')) || 1;
+  function jumpToWeek() {
+    for (const { steps } of WEEKS.slice(0, startWeek - 1)) for (const step of steps) {
+      selection = choose(selection, step.id, step.id === 'location' ? siteLetter(currentSite) : availableChoices(step.id, selection)[0].id);
+      decided[step.id] = true;
+    }
+    week = startWeek; startWeek = 1;
+    renderSteps(true); syncAssets(); showBrief(week);
+  }
+  if (WEEKS[startWeek - 1] && startWeek > 1) selectSite(jump.get('site') ?? 'plain');
   const projected = new THREE.Vector3(), temporary = new THREE.Vector3();
   function labels() {
     if (!transition && mode === 'planet') {
@@ -532,6 +583,7 @@ try {
         if (flight.transit) { flight.transit.geometry.dispose(); scene.remove(flight.transit); }
         setPose(flight.destination); controls.enabled = true;
         transition = null; blockButtons(false); uiMode(mode === 'local'); $('#travel-status').hidden = true;
+        if (mode === 'local' && startWeek > 1) jumpToWeek();
       }
     } else {
       if (focusTween) {

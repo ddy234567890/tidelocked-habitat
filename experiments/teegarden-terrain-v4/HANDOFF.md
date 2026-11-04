@@ -29,7 +29,7 @@ node scripts/deliver.mjs
 - A/B/C 전환은 표면을 따른 연속 이동. 행성 궤도 우회 없음.
 
 ## 1주차 와이어프레임 선지 (2026-11-03)
-- 선지 갈래는 플레이테스트 1주차(위치 3 → 짓는 방식 2씩 → 공기 3). 데이터 src/choices.json, 배치·와이어프레임 src/placement.js, 크기 비율 src/modelSizes.json.
+- 선지 갈래는 플레이테스트 1주차(위치 3 → 짓는 방식 2씩 → 공기 3). 데이터 src/weeks/week1.json, 배치·와이어프레임 src/placement.js, 크기 비율 src/modelSizes.json.
 - 건물·장치는 Kenney Space Kit(CC0) 모델의 모서리 선을 점으로 그린다. 새 머티리얼 없음.
 - 자세한 내용은 README.md "1주차 와이어프레임 선지".
 
@@ -48,8 +48,20 @@ GitHub 수정만으로 위 Sites 배포가 자동 갱신되지는 않습니다.
 - 화면은 팀 디자인 캔버스 「1주차 화면 3종」(https://claude.ai/artifact/7auowppcVKb3j5rwsvK2PQ)을 따른다: ⓪ 이동 중 → ① 브리핑 → ② 결정. 틀은 index.html, 색·글꼴·반응형은 src/style.css, 시작 화면은 src/intro.js.
 - 주소 뒤에 `?intro=0` 을 붙이면 시작 화면을 건너뛴다.
 - 왼쪽 상태 칸·브리핑에 채우는 값은 src/hud.json 이다. 아직 자료가 없는 값(산소 농도, 현재 기온, 대원 이름)은 null 로 두면 '측정 중'으로 나온다. 값을 지어 넣지 않는다.
-- 선지 글은 src/choices.json 의 label(이름) · line(한 줄 설명) · gain(얻는 것) · cost(감수할 것)이다. 근거는 플레이테스트 1주차의 얻는 것·감수할 것이다.
+- 선지 글은 src/weeks/week1.json 의 label(이름) · line(한 줄 설명) · gain(얻는 것) · cost(감수할 것)이다. 근거는 플레이테스트 1주차의 얻는 것·감수할 것이다.
   - 말투: 해요체로 차분하게. 비유(텐트·이불·동네)를 빼고 무엇을·왜를 먼저 적는다. 단계 질문은 '~골라 주세요'로 끝낸다.
   - tests/choices.test.js 가 길이(이름 12자·한 줄 36자·얻는 것/감수 28자)와 해요체를 검사한다.
 - 글꼴(Terrarum Sans Bitmap, SIL OFL 1.1)과 ORI 로봇 이미지는 src/assets 에 있고 ASSETS.md 에 적었다. 로봇 이미지의 작가·라이선스는 올린 팀원이 확인해 적어야 한다.
 - `node scripts/deliver.mjs` 로 만드는 독립 HTML 은 글꼴·로봇 이미지를 담지 못해 시스템 글꼴로 나온다 (상대 경로 파일이라서).
+
+## 주차 이어가기 (2026-11-04)
+- 주차 파일은 따로 둔다: 1~5주차 모두 src/weeks/weekN.json. src/choices.js 의 WEEKS 에 등록되어 있다.
+- 색: 지형은 파랑, 가장 최근에 더한 선지 하나는 크림(겹쳐 흰색으로 보인다), 그 전 선지는 모두 주황 (main.js syncAssets, 모든 주차 공통).
+- 선택 상태는 하나에 쌓인다: { location, module, oxygen, power, storage, heat, … }. 뒤 주차는 requires 로 앞 주차 선택을 읽는다 (선지 조건, situation 현재 상황 문구, extra 설명 뒤 문장).
+- 장치(오버레이)는 주차가 지나도 남고, buildOverlay 의 placed 로 앞 장치 자리를 비워 둔다.
+- 2주차만 바로 보기: 주소 뒤에 `?intro=0&week=2&site=lavaTube` (site 는 plain·lavaTube·ridge). 1주차는 단계마다 첫 선지를 고른 것으로 친다.
+- 오버레이 outside: { B: [x, z] } 는 그 지대에서 집 근처 대신 땅 위 자리에 둔다. 부품 box: [가로, 높이, 두께] 는 모델 없는 상자다.
+- 오버레이 partsAt: { A, B, C } 는 지대마다 장치 묶음이 다르다 (3주 W1).
+- 게이지·숫자 효과는 아직 없다. 5주 U1 의 {low} 와 점수 문구는 게이지가 들어온 뒤에 넣는다.
+- 더블클릭으로 여는 파일: `npm run open-file` 이 저장소 맨 위 이번-시안-열기.html 을 새로 만든다. 시작 메뉴에서 1주차 또는 2주차(지대별)를 고른다. 새 주차를 넣으면 이 파일도 다시 만든다.
+- 팀원 공유 링크: https://claude.ai/artifact/CGioyxxytzWiBNXMLx96fV (Teegarden 시안). 이번-시안-열기.html 을 새로 만든 뒤 같은 링크에 다시 올린다.
