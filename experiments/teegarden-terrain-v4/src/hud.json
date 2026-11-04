@@ -1,0 +1,12 @@
+{
+  "notes": "화면 칸에 채우는 값. null 은 아직 자료가 없다는 뜻이라 화면에는 '측정 중'처럼 보인다. 값이 정해지면 숫자를 넣으면 된다",
+  "year": "7777",
+  "crewName": null,
+  "temperature": { "night": 12, "day": 66, "now": null },
+  "oxygen": null,
+  "sites": {
+    "plain": { "temperature": [55, 66] },
+    "lavaTube": { "temperature": [25, 30] },
+    "ridge": { "temperature": [12, 66] }
+  }
+}
