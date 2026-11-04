@@ -1,4 +1,4 @@
-import data from './choices.json' with { type: 'json' };
+import week1 from './weeks/week1.json' with { type: 'json' };
 import week2 from './weeks/week2.json' with { type: 'json' };
 import week3 from './weeks/week3.json' with { type: 'json' };
 import week4 from './weeks/week4.json' with { type: 'json' };
@@ -10,14 +10,14 @@ import { caveSection, tubeFrame, tubeSurface, PILLAR_SPOTS } from './lavaTube.js
 
 // 단계별 선지 (플레이테스트 1주차 갈래): 위치(A·B·C) → 짓는 방식(위치마다 2개) → 숨 쉴 공기(3개). 앞 단계를 고르면 다음 단계 선지가 열린다.
 // 선택 상태는 { location, module, oxygen } 이다. 메인 게임 composer.js 의 resolve·requires 규칙과 같다.
-export { data as choiceData };
-export const STEP_IDS = data.steps.map(step => step.id);
+export { week1 as choiceData };
+export const STEP_IDS = week1.steps.map(step => step.id);
 // 주차 파일은 따로 두고 선택 상태 하나에 쌓는다: { location, module, oxygen, power, … }. 그래서 뒤 주차가 앞 주차 선택을 그대로 읽는다.
-// 1주차는 choices.json, 2주차부터 src/weeks/weekN.json. 새 주차는 여기에 추가한다
-export const WEEKS = [{ week: 1, steps: data.steps }, week2, week3, week4, week5];
+// 주차마다 src/weeks/weekN.json 하나. 새 주차는 여기에 추가한다
+export const WEEKS = [week1, week2, week3, week4, week5];
 export const ALL_STEPS = WEEKS.flatMap(week => week.steps);
-for (const { layers } of WEEKS.slice(1)) Object.assign(data.layers.overlay, layers.overlay);
-export const siteLetter = site => data.sites[site];
+for (const { layers } of WEEKS.slice(1)) Object.assign(week1.layers.overlay, layers.overlay);
+export const siteLetter = site => week1.sites[site];
 
 const meets = (requires, selection) => Object.entries(requires ?? {}).every(([step, ids]) => ids.includes(selection[step]));
 const isAvailable = (choice, selection) => !choice.hidden && meets(choice.requires, selection);
@@ -138,5 +138,5 @@ export function findSpot(site, preferred, footprint, cells = new Map()) {
 /** 오버레이를 놓을 자리: 레이어의 at[지대] → 없으면 지대 기본 자리 */
 export function overlaySpot(site, id) {
   const letter = siteLetter(site);
-  return placeAt(site, data.layers.overlay[id]?.at?.[letter] ?? data.slots[letter]);
+  return placeAt(site, week1.layers.overlay[id]?.at?.[letter] ?? week1.slots[letter]);
 }

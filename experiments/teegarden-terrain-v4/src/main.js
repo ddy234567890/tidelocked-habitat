@@ -29,7 +29,7 @@ const COPY = {
 const $ = selector => document.querySelector(selector);
 const host = $('#canvas-host'), stage = $('#stage');
 
-// 선지 글은 choices.json 에서 읽어 카드에 채운다: 이름 · 한 줄 설명 · 얻는 것 · 감수할 것
+// 선지 글은 weeks/week1.json 에서 읽어 카드에 채운다: 이름 · 한 줄 설명 · 얻는 것 · 감수할 것
 function fillCard(button, choice, selection = {}) {
   button.querySelector('.name').textContent = choice.label;
   button.querySelector('.line').textContent = [choice.line ?? '', ...textsFor(choice.extra, selection)].join(' ');
