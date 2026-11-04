@@ -5,7 +5,9 @@ import { buildPlain } from './plain.js';
 import { buildLavaTube } from './lavaTube.js';
 import { buildRidge } from './ridge.js';
 import { buildSurroundings, joinPoints } from './surroundings.js';
-import { availableChoices, choose, resolve, siteLetter } from './choices.js';
+import { availableChoices, choose, resolve, siteLetter, choiceData } from './choices.js';
+import hud from './hud.json' with { type: 'json' };
+import './intro.js';
 import { buildModule, buildOverlay } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
@@ -26,6 +28,27 @@ const COPY = {
 };
 const $ = selector => document.querySelector(selector);
 const host = $('#canvas-host'), stage = $('#stage');
+
+// 선지 글은 choices.json 에서 읽어 카드에 채운다: 이름 · 한 줄 설명 · 얻는 것 · 감수할 것
+function fillCard(button, choice) {
+  button.querySelector('.name').textContent = choice.label;
+  button.querySelector('.line').textContent = choice.line ?? '';
+  button.querySelector('.effects').replaceChildren(...[['gain', '얻는 것', choice.gain], ['cost', '감수', choice.cost]].filter(row => row[2]).map(([kind, tag, text]) => {
+    const item = document.createElement('li'), mark = document.createElement('i');
+    item.className = kind; mark.textContent = tag; item.append(mark, text);
+    return item;
+  }));
+}
+for (const step of choiceData.steps) {
+  const title = step.id === 'location' ? $('#step-location-text') : document.querySelector('#step-' + step.id + ' .step-title span');
+  if (title) title.textContent = step.label;
+}
+for (const choice of choiceData.steps[0].choices) {
+  const button = document.querySelector('.site[data-site="' + choice.site + '"]');
+  if (button) fillCard(button, choice);
+}
+$('#hud-year').textContent = 'YEAR ' + hud.year;
+$('#fact-day').textContent = hud.temperature.day + '°C'; $('#fact-night').textContent = hud.temperature.night + '°C';
 let mode = 'planet', currentSite = null, transition = null, localPoints = null, localSection = false, caveInterior = false;
 const cache = new Map();
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -153,11 +176,9 @@ try {
       const active = selection[stepId] === choice.id;
       button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
       const letter = document.createElement('b'); letter.textContent = choice.id;
-      const label = document.createElement('span'), small = document.createElement('small'), line = document.createElement('em');
-      small.textContent = stepId === 'module' ? 'HOUSING' : 'OXYGEN'; line.textContent = choice.line ?? '';
-      label.append(small, choice.label, line);
-      const arrow = document.createElement('i'); arrow.textContent = '↗';
-      button.append(letter, label, arrow);
+      const name = document.createElement('span'), line = document.createElement('em'), effects = document.createElement('ul');
+      name.className = 'name'; line.className = 'line'; effects.className = 'effects';
+      button.append(letter, name, line, effects); fillCard(button, choice);
       button.addEventListener('click', () => {
         if (transition || selection[stepId] === choice.id) return;
         selection = choose(selection, stepId, choice.id); renderSteps(true); syncAssets();
@@ -169,7 +190,7 @@ try {
   function decideButton(stepId) {
     const button = document.createElement('button');
     button.className = 'decide'; button.disabled = !selection[stepId];
-    button.textContent = { location: '위치', module: '짓는 방식', oxygen: '공기 방식' }[stepId] + ' 결정';
+    button.textContent = '▶ ' + { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[stepId] + ' 결정';
     button.addEventListener('click', () => {
       if (transition || !selection[stepId]) return;
       decided[stepId] = true; renderSteps(true);
@@ -178,6 +199,16 @@ try {
     return button;
   }
   const choiceLabel = stepId => availableChoices(stepId, selection).find(c => c.id === selection[stepId])?.label;
+  // 왼쪽 상태 칸: 기온(행성 전체 또는 고른 지대의 시나리오 범위) · 산소 · 결정 기록. 값이 없으면 '측정 중'이다
+  function updateHud(local) {
+    const range = local ? hud.sites[currentSite]?.temperature : null;
+    $('#hud-temp').textContent = range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°';
+    $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위 (시나리오)' : '밤 최저 / 낮 최고';
+    $('#hud-o2').textContent = hud.oxygen == null ? '측정 중' : hud.oxygen + '%';
+    $('#hud-o2-bar').style.width = (hud.oxygen ?? 0) + '%';
+    const entries = [local && decided.location ? siteLetter(currentSite) + ' ' + COPY[currentSite].title : '—', decided.module ? choiceLabel('module') : '—', decided.oxygen ? choiceLabel('oxygen') : '—'];
+    entries.forEach((text, i) => { $('#hud-log-' + (i + 1)).textContent = '▶ LOG 0' + (i + 1) + ' ........ ' + text; });
+  }
   // 1단계 지대 카드는 누르면 그 지역으로 날아가 둘러볼 수 있고, '지대 결정'을 눌러야 다음 단계가 열린다
   function renderSteps(local) {
     if (local) selection.location = siteLetter(currentSite);
@@ -195,6 +226,7 @@ try {
     summary.hidden = !(local && decided.location);
     if (!summary.hidden) summary.textContent = '결정 · ' + COPY[currentSite].title
       + (decided.module ? ' / ' + choiceLabel('module') : '') + (decided.oxygen ? ' / ' + choiceLabel('oxygen') : '');
+    updateHud(local);
   }
   // 짓는 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.
   // 공기 선지를 누르면 그 장치로, 공기 방식을 결정하면 주거와 산소 장치를 함께 담도록 다시 맞춘다.
@@ -313,7 +345,6 @@ try {
     $('#cave-view').hidden = !local || currentSite !== 'lavaTube';
     $('#cave-view').textContent = caveInterior ? '동굴 전체 보기' : '동굴 내부로';
     $('#orbit-note').hidden = local;
-    $('#planet-facts').hidden = local;
     $('#planet-labels').hidden = local;
     $('#landmark').hidden = !local;
     if (local) {

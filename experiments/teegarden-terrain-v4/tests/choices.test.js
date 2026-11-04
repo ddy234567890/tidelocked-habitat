@@ -33,6 +33,21 @@ for (const [letter, ids] of Object.entries({ A: ['A1', 'A2'], B: ['B1', 'B2'], C
   for (const id of ids) assert.deepEqual(availableChoices('oxygen', { location: letter, module: id }).map(c => c.id), ['O1', 'O2', 'O3']);
 }
 for (const step of choiceData.steps) for (const choice of step.choices) assert.ok(choice.label && choice.line, `${choice.id} 이름과 한 줄 설명`);
+// 선지 카드 글: 이름·한 줄 설명·얻는 것·감수할 것이 모두 있고, 카드에 들어갈 만큼 짧다. 말투는 해요체로 맞춘다
+for (const step of choiceData.steps) {
+  assert.ok(step.label.endsWith('주세요'), `${step.id} 단계 질문은 '~골라 주세요'로 끝난다`);
+  for (const choice of step.choices) {
+    assert.ok(choice.gain && choice.cost, `${choice.id} 얻는 것과 감수할 것`);
+    assert.ok(choice.label.length <= 12, `${choice.id} 이름은 12자 이하`);
+    assert.ok(choice.line.length <= 36 && choice.line.endsWith('요.'), `${choice.id} 한 줄 설명은 36자 이하, 해요체`);
+    for (const text of [choice.gain, choice.cost]) assert.ok(text.length <= 28, `${choice.id} '${text}' 는 28자 이하`);
+  }
+}
+// 화면 칸에 채우는 값: 모르는 값은 지어내지 않고 null
+const hud = JSON.parse(readFileSync(new URL('../src/hud.json', import.meta.url)));
+assert.ok(hud.temperature.night < hud.temperature.day, '밤 최저 < 낮 최고');
+for (const site of Object.keys(definitions)) if (site !== 'planet' && hud.sites[site]) assert.ok(hud.sites[site].temperature[0] <= hud.sites[site].temperature[1], `${site} 기온 범위`);
+assert.ok(hud.oxygen === null || typeof hud.oxygen === 'number');
 let selection = choose({}, 'location', 'C');
 selection = choose(selection, 'module', 'C2');
 selection = choose(selection, 'oxygen', 'O3');

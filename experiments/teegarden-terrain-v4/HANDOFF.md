@@ -43,3 +43,13 @@ sites.json: 지역 데이터. palette.js: 색. tests/: 지형/경로/효과 검�
 공개 시안: https://teegarden-b-exploration.chayubin0229.chatgpt.site
 GitHub 수정만으로 위 Sites 배포가 자동 갱신되지는 않습니다.
 다른 계정은 이 비공개 저장소 접근 권한과 수정 권한이 필요합니다.
+
+## 화면 디자인과 선지 문구 (2026-11-04)
+- 화면은 팀 디자인 캔버스 「1주차 화면 3종」(https://claude.ai/artifact/7auowppcVKb3j5rwsvK2PQ)을 따른다: ⓪ 이동 중 → ① 브리핑 → ② 결정. 틀은 index.html, 색·글꼴·반응형은 src/style.css, 시작 화면은 src/intro.js.
+- 주소 뒤에 `?intro=0` 을 붙이면 시작 화면을 건너뛴다.
+- 왼쪽 상태 칸·브리핑에 채우는 값은 src/hud.json 이다. 아직 자료가 없는 값(산소 농도, 현재 기온, 대원 이름)은 null 로 두면 '측정 중'으로 나온다. 값을 지어 넣지 않는다.
+- 선지 글은 src/choices.json 의 label(이름) · line(한 줄 설명) · gain(얻는 것) · cost(감수할 것)이다. 근거는 플레이테스트 1주차의 얻는 것·감수할 것이다.
+  - 말투: 해요체로 차분하게. 비유(텐트·이불·동네)를 빼고 무엇을·왜를 먼저 적는다. 단계 질문은 '~골라 주세요'로 끝낸다.
+  - tests/choices.test.js 가 길이(이름 12자·한 줄 36자·얻는 것/감수 28자)와 해요체를 검사한다.
+- 글꼴(Terrarum Sans Bitmap, SIL OFL 1.1)과 ORI 로봇 이미지는 src/assets 에 있고 ASSETS.md 에 적었다. 로봇 이미지의 작가·라이선스는 올린 팀원이 확인해 적어야 한다.
+- `node scripts/deliver.mjs` 로 만드는 독립 HTML 은 글꼴·로봇 이미지를 담지 못해 시스템 글꼴로 나온다 (상대 경로 파일이라서).
