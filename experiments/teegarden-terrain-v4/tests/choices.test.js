@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { choiceData, availableChoices, choose, resolve, placeAt, overlaySpot, floorAt, STEP_IDS, findSpot, fitsAt, occupancy } from '../src/choices.js';
+import { choiceData, availableChoices, choose, resolve, placeAt, overlaySpot, floorAt, STEP_IDS, findSpot, fitsAt, occupancy, WEEKS, ALL_STEPS, textsFor } from '../src/choices.js';
 import { PILLAR_SPOTS } from '../src/lavaTube.js';
 import { buildCaveSeal, caveSection, SEAL_STATIONS } from '../src/lavaTube.js';
 import { ridgeFrame } from '../src/ridge.js';
@@ -19,10 +19,39 @@ for (const step of choiceData.steps) for (const choice of step.choices) {
     for (const id of ids) assert.ok(step.choices.some(c => c.id === id), `${choice.id} 의 requires ${stepId}:${id}`);
   }
 }
-const assets = [...Object.values(layers.module).flatMap(l => l.parts), ...Object.values(layers.overlay).flatMap(l => l.parts ?? [l])].map(p => p.asset).filter(Boolean);
+const assets = [...Object.values(layers.module).flatMap(l => l.parts), ...Object.values(layers.overlay).flatMap(l => l.partsAt ? Object.values(l.partsAt).flat() : l.parts ?? [l])].map(p => p.asset).filter(Boolean);
 for (const asset of new Set(assets)) {
   assert.ok(existsSync(new URL(`../src/models/${asset}.glb`, import.meta.url)), `모델 파일 ${asset}.glb`);
   assert.ok(placement.includes(`'./models/${asset}.glb'`), `placement.js 가 ${asset}.glb 를 불러온다`);
+}
+
+// 주차가 이어진다: 뒤 주차 선지도 레이어가 있고, 앞 주차 선택이 지워지지 않으며, 장치가 쌓이고, 앞 주차 선택에 따라 문구가 달라진다
+assert.equal(new Set(ALL_STEPS.map(step => step.id)).size, ALL_STEPS.length, '단계 id 는 주차를 넘어서도 겹치지 않는다');
+assert.deepEqual(WEEKS.map(week => week.week), [1, 2, 3, 4, 5]);
+assert.equal(ALL_STEPS.length, 15, '5주 동안 매주 결정 3개');
+for (const week of WEEKS.slice(1)) for (const step of week.steps) {
+  assert.ok(step.short, `${step.id} 결정 버튼 이름`);
+  for (const choice of step.choices) {
+    assert.ok(choice.label && choice.line && choice.gain && choice.cost, `${choice.id} 카드 글`);
+    for (const id of choice.overlays ?? []) assert.ok(layers.overlay[id], `오버레이 레이어 ${id}`);
+  }
+}
+{
+  let picked = { location: 'B', module: 'B2', oxygen: 'O1' };
+  picked = choose(picked, 'power', 'P1');
+  picked = choose(picked, 'storage', 'S1');
+  assert.deepEqual(resolve(picked).overlays, ['big_machine', 'solar_field', 'battery_main']);
+  assert.equal(resolve(picked).module, resolve({ location: 'B', module: 'B2' }).module);
+  assert.equal(picked.oxygen, 'O1');
+  assert.equal(choose(picked, 'power', 'P2').storage, undefined, '앞 단계를 바꾸면 뒤 단계 선택은 지운다');
+  const panel = ALL_STEPS.find(step => step.id === 'power').choices.find(choice => choice.id === 'P1');
+  assert.equal(textsFor(panel.extra, picked).length, 1, '동굴이면 전선 문장이 붙는다');
+  assert.equal(textsFor(panel.extra, { location: 'A' }).length, 0, '평원이면 붙지 않는다');
+  assert.ok(layers.overlay.solar_field.outside.B, '동굴에서는 태양광을 굴 밖에 둔다');
+  assert.ok(layers.overlay.radiator.parts.every(part => part.box), '방열판은 모델 없이 상자로 그린다');
+  const situation = WEEKS[1].situation;
+  assert.equal(textsFor(situation, picked).length, 2);
+  assert.equal(textsFor(situation, { location: 'C', module: 'C2' }).length, 2);
 }
 
 // 플레이테스트 1주차 갈래: 위치 3개 → 위치마다 짓는 방식 2개 → 공기 방식 3개(모든 위치 공통)
@@ -33,6 +62,21 @@ for (const [letter, ids] of Object.entries({ A: ['A1', 'A2'], B: ['B1', 'B2'], C
   for (const id of ids) assert.deepEqual(availableChoices('oxygen', { location: letter, module: id }).map(c => c.id), ['O1', 'O2', 'O3']);
 }
 for (const step of choiceData.steps) for (const choice of step.choices) assert.ok(choice.label && choice.line, `${choice.id} 이름과 한 줄 설명`);
+// 선지 카드 글: 이름·한 줄 설명·얻는 것·감수할 것이 모두 있고, 카드에 들어갈 만큼 짧다. 말투는 해요체로 맞춘다
+for (const step of choiceData.steps) {
+  assert.ok(step.label.endsWith('주세요'), `${step.id} 단계 질문은 '~골라 주세요'로 끝난다`);
+  for (const choice of step.choices) {
+    assert.ok(choice.gain && choice.cost, `${choice.id} 얻는 것과 감수할 것`);
+    assert.ok(choice.label.length <= 12, `${choice.id} 이름은 12자 이하`);
+    assert.ok(choice.line.length <= 36 && choice.line.endsWith('요.'), `${choice.id} 한 줄 설명은 36자 이하, 해요체`);
+    for (const text of [choice.gain, choice.cost]) assert.ok(text.length <= 28, `${choice.id} '${text}' 는 28자 이하`);
+  }
+}
+// 화면 칸에 채우는 값: 모르는 값은 지어내지 않고 null
+const hud = JSON.parse(readFileSync(new URL('../src/hud.json', import.meta.url)));
+assert.ok(hud.temperature.night < hud.temperature.day, '밤 최저 < 낮 최고');
+for (const site of Object.keys(definitions)) if (site !== 'planet' && hud.sites[site]) assert.ok(hud.sites[site].temperature[0] <= hud.sites[site].temperature[1], `${site} 기온 범위`);
+assert.ok(hud.oxygen === null || typeof hud.oxygen === 'number');
 let selection = choose({}, 'location', 'C');
 selection = choose(selection, 'module', 'C2');
 selection = choose(selection, 'oxygen', 'O3');

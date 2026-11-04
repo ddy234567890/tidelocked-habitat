@@ -5,6 +5,7 @@
 ## 팀 작업판
 
 - 작업판: https://claude.ai/artifact/YSmSDPCnznSeZDhcusw6Rw
+- 게임 사이트: https://ddy234567890.github.io/tidelocked-habitat/ (main 에 합쳐지면 `.github/workflows/pages.yml` 이 자동으로 올린다)
 - 사용자가 "작업판 열어줘"라고 하면 Artifact 도구의 `open` 동작으로 이 링크를 옆 화면에 연다.
 - 팀원 대부분이 git이 처음이다. 브랜치·커밋·PR은 사용자가 말로 요청하면 대신 처리하고, 결과를 쉬운 말로 알려 준다.
 

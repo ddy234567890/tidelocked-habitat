@@ -1,35 +1,123 @@
 <!doctype html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#07111d"><title>TEEGARDEN b / 행성 탐사</title><link rel="stylesheet" href="/src/style.css"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#02030a"><title>TEEGARDEN b / 행성 탐사</title><link rel="stylesheet" href="/src/style.css"></head>
 <body>
-<header><a class="brand" href="#" id="brand-home">T<span>·</span>B <small>EXPLORATION PROGRAM</small></a><span class="header-note">TEEGARDEN'S STAR b <b>/</b> 영구 황혼의 세계</span><span class="edition">MISSION 002 <i></i></span></header>
-<main>
- <section id="stage" class="stage">
-  <div id="canvas-host"></div>
-  <div class="heading"><p class="eyebrow" id="eyebrow">ORBITAL SURVEY / 지표 탐사</p><h1 id="title">Teegarden's<br>Star <em>b.</em></h1><p id="description">별이 지지 않는 세계.<br>황혼의 경계에서 우리의 거주지를 찾습니다.</p></div>
-  <div id="planet-labels" aria-label="행성 위 탐사 지점">
-   <button class="pin" data-site="plain" aria-label="A 현무암 평원 탐사"><b>A</b><span>현무암 평원<small>VOLCANIC PLAIN</small></span></button>
-   <button class="pin" data-site="lavaTube" aria-label="B 용암동굴 탐사"><b>B</b><span>용암동굴<small>LAVA TUBE</small></span></button>
-   <button class="pin" data-site="ridge" aria-label="C 황혼 능선 탐사"><b>C</b><span>황혼 능선<small>TERMINATOR RIDGE</small></span></button>
+<!-- 화면 디자인: 팀 디자인 캔버스 「1주차 화면 3종」(이동 중 → 브리핑 → 결정). 레이아웃·색·글꼴을 그대로 따른다 -->
+<div id="intro" class="intro" role="dialog" aria-modal="true" aria-label="탐사 시작">
+ <section id="intro-travel" class="screen travel" aria-live="polite">
+  <span class="star s1" aria-hidden="true"></span><span class="star s2" aria-hidden="true"></span><span class="star s3" aria-hidden="true"></span><span class="star s4" aria-hidden="true"></span><span class="star s5" aria-hidden="true"></span><span class="star s6" aria-hidden="true"></span>
+  <h1>이동 중...</h1>
+  <p class="news">Breaking News: Teegarden - 2 행성에서 3%의 확률로 대기권 발견돼...</p>
+  <div class="route">
+   <div class="end"><svg width="88" height="88" viewBox="0 0 22 22" shape-rendering="crispEdges" role="img" aria-label="지구"><rect x="7" y="1" width="8" height="1" fill="#3D6BFF"/><rect x="5" y="2" width="12" height="1" fill="#3D6BFF"/><rect x="3" y="3" width="16" height="2" fill="#3D6BFF"/><rect x="2" y="5" width="18" height="2" fill="#3D6BFF"/><rect x="1" y="7" width="20" height="8" fill="#3D6BFF"/><rect x="2" y="15" width="18" height="2" fill="#2846B8"/><rect x="3" y="17" width="16" height="2" fill="#2846B8"/><rect x="5" y="19" width="12" height="1" fill="#2846B8"/><rect x="7" y="20" width="8" height="1" fill="#2846B8"/><rect x="5" y="4" width="4" height="2" fill="#9DB6FF"/><rect x="4" y="6" width="6" height="3" fill="#9DB6FF"/><rect x="6" y="9" width="3" height="2" fill="#9DB6FF"/><rect x="13" y="8" width="5" height="3" fill="#9DB6FF"/><rect x="14" y="11" width="3" height="3" fill="#9DB6FF"/><rect x="9" y="15" width="4" height="2" fill="#9DB6FF"/><rect x="6" y="3" width="2" height="1" fill="#FFFFFF" opacity=".7"/></svg><span>지구</span></div>
+   <div class="track" role="progressbar" aria-label="이동 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="travel-bar"><div class="fill" id="travel-fill"></div>
+    <div class="rocket" id="travel-rocket"><svg width="132" height="56" viewBox="0 0 33 14" shape-rendering="crispEdges" role="img" aria-label="로켓"><rect x="0" y="6" width="3" height="2" fill="#3D6BFF"/><rect x="2" y="5" width="4" height="4" fill="#6E92FF"/><rect x="5" y="4" width="3" height="6" fill="#DCE6FF"/><rect x="8" y="2" width="3" height="2" fill="#3D6BFF"/><rect x="8" y="10" width="3" height="2" fill="#3D6BFF"/><rect x="8" y="4" width="16" height="6" fill="#E8EEFF"/><rect x="9" y="3" width="13" height="1" fill="#C9D6FF"/><rect x="9" y="10" width="13" height="1" fill="#9DB6FF"/><rect x="24" y="5" width="3" height="4" fill="#E8EEFF"/><rect x="27" y="6" width="2" height="2" fill="#E8EEFF"/><rect x="24" y="4" width="2" height="1" fill="#C9D6FF"/><rect x="17" y="5" width="4" height="4" fill="#3D6BFF"/><rect x="18" y="6" width="2" height="2" fill="#9DB6FF"/><rect x="11" y="6" width="1" height="2" fill="#6E92FF"/><rect x="13" y="6" width="1" height="2" fill="#6E92FF"/></svg></div>
+    <span class="pct" id="travel-pct">0%</span></div>
+   <div class="end"><svg width="88" height="88" viewBox="0 0 22 22" shape-rendering="crispEdges" role="img" aria-label="도착 행성"><rect x="7" y="1" width="8" height="1" fill="#9DB6FF"/><rect x="5" y="2" width="12" height="1" fill="#9DB6FF"/><rect x="3" y="3" width="16" height="2" fill="#9DB6FF"/><rect x="2" y="5" width="18" height="2" fill="#9DB6FF"/><rect x="1" y="7" width="20" height="8" fill="#7FA0FF"/><rect x="2" y="15" width="18" height="2" fill="#5C7FE8"/><rect x="3" y="17" width="16" height="2" fill="#5C7FE8"/><rect x="5" y="19" width="12" height="1" fill="#3D6BFF"/><rect x="7" y="20" width="8" height="1" fill="#3D6BFF"/><rect x="1" y="9" width="20" height="1" fill="#C9D6FF" opacity=".7"/><rect x="2" y="13" width="18" height="1" fill="#C9D6FF" opacity=".5"/><rect x="12" y="4" width="3" height="2" fill="#DCE6FF" opacity=".9"/><rect x="6" y="16" width="2" height="1" fill="#DCE6FF" opacity=".8"/></svg><span>행성</span></div>
   </div>
-  <div class="local-nav" id="local-nav" hidden><button id="back">← 행성으로</button><button id="cave-view" hidden>동굴 전체 보기</button><button id="section">단면 보기</button></div>
-  <div class="orbit-note" id="orbit-note"><span class="orbit-line"></span><small>항성 방향 고정</small><p>낮의 현무암 평원에서<br>밤의 습윤 지대까지.</p></div>
-  <div id="landmark" class="landmark" hidden></div>
-  <div class="stage-bottom"><span id="interaction">행성 위 A · B · C를 선택해 접근하세요</span><span id="build-time" role="status">행성 모델 준비 중</span></div>
-  <div id="travel-status" class="travel-status" role="status" hidden>탐사 지점으로 접근 중</div>
-  <div id="error" hidden role="alert"></div>
+  <p class="eta" id="travel-eta">행성 궤도 진입 준비 중</p>
+  <button type="button" class="skip" id="intro-skip">건너뛰기</button>
  </section>
- <section id="planet-facts" class="facts"><div><small>MINIMUM MASS / 최소질량</small><strong>1.16 <span>M⊕</span></strong></div><div><small>ESTIMATED RADIUS / 추정 반지름</small><strong>1.04 <span>R⊕</span></strong></div><div><small>ORBITAL PERIOD / 공전주기</small><strong>4.906 <span>DAYS</span></strong></div><p>조석 고정 시나리오<br><span>낮의 평원·동굴과 황혼의 능선</span></p></section>
- <p class="step-title" id="step-location-title"><b>1</b>어디에 기지를 세울까?</p>
- <nav class="sites" aria-label="탐사 지점 목록">
-  <button data-site="plain" class="site"><b>A</b><span><small>SURFACE</small>현무암 평원</span><em>용암 주름 · 오래된 충돌 흔적</em><i>↗</i></button>
-  <button data-site="lavaTube" class="site"><b>B</b><span><small>SUBSURFACE</small>용암동굴</span><em>아치 입구 · 큰 방 · 옆 굴</em><i>↗</i></button>
-  <button data-site="ridge" class="site"><b>C</b><span><small>TERMINATOR</small>황혼 능선</span><em>굽은 마루 · 곁가지 능선 · 얼음 골짜기</em><i>↗</i></button>
- </nav>
- <p class="decided" id="decided" hidden></p>
- <div class="step" id="step-module" hidden><p class="step-title"><b>2</b>기지를 어떻게 지을까?</p><nav class="choices" aria-label="짓는 방식 선지"></nav></div>
- <div class="step" id="step-oxygen" hidden><p class="step-title"><b>3</b>숨 쉴 공기는 어떻게 지킬까?</p><nav class="choices" aria-label="공기 방식 선지"></nav></div>
- <footer><span>모델 기반 설계 시나리오 · 실제 관측 지형이 아닙니다</span><button id="notes-toggle" aria-expanded="false" aria-controls="notes">자료와 모델 기준 ＋</button></footer>
- <section id="notes" hidden><p>첨부 자료의 최소질량 1.16 M⊕, 추정 반지름 1.04 R⊕, 공전주기 4.906일을 표기했습니다. 구형 행성과 건조한 낮·습윤한 밤의 분포는 자료의 기후 가정을 바탕으로 한 시각적 시나리오입니다. 대륙, 해양, 동굴, 능선과 A·B·C 위치는 실제 관측 지도가 아닙니다.</p><p>지역 확대는 서로 다른 축척을 연결하는 탐사 연출입니다. 구형 행성과 지역 지형의 축척은 실제 거리 비율과 다릅니다. 표면 기복은 2.00×로 고정했습니다. 정상 높이 0, 띠 반폭 0.45, 얼음 골짜기 중심과 동굴 z=0 절개면·위험 좌표는 유지했습니다. 동굴의 기준 크기 주변에서 폭과 높이를 변화시켰습니다.</p><p>별과 지형은 움직이지 않습니다. 짓는 방식 단계부터는 에셋이 놓이는 곳으로 다가가 관찰 카메라만 천천히 돕니다. 건물과 산소 장치는 가벼운 모델의 모서리 선을 점으로 그린 와이어프레임입니다(Kenney Space Kit, CC0). 드래그로도 카메라를 움직일 수 있습니다. 얼음 골짜기는 지정된 게임 설정입니다. 초기 원본이 없어 실제 프로젝트 배치 좌표와의 정합성은 별도 확인이 필요합니다.</p></section>
-</main><script type="module" src="/src/main.js"></script>
+
+ <section id="intro-brief" class="screen brief" hidden>
+  <div class="brief-view">
+   <span class="bracket tl" aria-hidden="true"></span><span class="bracket tr" aria-hidden="true"></span><span class="bracket bl" aria-hidden="true"></span><span class="bracket br" aria-hidden="true"></span>
+   <div class="cam-l"><span class="hi">ORI · FIELD CAM</span><span>SURFACE SCAN · TEEGARDEN'S STAR b</span></div>
+   <div class="cam-r"><span id="brief-year">YEAR 7777</span><span>SIGNAL · <span class="hi">LIVE</span></span></div>
+   <div class="glow" aria-hidden="true"></div>
+   <img class="robot" src="/src/assets/ori-robot.png" alt="탐사 로봇 ORI">
+   <div class="bubble"><span class="who">ORI-07 · 탐사 로봇</span><p id="brief-bubble"></p>
+    <div class="send"><span class="bar" aria-hidden="true"></span><span><span id="brief-crew">대원</span>님 기기로 전송 중</span></div></div>
+  </div>
+  <div class="brief-box">
+   <div class="tabs" id="brief-tabs" role="tablist" aria-label="주차"></div>
+   <div class="brief-body">
+    <div class="avatar" aria-hidden="true"><svg width="44" height="44" viewBox="0 0 40 40" fill="none" stroke="#9DB6FF" stroke-width="2"><rect x="13" y="7" width="14" height="14"/><path d="M6 36v-4c0-5 6-8 14-8s14 3 14 8v4"/></svg></div>
+    <div class="report" id="brief-report"></div>
+    <button type="button" class="next" id="intro-next" aria-label="다음">▶▶</button>
+   </div>
+  </div>
+  <p class="foot-keys">다음 ▶ · 확정 <kbd>OK</kbd></p>
+ </section>
+</div>
+
+<div class="hud" id="hud">
+ <aside class="panel p-left" aria-label="탐사 상태">
+  <div class="tabs" role="tablist" aria-label="주차"><button type="button" class="tab on" role="tab" aria-selected="true" aria-label="1주차">W1</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="2주차">W2</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="3주차">W3</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="4주차">W4</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="5주차">W5</button></div>
+  <div class="panel-body">
+   <div class="stat"><span class="chip">TEMP</span><strong id="hud-temp">—</strong><small id="hud-temp-note"></small></div>
+   <div class="stat"><span class="chip">O₂</span><strong id="hud-o2">측정 중</strong><span class="gauge" aria-hidden="true"><span id="hud-o2-bar"></span></span></div>
+   <div class="log" aria-label="결정 기록"><span id="hud-log-1">▶ LOG 01 ........ —</span><span id="hud-log-2">▶ LOG 02 ........ —</span><span id="hud-log-3">▶ LOG 03 ........ —</span></div>
+  </div>
+ </aside>
+
+ <section id="stage" class="window p-stage">
+  <div class="titlebar"><span>ORI://SITE_VIEW</span><span class="wbtns" aria-hidden="true"><i>_</i><i></i></span></div>
+  <div class="window-body">
+   <div id="canvas-host"></div>
+   <div class="compass" aria-hidden="true"><span>000</span><span>090</span><span>180</span><span>270</span><span>360</span></div>
+   <span class="cross v" aria-hidden="true"></span><span class="cross h" aria-hidden="true"></span>
+   <div class="heading"><p class="eyebrow" id="eyebrow">ORBITAL SURVEY / 지표 탐사</p><h1 id="title">Teegarden's<br>Star <em>b.</em></h1><p id="description">별이 지지 않는 세계.<br>황혼의 경계에서 우리의 거주지를 찾습니다.</p></div>
+   <div id="planet-labels" aria-label="행성 위 탐사 지점">
+    <button class="pin" data-site="plain" aria-label="A 현무암 평원 탐사"><b>A</b><span>현무암 평원<small>VOLCANIC PLAIN</small></span></button>
+    <button class="pin" data-site="lavaTube" aria-label="B 용암동굴 탐사"><b>B</b><span>용암동굴<small>LAVA TUBE</small></span></button>
+    <button class="pin" data-site="ridge" aria-label="C 황혼 능선 탐사"><b>C</b><span>황혼 능선<small>TERMINATOR RIDGE</small></span></button>
+   </div>
+   <div class="local-nav" id="local-nav" hidden><button id="back">← 행성으로</button><button id="cave-view" hidden>동굴 전체 보기</button><button id="section">단면 보기</button></div>
+   <div class="orbit-note" id="orbit-note"><span class="orbit-line"></span><small>항성 방향 고정</small><p>낮의 현무암 평원에서<br>밤의 습윤 지대까지.</p></div>
+   <div id="landmark" class="landmark" hidden></div>
+   <div class="stage-bottom"><span id="interaction">행성 위 A · B · C를 선택해 접근하세요</span><span id="legend" class="legend" hidden><i class="terrain"></i>지형 <i class="new"></i>방금 추가 <span id="legend-old" hidden><i class="old"></i>이전 선택</span></span><span id="build-time" role="status">행성 모델 준비 중</span></div>
+   <div id="travel-status" class="travel-status" role="status" hidden>탐사 지점으로 접근 중</div>
+   <div id="error" hidden role="alert"></div>
+  </div>
+ </section>
+
+ <aside class="panel p-right" aria-label="행성 정보">
+  <div class="titlebar"><span>PLANET_DATA</span><span class="wbtns" aria-hidden="true"><i>_</i><i></i><i>×</i></span></div>
+  <div class="panel-body">
+   <div class="meta"><span id="hud-year">YEAR 7777</span><span>TARGET : TEEGARDEN'S STAR b</span><span>STATUS : <b class="on">ONLINE</b></span></div>
+   <div class="globe" aria-hidden="true"><div></div></div>
+   <ul id="planet-facts" class="facts">
+    <li><span>최소질량</span><i></i><b>1.16 M⊕</b></li>
+    <li><span>추정 반지름</span><i></i><b>1.04 R⊕</b></li>
+    <li><span>공전주기</span><i></i><b>4.906일</b></li>
+    <li><span>낮 최고</span><i></i><b id="fact-day">66°C</b></li>
+    <li><span>밤 최저</span><i></i><b id="fact-night">12°C</b></li>
+   </ul>
+   <p class="scenario">조석 고정 시나리오<br>낮의 평원·동굴과 황혼의 능선</p>
+  </div>
+ </aside>
+
+ <aside class="panel p-crew" aria-label="대원 상태">
+  <div class="titlebar"><span>CREW_LINK</span><span class="crew-state" id="crew-state">대기 중</span></div>
+  <div class="panel-body crew">
+   <svg width="118" height="116" viewBox="0 0 170 168" fill="none" stroke-width="2" role="img" aria-label="대원 얼굴 자리"><path d="M30 168c4-30 26-46 55-46s51 16 55 46" stroke="#2846B8"/><ellipse cx="85" cy="74" rx="36" ry="46" stroke="#9DB6FF"/><path d="M40 70a45 45 0 0 1 90 0" stroke="#3D6BFF"/><rect x="34" y="66" width="10" height="26" stroke="#3D6BFF"/><rect x="126" y="66" width="10" height="26" stroke="#3D6BFF"/><path d="M66 66l10 10M76 66l-10 10M94 66l10 10M104 66l-10 10" stroke="#9DB6FF"/><path d="M74 100h22" stroke="#9DB6FF"/></svg>
+   <div class="vitals"><div><span>SpO₂ <b id="vital-spo2">—</b></span><span class="gauge"><span style="width:0"></span></span></div><div><span>체온 <b id="vital-temp">—</b></span><span class="gauge"><span style="width:0"></span></span></div><div><span>호흡 <b id="vital-breath">—</b></span><span class="gauge"><span style="width:0"></span></span></div></div>
+  </div>
+ </aside>
+
+ <section class="p-decision" aria-label="선지">
+  <p class="step-title" id="step-location-title"><b>1</b><span id="step-location-text">기지를 세울 위치를 골라 주세요</span></p>
+  <nav class="sites cards" aria-label="탐사 지점 목록">
+   <button data-site="plain" class="site"><b>A</b><span class="name">현무암 평원</span><em class="line"></em><ul class="effects"></ul></button>
+   <button data-site="lavaTube" class="site"><b>B</b><span class="name">용암동굴</span><em class="line"></em><ul class="effects"></ul></button>
+   <button data-site="ridge" class="site"><b>C</b><span class="name">황혼 능선</span><em class="line"></em><ul class="effects"></ul></button>
+  </nav>
+  <p class="decided" id="decided" hidden></p>
+  <div class="step" id="step-module" hidden><p class="step-title"><b>2</b><span></span></p><nav class="choices cards" aria-label="짓는 방식 선지"></nav></div>
+  <div class="step" id="step-oxygen" hidden><p class="step-title"><b>3</b><span></span></p><nav class="choices cards" aria-label="공기 방식 선지"></nav></div>
+  <div class="step" id="step-week" hidden><p class="decided" id="week-situation"></p><p class="step-title"><b></b><span></span></p><nav class="choices cards" aria-label="이번 주 선지"></nav></div>
+  <button class="decide" id="next-week" hidden>▶ 다음 주로</button>
+ </section>
+
+ <footer class="p-foot">
+  <span class="keys">선택 ◀ ▶ · 확정 <kbd>OK</kbd></span>
+  <span class="foot-note">모델 기반 설계 시나리오 · 실제 관측 지형이 아닙니다</span>
+  <button id="notes-toggle" aria-expanded="false" aria-controls="notes">자료와 모델 기준 ＋</button>
+  <a class="brand" href="#" id="brand-home">ORBITAL RESEARCH INSTITUTE · SECTOR 7</a>
+ </footer>
+ <section id="notes" hidden><p>첨부 자료의 최소질량 1.16 M⊕, 추정 반지름 1.04 R⊕, 공전주기 4.906일을 표기했습니다. 구형 행성과 건조한 낮·습윤한 밤의 분포는 자료의 기후 가정을 바탕으로 한 시각적 시나리오입니다. 대륙, 해양, 동굴, 능선과 A·B·C 위치는 실제 관측 지도가 아닙니다.</p><p>지역 확대는 서로 다른 축척을 연결하는 탐사 연출입니다. 구형 행성과 지역 지형의 축척은 실제 거리 비율과 다릅니다. 표면 기복은 2.00×로 고정했습니다. 정상 높이 0, 띠 반폭 0.45, 얼음 골짜기 중심과 동굴 z=0 절개면·위험 좌표는 유지했습니다. 동굴의 기준 크기 주변에서 폭과 높이를 변화시켰습니다.</p><p>별과 지형은 움직이지 않습니다. 짓는 방식 단계부터는 에셋이 놓이는 곳으로 다가가 관찰 카메라만 천천히 돕니다. 건물과 산소 장치는 가벼운 모델의 모서리 선을 점으로 그린 와이어프레임입니다(Kenney Space Kit, CC0). 드래그로도 카메라를 움직일 수 있습니다. 얼음 골짜기는 지정된 게임 설정입니다. 초기 원본이 없어 실제 프로젝트 배치 좌표와의 정합성은 별도 확인이 필요합니다.</p><p>화면 글자는 Terrarum Sans Bitmap(SIL OFL 1.1, CuriousTorvald)입니다. 기온은 낮 최고 66°C·밤 최저 12°C이고, 지대별 기온 범위는 시나리오 값입니다. 산소 농도와 대원 상태는 아직 자료가 없어 비워 두었습니다.</p></section>
+</div>
+<div class="scanlines" aria-hidden="true"></div>
+<script type="module" src="/src/main.js"></script>
 </body></html>

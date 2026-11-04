@@ -1,0 +1,402 @@
+{
+  "week": 4,
+  "brief": "이번 주에는 식량을 조사할게요.\n작물이 자랄 시간까지 미리 챙겨야 해요.",
+  "title": "먹을 것 만들기",
+  "goal": "가져온 식량이 떨어지기 전에 농장을 만들어요. 작물은 하루아침에 자라지 않아요!",
+  "situation": [
+    {
+      "text": "착륙선에서 가져온 식량이 매주 줄고 있어요."
+    },
+    {
+      "requires": {
+        "location": [
+          "B"
+        ]
+      },
+      "text": "동굴 안이라 재배실을 안에 두면 조명 전력이 들고, 밖에 두면 오가는 거리가 길어요."
+    },
+    {
+      "text": "작물은 바로 자라지 않아요. 잎채소는 몇 주, 주식 작물은 몇 달이 걸려요."
+    }
+  ],
+  "layers": {
+    "overlay": {
+      "led_farm": {
+        "label": "실내 LED 농장",
+        "scaleAt": {
+          "B": 0.4,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "hangar-small",
+            "offset": [
+              0,
+              0
+            ]
+          },
+          {
+            "asset": "shelf",
+            "offset": [
+              1.5,
+              -0.4
+            ],
+            "scale": 0.8
+          },
+          {
+            "asset": "shelf",
+            "offset": [
+              1.5,
+              0.4
+            ],
+            "scale": 0.8
+          }
+        ]
+      },
+      "greenhouse": {
+        "label": "바깥 유리 온실",
+        "outside": {
+          "B": [
+            -9.5,
+            -2.2
+          ]
+        },
+        "parts": [
+          {
+            "asset": "hangar-round-glass"
+          }
+        ],
+        "scaleAt": {
+          "C": 0.7
+        }
+      },
+      "food_store": {
+        "label": "비상식량 창고 채우기",
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "box": [
+              0.6,
+              0.45,
+              0.6
+            ],
+            "offset": [
+              -0.35,
+              0
+            ]
+          },
+          {
+            "box": [
+              0.6,
+              0.45,
+              0.6
+            ],
+            "offset": [
+              0.35,
+              0
+            ]
+          },
+          {
+            "box": [
+              0.6,
+              0.45,
+              0.6
+            ],
+            "offset": [
+              0,
+              0.5
+            ]
+          }
+        ]
+      },
+      "farm_extension": {
+        "label": "농장 크게 키우기",
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "corridor-window",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "crop_leaf": {
+        "label": "쑥쑥 상추",
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "cabbage",
+            "offset": [
+              -0.5,
+              -0.3
+            ],
+            "scale": 0.4
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              0,
+              -0.3
+            ],
+            "scale": 0.4
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              0.5,
+              -0.3
+            ],
+            "scale": 0.4
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              -0.5,
+              0.3
+            ],
+            "scale": 0.4
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              0,
+              0.3
+            ],
+            "scale": 0.4
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              0.5,
+              0.3
+            ],
+            "scale": 0.4
+          }
+        ]
+      },
+      "crop_staple": {
+        "label": "든든 감자·밀",
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "wheat",
+            "offset": [
+              -0.6,
+              -0.3
+            ],
+            "scale": 0.6
+          },
+          {
+            "asset": "wheat",
+            "offset": [
+              -0.2,
+              -0.3
+            ],
+            "scale": 0.6
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0.2,
+              -0.3
+            ],
+            "scale": 0.5
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0.6,
+              -0.3
+            ],
+            "scale": 0.5
+          },
+          {
+            "asset": "wheat",
+            "offset": [
+              -0.6,
+              0.3
+            ],
+            "scale": 0.6
+          },
+          {
+            "asset": "wheat",
+            "offset": [
+              -0.2,
+              0.3
+            ],
+            "scale": 0.6
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0.2,
+              0.3
+            ],
+            "scale": 0.5
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0.6,
+              0.3
+            ],
+            "scale": 0.5
+          }
+        ]
+      },
+      "crop_algae": {
+        "label": "초록 물풀(조류)",
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "glass-cylinder",
+            "offset": [
+              -0.5,
+              0
+            ],
+            "scale": 0.6
+          },
+          {
+            "asset": "glass-cylinder",
+            "offset": [
+              0,
+              0
+            ],
+            "scale": 0.6
+          },
+          {
+            "asset": "glass-cylinder",
+            "offset": [
+              0.5,
+              0
+            ],
+            "scale": 0.6
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "farm",
+      "short": "농장",
+      "label": "농장은 어디에 지을까?",
+      "choices": [
+        {
+          "id": "G1",
+          "label": "실내 LED 농장",
+          "line": "날씨 걱정 없지만 전기를 먹어요.",
+          "gain": "바깥 날씨와 상관없이 잘 자라요",
+          "cost": "전등을 켜야 해서 매주 전기가 많이 들어요",
+          "overlays": [
+            "led_farm"
+          ]
+        },
+        {
+          "id": "G2",
+          "label": "바깥 유리 온실",
+          "line": "별빛으로 키우지만, 바깥 위험에 노출돼요.",
+          "gain": "전등 전기는 덜 들어요",
+          "cost": "붉은 별빛만으로 잘 자랄지는 아직 몰라요",
+          "extra": [
+            {
+              "requires": {
+                "location": [
+                  "B"
+                ]
+              },
+              "text": "동굴에서는 온실까지 오가는 길이 멀어요."
+            }
+          ],
+          "overlays": [
+            "greenhouse"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "balance",
+      "short": "비중",
+      "label": "지금 먹을 것과 앞으로 키울 것, 어디에 더 힘을 쓸까?",
+      "choices": [
+        {
+          "id": "K1",
+          "label": "비상식량 창고 채우기",
+          "line": "지금 배부르게.",
+          "gain": "지금은 든든해요",
+          "cost": "농장은 작게 시작해요",
+          "overlays": [
+            "food_store"
+          ]
+        },
+        {
+          "id": "K2",
+          "label": "농장 크게 키우기",
+          "line": "나중에 배부르게.",
+          "gain": "수확이 시작되면 1.5배 많이 거둬요",
+          "cost": "수확 전까지는 지금 있는 식량으로 버텨야 해요",
+          "overlays": [
+            "farm_extension"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "crop",
+      "short": "작물",
+      "label": "무엇을 키울까?",
+      "choices": [
+        {
+          "id": "C_leaf",
+          "label": "쑥쑥 상추",
+          "line": "빨리 먹지만 배는 덜 불러요.",
+          "gain": "5주차부터 조금씩 거둬요",
+          "cost": "영양(열량)이 적어서 주식이 되긴 어려워요",
+          "overlays": [
+            "crop_leaf"
+          ]
+        },
+        {
+          "id": "C_staple",
+          "label": "든든 감자·밀",
+          "line": "오래 걸리지만 배를 채워요.",
+          "gain": "배를 든든하게 채워요",
+          "cost": "이주민이 들어온 뒤 3주째에 처음 거둬요",
+          "overlays": [
+            "crop_staple"
+          ]
+        },
+        {
+          "id": "C_algae",
+          "label": "초록 물풀(조류)",
+          "line": "먹을 것과 산소를 함께.",
+          "gain": "조금 먹을 수도 있고 산소도 만들어 줘요",
+          "cost": "물이 더러워지면 통째로 죽을 수 있어요",
+          "overlays": [
+            "crop_algae"
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": {
+    "scaleAt": "좁은 동굴(B)과 능선(C)에서는 장치를 줄여야 주차가 쌓여도 겹치지 않는다"
+  }
+}

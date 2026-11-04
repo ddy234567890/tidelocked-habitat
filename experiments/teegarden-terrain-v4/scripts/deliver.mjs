@@ -29,7 +29,7 @@ for (const [name, builder] of Object.entries({ planet: buildPlanet, plain: build
   }
   await writeFile(new URL(`${name}.ply`, target), lines.join('\n'));
 }
-const files = ['package.json', 'index.html', 'src/sites.json', 'src/palette.js', 'src/terrain.js', 'src/plain.js', 'src/lavaTube.js', 'src/ridge.js', 'src/planet.js', 'src/surroundings.js', 'src/choices.json', 'src/choices.js', 'src/placement.js', 'src/navigation.js', 'src/effects.js', 'src/main.js', 'src/style.css', 'tests/terrain.test.js', 'tests/navigation.test.js', 'tests/effects.test.js', 'scripts/deliver.mjs'];
+const files = ['package.json', 'index.html', 'src/sites.json', 'src/palette.js', 'src/terrain.js', 'src/plain.js', 'src/lavaTube.js', 'src/ridge.js', 'src/planet.js', 'src/surroundings.js', 'src/weeks/week1.json', 'src/choices.js', 'src/placement.js', 'src/navigation.js', 'src/effects.js', 'src/main.js', 'src/style.css', 'tests/terrain.test.js', 'tests/navigation.test.js', 'tests/effects.test.js', 'scripts/deliver.mjs'];
 let source = '# Teegarden b 독립 프로토타입 전체 코드\n\n2026-10-30 · v4.0 · 카메라 이동 후 홀로그램 구성. 각 파일의 전체 내용입니다.\n';
 for (const file of files) {
   const language = file.endsWith('.css') ? 'css' : file.endsWith('.html') ? 'html' : file.endsWith('.json') ? 'json' : 'js';
