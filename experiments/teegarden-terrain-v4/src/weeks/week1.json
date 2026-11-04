@@ -1,0 +1,155 @@
+{
+  "week": 1,
+  "brief": "오늘의 행성 정보를 확인하기 위해 나왔어요!\n첫 주차에는 대기와 기온에 대해 조사할게요.",
+  "source": "1주차 선지는 플레이테스트 페이지 「기지 5주 플레이테스트」(https://claude.ai/artifact/24Cr489hQUyHoz1W29BB8f) 1주차의 갈래를 따른다: ① 위치 A·B·C → ② 위치마다 짓는 방식 2개 → ③ 숨 쉴 공기 3개(모든 위치 공통)",
+  "notes": {
+    "position": "[x, z] 이면 높이는 그 자리 지형(A·C 지표, B 동굴 바닥)에 자동으로 맞춘다. [x, y, z] 이면 그대로 쓴다",
+    "crest": "true 면 x 를 C 능선 마루에서 잰다 (굽은 마루를 따라간다)",
+    "scale": "1 이 모델의 원래 크기다 (modelSizes.json 의 크기 비율을 자동으로 곱한다)",
+    "lift": "바닥에서 띄우는 높이 (받침대 위에 올린 집 등)",
+    "home": "true 인 부품은 사람이 사는 집이다. O-3 처럼 집마다 장치를 두는 선지가 그 옆에 장치를 놓는다",
+    "overlay.parts": "산소 장치 묶음. 빈자리를 찾은 뒤 그 자리에서 offset [x, z] 만큼 떨어져 놓인다",
+    "overlay.perHome": "true 면 집(home)마다 장치를 하나씩 둔다",
+    "overlay.scaleAt": "지대(A·B·C)마다 장치 묶음 크기 배율. 좁은 동굴에서는 작게 둬야 바닥에 들어간다",
+    "overlay.at": "지대(A·B·C)마다 놓을 자리. 없으면 slots 의 자리를 쓴다",
+    "special": "caveSeal·wallCoat 는 이전 선지가 쓰던 특수 레이어로, 지금 1주차 선지에서는 쓰지 않는다",
+    "line": "선지 카드의 한 줄 설명(line)과 ‘얻는 것’(gain)·‘감수할 것’(cost). 문구의 근거는 플레이테스트 페이지 1주차의 얻는 것·감수할 것이고, 말투는 해요체로 차분하게 쓴다"
+  },
+  "sites": {
+    "plain": "A",
+    "lavaTube": "B",
+    "ridge": "C"
+  },
+  "slots": {
+    "A": [0.6, 3.6],
+    "B": [3.0, -1.0],
+    "C": [1.2, -2.6, "crest"]
+  },
+  "layers": {
+    "module": {
+      "tent_deploy": {
+        "label": "신속 전개 모듈",
+        "parts": [
+          { "asset": "hangar-round", "position": [-0.6, 0], "home": true },
+          { "asset": "corridor", "position": [1.95, 0.2], "rotation": 90 },
+          { "asset": "hangar-round", "position": [3.9, 0.4], "scale": 0.7, "rotation": 30, "home": true }
+        ]
+      },
+      "soil_cover": {
+        "label": "차폐 보강 모듈",
+        "parts": [
+          { "asset": "hangar-small", "position": [-1.6, 0], "scale": 0.85 },
+          { "asset": "mound", "position": [-1.6, 0], "scale": 4.6, "home": true },
+          { "asset": "hangar-small", "position": [2.9, 0.6], "scale": 0.85 },
+          { "asset": "mound", "position": [2.9, 0.6], "scale": 4.6, "rotation": 70, "home": true },
+          { "asset": "corridor", "position": [0.65, 0.3], "rotation": 90 },
+          { "asset": "gate-airlock", "position": [-1.6, 2.5] }
+        ]
+      },
+      "cave_entrance": {
+        "label": "동굴 입구 거점",
+        "parts": [
+          { "asset": "gate-complex", "position": [-5.4, -1.0], "rotation": 90 },
+          { "asset": "hangar-small", "position": [-3.6, -1.0], "scale": 0.75, "home": true },
+          { "asset": "corridor", "position": [-2.1, -1.0], "rotation": 90 },
+          { "asset": "structure-closed", "position": [-0.9, -1.0], "home": true }
+        ]
+      },
+      "cave_deep": {
+        "label": "동굴 안쪽 거점",
+        "parts": [
+          { "asset": "structure-closed", "position": [8.6, -1.0], "home": true },
+          { "asset": "corridor-split", "position": [9.8, -1.0], "rotation": 90 },
+          { "asset": "structure-closed", "position": [11.0, -1.0], "home": true },
+          { "asset": "corridor-window", "position": [9.8, -2.2] },
+          { "asset": "corridor", "position": [7.4, -1.0], "rotation": 90 },
+          { "asset": "corridor", "position": [6.2, -1.0], "rotation": 90 }
+        ]
+      },
+      "terrace": {
+        "label": "집약형 단지",
+        "parts": [
+          { "asset": "structure-closed", "position": [0, 0], "crest": true, "home": true },
+          { "asset": "platform-low", "position": [1.5, 0], "crest": true },
+          { "asset": "structure-closed", "position": [1.5, 0], "crest": true, "lift": 0.6, "home": true },
+          { "asset": "platform-low", "position": [3.0, 0], "crest": true },
+          { "asset": "structure-closed", "position": [3.0, 0], "crest": true, "lift": 0.6, "home": true },
+          { "asset": "corridor", "position": [0, 1.2], "crest": true },
+          { "asset": "structure-closed", "position": [0, 2.4], "crest": true, "home": true },
+          { "asset": "stairs", "position": [0.75, -0.9], "crest": true, "rotation": -90 },
+          { "asset": "stairs", "position": [2.25, -0.9], "crest": true, "rotation": -90 }
+        ]
+      },
+      "scattered": {
+        "label": "분산형 단지",
+        "parts": [
+          { "asset": "structure-detailed", "position": [0, -4.2], "crest": true, "home": true },
+          { "asset": "structure-closed", "position": [0, 0.6], "crest": true, "home": true },
+          { "asset": "supports-high", "position": [2.6, 3.4], "crest": true },
+          { "asset": "structure-closed", "position": [2.6, 3.4], "crest": true, "lift": 1.2, "home": true },
+          { "asset": "structure-detailed", "position": [3.4, -2.0], "crest": true, "home": true }
+        ]
+      }
+    },
+    "overlay": {
+      "big_machine": {
+        "label": "중앙 산소 설비",
+        "scaleAt": { "B": 0.7 },
+        "parts": [
+          { "asset": "generator-large", "offset": [-0.5, 0] },
+          { "asset": "tank-large", "offset": [0.85, -0.5] },
+          { "asset": "tank-large", "offset": [0.85, 0.5] }
+        ]
+      },
+      "recycler": {
+        "label": "물 회수형 산소 설비",
+        "scaleAt": { "B": 0.75 },
+        "parts": [
+          { "asset": "recycler", "offset": [-0.45, -0.4] },
+          { "asset": "tank-large", "offset": [-0.45, 0.55] },
+          { "asset": "pipe-split", "offset": [0.5, -0.4], "scale": 0.7, "rotation": 90 },
+          { "asset": "pipe-ring", "offset": [0.5, 0.5], "scale": 0.7, "rotation": 90 }
+        ]
+      },
+      "small_units": {
+        "label": "분산형 산소 장치",
+        "perHome": true,
+        "parts": [
+          { "asset": "air-unit-small", "offset": [0, 0] }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "location",
+      "label": "기지를 세울 위치를 골라 주세요",
+      "choices": [
+        { "id": "A", "label": "현무암 평원", "line": "넓은 평지라 건설과 확장이 쉬워요.", "gain": "넓은 부지, 태양광·온실 자리", "cost": "그늘이 없어 냉방 전력이 계속 들어요", "site": "plain" },
+        { "id": "B", "label": "용암동굴", "line": "두꺼운 암반이 바깥 환경을 막아 줘요.", "gain": "냉방 부담이 적고, 안쪽에 물이 있을 수 있어요", "cost": "장비 반입 전력이 크고 지상과 멀어져요", "site": "lavaTube" },
+        { "id": "C", "label": "황혼 능선", "line": "낮과 밤의 경계라 빛을 안정적으로 받아요.", "gain": "일조 확보, 그늘 사면의 얼음 가능성", "cost": "평지가 좁아 기초 공사가 필요해요", "site": "ridge" }
+      ]
+    },
+    {
+      "id": "module",
+      "label": "기지를 짓는 방식을 골라 주세요",
+      "choices": [
+        { "id": "A1", "label": "신속 전개 모듈", "line": "반입한 모듈을 그대로 펼쳐 바로 가동해요.", "gain": "초기 전력 절감", "cost": "냉방 전력 증가, 정전에 취약", "requires": { "location": ["A"] }, "module": "tent_deploy" },
+        { "id": "A2", "label": "차폐 보강 모듈", "line": "모듈 위에 현지 흙을 덮어 열을 막아요.", "gain": "이후 냉방 전력 감소", "cost": "초기 공사 전력이 커요", "requires": { "location": ["A"] }, "module": "soil_cover" },
+        { "id": "B1", "label": "동굴 입구 거점", "line": "입구 가까이에 지어 드나들기 쉬워요.", "gain": "반입·대피가 쉽고 지상과 가까워요", "cost": "입구로 들어오는 먼지와 별 활동의 영향", "requires": { "location": ["B"] }, "module": "cave_entrance" },
+        { "id": "B2", "label": "동굴 안쪽 거점", "line": "암반 깊숙이 들어가 바깥 영향을 거의 받지 않아요.", "gain": "외부 사건에 강해요", "cost": "전선·배관이 길어 비용이 늘어요", "requires": { "location": ["B"] }, "module": "cave_deep" },
+        { "id": "C1", "label": "집약형 단지", "line": "건물을 한곳에 모아 연결을 짧게 해요.", "gain": "시공비 절감, 관리 용이", "cost": "설비 고장이 여러 동으로 번져요", "requires": { "location": ["C"] }, "module": "terrace" },
+        { "id": "C2", "label": "분산형 단지", "line": "건물을 나누어 지어 사고가 번지지 않게 해요.", "gain": "한 구역의 사고가 격리돼요", "cost": "기초 공사와 연결선이 늘어요", "requires": { "location": ["C"] }, "module": "scattered" }
+      ]
+    },
+    {
+      "id": "oxygen",
+      "label": "산소를 공급하는 방식을 골라 주세요",
+      "choices": [
+        { "id": "O1", "label": "중앙 산소 설비", "line": "큰 장치 한 대가 물을 전기분해해 산소를 만들어요.", "gain": "구성이 단순하고 저렴해요", "cost": "물 소비가 많고 고장 시 전체가 영향을 받아요", "overlays": ["big_machine"] },
+        { "id": "O2", "label": "물 회수형 산소 설비", "line": "내쉰 이산화탄소에서 물을 되찾아 다시 써요.", "gain": "매주 물을 아낄 수 있어요", "cost": "설치·정비 전력이 커요", "overlays": ["recycler"] },
+        { "id": "O3", "label": "분산형 산소 장치", "line": "작은 장치를 구역마다 두어 하나가 멈춰도 공급이 이어져요.", "gain": "고장·정전 때 공기 피해 감소", "cost": "장비가 여러 대라 초기 전력이 커요", "overlays": ["small_units"] }
+      ]
+    }
+  ]
+}

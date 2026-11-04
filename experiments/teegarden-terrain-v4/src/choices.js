@@ -1,34 +1,47 @@
-import data from './choices.json' with { type: 'json' };
+import week1 from './weeks/week1.json' with { type: 'json' };
+import week2 from './weeks/week2.json' with { type: 'json' };
+import week3 from './weeks/week3.json' with { type: 'json' };
+import week4 from './weeks/week4.json' with { type: 'json' };
+import week5 from './weeks/week5.json' with { type: 'json' };
 import definitions from './sites.json' with { type: 'json' };
 import { plainSurface } from './plain.js';
 import { ridgeSurface, ridgeCrest, ridgeFrame, TOP_HALF_WIDTH } from './ridge.js';
-import { caveSection, tubeFrame, PILLAR_SPOTS } from './lavaTube.js';
+import { caveSection, tubeFrame, tubeSurface, PILLAR_SPOTS } from './lavaTube.js';
 
-// 단계별 선지: 지대(A·B·C) → 거주 방식 → 산소 생성 방식. 앞 단계를 고르면 다음 단계 선지가 열린다.
+// 단계별 선지 (플레이테스트 1주차 갈래): 위치(A·B·C) → 짓는 방식(위치마다 2개) → 숨 쉴 공기(3개). 앞 단계를 고르면 다음 단계 선지가 열린다.
 // 선택 상태는 { location, module, oxygen } 이다. 메인 게임 composer.js 의 resolve·requires 규칙과 같다.
-export { data as choiceData };
-export const STEP_IDS = data.steps.map(step => step.id);
-export const siteLetter = site => data.sites[site];
+export { week1 as choiceData };
+export const STEP_IDS = week1.steps.map(step => step.id);
+// 주차 파일은 따로 두고 선택 상태 하나에 쌓는다: { location, module, oxygen, power, … }. 그래서 뒤 주차가 앞 주차 선택을 그대로 읽는다.
+// 주차마다 src/weeks/weekN.json 하나. 새 주차는 여기에 추가한다
+export const WEEKS = [week1, week2, week3, week4, week5];
+export const ALL_STEPS = WEEKS.flatMap(week => week.steps);
+for (const { layers } of WEEKS.slice(1)) Object.assign(week1.layers.overlay, layers.overlay);
+export const siteLetter = site => week1.sites[site];
 
-const isAvailable = (choice, selection) =>
-  !choice.hidden && Object.entries(choice.requires ?? {}).every(([step, ids]) => ids.includes(selection[step]));
+const meets = (requires, selection) => Object.entries(requires ?? {}).every(([step, ids]) => ids.includes(selection[step]));
+const isAvailable = (choice, selection) => !choice.hidden && meets(choice.requires, selection);
+
+/** [{ requires?, text }] 에서 지금 선택에 맞는 문장만 고른다 (현재 상황 문구, 선지 설명 뒤에 붙는 문장) */
+export const textsFor = (items, selection) => (items ?? []).filter(item => meets(item.requires, selection)).map(item => item.text);
 
 /** 그 단계에서 지금 고를 수 있는 선지 */
 export function availableChoices(stepId, selection) {
-  return (data.steps.find(step => step.id === stepId)?.choices ?? []).filter(choice => isAvailable(choice, selection));
+  return (ALL_STEPS.find(step => step.id === stepId)?.choices ?? []).filter(choice => isAvailable(choice, selection));
 }
 
 /** 앞 단계를 바꾸면 그 뒤 단계 선택은 지운다 */
 export function choose(selection, stepId, choiceId) {
   const next = { ...selection, [stepId]: choiceId };
-  for (const id of STEP_IDS.slice(STEP_IDS.indexOf(stepId) + 1)) delete next[id];
+  const ids = ALL_STEPS.map(step => step.id);
+  for (const id of ids.slice(ids.indexOf(stepId) + 1)) delete next[id];
   return next;
 }
 
 /** 선택 상태 → 그릴 레이어 */
 export function resolve(selection) {
   const layers = { module: null, overlays: [] };
-  for (const step of data.steps) {
+  for (const step of ALL_STEPS) {
     const choice = step.choices.find(c => c.id === selection[step.id]);
     if (!choice || !isAvailable(choice, selection)) continue;
     if (choice.module) layers.module = choice.module;
@@ -46,6 +59,10 @@ export function floorAt(site, x, z) {
 }
 
 /** JSON 의 자리 → 지대 좌표 [x, y, z]. crest 면 x 를 능선 마루에서 잰다 */
+/** 땅 위 자리. 동굴(B) 지대에서 굴 밖 지표에 놓는 장치가 쓴다 */
+export function surfaceSpot(site, [x, z]) {
+  return [x, site === 'lavaTube' ? tubeSurface(x, z, definitions.lavaTube) : floorAt(site, x, z), z];
+}
 export function placeAt(site, position, crest = false) {
   const [a, b, c] = position;
   const z = position.length === 3 && typeof c === 'number' ? c : b;
@@ -57,7 +74,7 @@ export function placeAt(site, position, crest = false) {
 
 // 산소 장치 자리 찾기: 원하는 자리에서 가까운 순으로 살펴, 주거 모듈 점·지형과 겹치지 않는 첫 자리를 쓴다.
 // footprint 는 장치의 바닥 반지름 r 과 높이 h (지역 단위)
-const CELL = 0.25, CLEARANCE = 0.3, SEARCH = 8, STEP = 0.4;
+const CELL = 0.25, CLEARANCE = 0.3, SEARCH = 8, STEP = 0.4, SLOPES = [0.3, 0.6, 1.0];
 /** 모듈 점들이 차지한 칸: (x, z) 칸마다 높이 범위 */
 export function occupancy(positions) {
   const cells = new Map();
@@ -79,7 +96,7 @@ function clearOf(cells, x, y, z, { r, h }) {
   return true;
 }
 /** 장치를 (x, z) 에 둘 수 있는지: 지형이 장치를 뚫지 않고(바닥 높이 차), B 는 동굴 안 바닥·천장·기둥·절개면 뒤 */
-export function fitsAt(site, x, z, footprint, cells) {
+export function fitsAt(site, x, z, footprint, cells, slope = SLOPES[0]) {
   const { r, h } = footprint, y = floorAt(site, x, z);
   if (!Number.isFinite(y)) return false;
   let low = y, high = y;
@@ -87,7 +104,7 @@ export function fitsAt(site, x, z, footprint, cells) {
     const f = floorAt(site, x + Math.cos(a * Math.PI / 4) * r, z + Math.sin(a * Math.PI / 4) * r);
     low = Math.min(low, f); high = Math.max(high, f);
   }
-  if (high - low > 0.3) return false;
+  if (high - low > slope) return false;
   if (site === 'lavaTube') {
     const s = caveSection(x, definitions.lavaTube), f = tubeFrame(x);
     if (!s || z > -(r + 0.1) || Math.abs(z) + r > f.width * 0.9) return false;
@@ -102,7 +119,8 @@ export function findSpot(site, preferred, footprint, cells = new Map()) {
   const [px, , pz] = preferred, candidates = [];
   for (let dx = -SEARCH; dx <= SEARCH; dx += STEP) for (let dz = -SEARCH; dz <= SEARCH; dz += STEP) candidates.push([px + dx, pz + dz]);
   candidates.sort((a, b) => Math.hypot(a[0] - px, a[1] - pz) - Math.hypot(b[0] - px, b[1] - pz));
-  for (const [x, z] of candidates) if (fitsAt(site, x, z, footprint, cells)) return [x, floorAt(site, x, z), z];
+  // 평평한 자리부터 찾고, 주차가 쌓여 자리가 모자라면 조금 비탈진 곳까지 넓힌다
+  for (const slope of SLOPES) for (const [x, z] of candidates) if (fitsAt(site, x, z, footprint, cells, slope)) return [x, floorAt(site, x, z), z];
   // 모듈과 겹치지 않는 자리가 없으면, 지형 조건만 맞는 자리 중 모듈 점에서 가장 먼 곳
   let best = null, far = -1;
   for (const [x, z] of candidates) {
@@ -120,5 +138,5 @@ export function findSpot(site, preferred, footprint, cells = new Map()) {
 /** 오버레이를 놓을 자리: 레이어의 at[지대] → 없으면 지대 기본 자리 */
 export function overlaySpot(site, id) {
   const letter = siteLetter(site);
-  return placeAt(site, data.layers.overlay[id]?.at?.[letter] ?? data.slots[letter]);
+  return placeAt(site, week1.layers.overlay[id]?.at?.[letter] ?? week1.slots[letter]);
 }
