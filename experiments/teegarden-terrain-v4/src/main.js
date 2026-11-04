@@ -7,7 +7,7 @@ import { buildRidge } from './ridge.js';
 import { buildSurroundings, joinPoints } from './surroundings.js';
 import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor } from './choices.js';
 import hud from './hud.json' with { type: 'json' };
-import './intro.js';
+import { openBriefing } from './intro.js';
 import { buildModule, buildOverlay, tintLayer, TINT } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
@@ -230,6 +230,7 @@ try {
       : decided[step.id] ? choiceLabel(step.id) : '—');
     entries.forEach((text, i) => { $('#hud-log-' + (i + 1)).textContent = '▶ LOG 0' + (i + 1) + ' ........ ' + text; });
     document.querySelectorAll('#hud .tab').forEach((tab, i) => {
+      tab.hidden = i >= week; // 아직 오지 않은 주차는 탭을 보이지 않는다
       tab.classList.toggle('on', i === week - 1); tab.setAttribute('aria-selected', String(i === week - 1));
     });
   }
@@ -316,7 +317,13 @@ try {
     controls.autoRotate = false;
   }
 
-  $('#next-week').addEventListener('click', () => { week++; renderSteps(true); });
+  // 주차 브리핑: 다음 주로 넘어갈 때 뜨고, 왼쪽 주차 탭이나 브리핑의 탭으로 지난 주 것을 다시 본다
+  const showBrief = number => {
+    const shown = WEEKS[number - 1];
+    openBriefing(shown, textsFor(shown.situation, selection), week, showBrief);
+  };
+  document.querySelectorAll('#hud .tab').forEach((tab, i) => tab.addEventListener('click', () => showBrief(i + 1)));
+  $('#next-week').addEventListener('click', () => { week++; renderSteps(true); showBrief(week); });
 
   // A와 B는 사용자 표시 위치, C는 기존 위치다. 실제 경위도 자료는 아니다.
   const sun = new THREE.Vector3(PLANET_SUN.x, PLANET_SUN.y, PLANET_SUN.z).normalize();
@@ -386,15 +393,10 @@ try {
     $('#landmark').hidden = !local;
     if (local) {
       const text = COPY[currentSite];
-      $('#eyebrow').textContent = 'SURFACE EXPEDITION / SITE ' + text.letter;
-      $('#title').textContent = text.title; $('#description').textContent = text.text;
       $('#landmark').replaceChildren(document.createTextNode(text.tag));
       const sub = document.createElement('small'); sub.textContent = text.sub; $('#landmark').appendChild(sub);
       $('#interaction').textContent = '드래그 회전 · 휠 확대 · 우클릭 이동';
     } else {
-      $('#eyebrow').textContent = 'ORBITAL SURVEY / 지표 탐사';
-      $('#title').innerHTML = "Teegarden's<br>Star <em>b.</em>";
-      $('#description').innerHTML = '별이 지지 않는 세계.<br>황혼의 경계에서 우리의 거주지를 찾습니다.';
       $('#interaction').textContent = '행성 위 A · B · C를 선택해 접근하세요';
       $('#build-time').textContent = 'TEEGARDEN b / ORBITAL VIEW';
     }
@@ -509,7 +511,7 @@ try {
       decided[step.id] = true;
     }
     week = startWeek; startWeek = 1;
-    renderSteps(true); syncAssets();
+    renderSteps(true); syncAssets(); showBrief(week);
   }
   if (WEEKS[startWeek - 1] && startWeek > 1) selectSite(jump.get('site') ?? 'plain');
   const projected = new THREE.Vector3(), temporary = new THREE.Vector3();

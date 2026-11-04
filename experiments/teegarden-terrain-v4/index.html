@@ -26,14 +26,14 @@
    <div class="cam-r"><span id="brief-year">YEAR 7777</span><span>SIGNAL · <span class="hi">LIVE</span></span></div>
    <div class="glow" aria-hidden="true"></div>
    <img class="robot" src="/src/assets/ori-robot.png" alt="탐사 로봇 ORI">
-   <div class="bubble"><span class="who">ORI-07 · 탐사 로봇</span><p>오늘의 행성 정보를 확인하기 위해 나왔어요!<br>첫 주차에는 대기와 기온에 대해 조사할게요.</p>
+   <div class="bubble"><span class="who">ORI-07 · 탐사 로봇</span><p id="brief-bubble"></p>
     <div class="send"><span class="bar" aria-hidden="true"></span><span><span id="brief-crew">대원</span>님 기기로 전송 중</span></div></div>
   </div>
   <div class="brief-box">
-   <div class="tabs" role="tablist" aria-label="주차"><button type="button" class="tab on" role="tab" aria-selected="true">WEEK 1</button><button type="button" class="tab" role="tab" aria-selected="false" disabled>WEEK 2</button><button type="button" class="tab" role="tab" aria-selected="false" disabled>WEEK 3</button></div>
+   <div class="tabs" id="brief-tabs" role="tablist" aria-label="주차"></div>
    <div class="brief-body">
     <div class="avatar" aria-hidden="true"><svg width="44" height="44" viewBox="0 0 40 40" fill="none" stroke="#9DB6FF" stroke-width="2"><rect x="13" y="7" width="14" height="14"/><path d="M6 36v-4c0-5 6-8 14-8s14 3 14 8v4"/></svg></div>
-    <div class="report"><p id="brief-temp"></p><p id="brief-o2"></p></div>
+    <div class="report" id="brief-report"></div>
     <button type="button" class="next" id="intro-next" aria-label="다음">▶▶</button>
    </div>
   </div>
@@ -43,7 +43,7 @@
 
 <div class="hud" id="hud">
  <aside class="panel p-left" aria-label="탐사 상태">
-  <div class="tabs" role="tablist" aria-label="주차"><button type="button" class="tab on" role="tab" aria-selected="true" aria-label="1주차">W1</button><button type="button" class="tab" role="tab" aria-selected="false" disabled aria-label="2주차">W2</button><button type="button" class="tab" role="tab" aria-selected="false" disabled aria-label="3주차">W3</button><button type="button" class="tab" role="tab" aria-selected="false" disabled aria-label="4주차">W4</button><button type="button" class="tab" role="tab" aria-selected="false" disabled aria-label="5주차">W5</button></div>
+  <div class="tabs" role="tablist" aria-label="주차"><button type="button" class="tab on" role="tab" aria-selected="true" aria-label="1주차">W1</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="2주차">W2</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="3주차">W3</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="4주차">W4</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="5주차">W5</button></div>
   <div class="panel-body">
    <div class="stat"><span class="chip">TEMP</span><strong id="hud-temp">—</strong><small id="hud-temp-note"></small></div>
    <div class="stat"><span class="chip">O₂</span><strong id="hud-o2">측정 중</strong><span class="gauge" aria-hidden="true"><span id="hud-o2-bar"></span></span></div>
