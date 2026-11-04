@@ -98,6 +98,25 @@
 | solar-panel-stand.glb | Solar Panel | https://poly.pizza/m/ah89Y79JdT | Quaternius | CC0 | 발전소 + 비탈 마을 |
 | satellite-dish.glb | Satellite Dish | https://poly.pizza/m/IDRrztoAMB | Kenney | CC0 | 미정 |
 
+## 2~5주차 추가 모델 (Poly Pizza, CC0)
+
+2~5주차 선지에서 모자란 모델을 하나씩 받았어요. 묶음을 통째로 받지 않아서 10개를 합쳐도 약 300KB예요. 선지별 정리는 `docs/week2-5-assets.md`에 있어요.
+
+![2~5주차 모델 미리보기](docs/model-previews/6-week2-5-wireframe.png)
+
+| 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 삼각형 | 쓰는 선지 |
+|---|---|---|---|---|---|---|
+| battery.glb | Battery | https://poly.pizza/m/MYa3uWdwPU | Quaternius | CC0 | 132 | 2주 S1 커다란 배터리, S2 동네마다 비상 배터리 |
+| space-truck.glb | Space Truck | https://poly.pizza/m/HnXp3ZkfDk | Kay Lousberg | CC0 | 1,434 | 3주 W1 물 운반 (평지) |
+| drill.glb | Drill | https://poly.pizza/m/8uBbH7Dvmb | Kay Lousberg | CC0 | 1,198 | 3주 W1 얼음 캐기 (능선) |
+| oven.glb | Oven | https://poly.pizza/m/FGnRmwfjsT | Kay Lousberg | CC0 | 542 | 3주 W2 흙 짜서 물 얻기 |
+| shelf.glb | Bookshelf | https://poly.pizza/m/30Iealxb0p | CreativeTrio | CC0 | 236 | 4주 G1 실내 LED 농장 |
+| cabbage.glb | Cabbage | https://poly.pizza/m/6urnIRBhzr | Kenney | CC0 | 144 | 4주 C_leaf 쑥쑥 상추 |
+| wheat.glb | Wheat | https://poly.pizza/m/lPspzfC8Pu | Quaternius | CC0 | 408 | 4주 C_staple 든든 감자·밀 |
+| corn.glb | Corn | https://poly.pizza/m/NaEnzEW0JQ | Kenney | CC0 | 128 | 4주 C_staple 든든 감자·밀 |
+| astronaut.glb | Astronaut | https://poly.pizza/m/4orkFqR9c9 | Polygonal Mind | CC0 | 2,284 | 5주 M1·M2 입주 |
+| spaceship.glb | Spaceship | https://poly.pizza/m/H4OXkd9lWz | Quaternius | CC0 | 456 | 5주 M2 두 번에 나눠 입주 |
+
 ## NVIDIA SimReady (CC-BY 4.0)
 
 > ⚠️ 이 표의 모델은 CC0이 아니라 **CC-BY 4.0**이에요. 게임에 쓰면 크레딧에 꼭 이렇게 적어 주세요:
