@@ -1,5 +1,5 @@
 {
-  "note": "Kenney Space Kit 모델의 원래 가장 긴 변 (통로 한 칸 = 1). 정리 도구가 모든 모델을 가장 긴 변 1로 맞춰 크기 차이가 사라지므로, placement.js 가 놓을 때 이 값 × tile 을 scale 에 자동으로 곱한다. 그래서 choices.json 의 scale 1 은 '원래 크기'다",
+  "note": "Kenney Space Kit 모델의 원래 가장 긴 변 (통로 한 칸 = 1). 정리 도구가 모든 모델을 가장 긴 변 1로 맞춰 크기 차이가 사라지므로, placement.js 가 놓을 때 이 값 × tile 을 scale 에 자동으로 곱한다. 그래서 weeks/week1.json 의 scale 1 은 '원래 크기'다",
   "tile": 1.2,
   "sizes": {
     "hangar-round": 3.27,

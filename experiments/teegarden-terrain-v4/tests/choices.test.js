@@ -19,7 +19,7 @@ for (const step of choiceData.steps) for (const choice of step.choices) {
     for (const id of ids) assert.ok(step.choices.some(c => c.id === id), `${choice.id} 의 requires ${stepId}:${id}`);
   }
 }
-const assets = [...Object.values(layers.module).flatMap(l => l.parts), ...Object.values(layers.overlay).flatMap(l => l.parts ?? [l])].map(p => p.asset).filter(Boolean);
+const assets = [...Object.values(layers.module).flatMap(l => l.parts), ...Object.values(layers.overlay).flatMap(l => l.partsAt ? Object.values(l.partsAt).flat() : l.parts ?? [l])].map(p => p.asset).filter(Boolean);
 for (const asset of new Set(assets)) {
   assert.ok(existsSync(new URL(`../src/models/${asset}.glb`, import.meta.url)), `모델 파일 ${asset}.glb`);
   assert.ok(placement.includes(`'./models/${asset}.glb'`), `placement.js 가 ${asset}.glb 를 불러온다`);
@@ -27,6 +27,8 @@ for (const asset of new Set(assets)) {
 
 // 주차가 이어진다: 뒤 주차 선지도 레이어가 있고, 앞 주차 선택이 지워지지 않으며, 장치가 쌓이고, 앞 주차 선택에 따라 문구가 달라진다
 assert.equal(new Set(ALL_STEPS.map(step => step.id)).size, ALL_STEPS.length, '단계 id 는 주차를 넘어서도 겹치지 않는다');
+assert.deepEqual(WEEKS.map(week => week.week), [1, 2, 3, 4, 5]);
+assert.equal(ALL_STEPS.length, 15, '5주 동안 매주 결정 3개');
 for (const week of WEEKS.slice(1)) for (const step of week.steps) {
   assert.ok(step.short, `${step.id} 결정 버튼 이름`);
   for (const choice of step.choices) {
