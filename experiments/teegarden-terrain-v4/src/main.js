@@ -8,7 +8,7 @@ import { buildSurroundings, joinPoints } from './surroundings.js';
 import { availableChoices, choose, resolve, siteLetter, choiceData } from './choices.js';
 import hud from './hud.json' with { type: 'json' };
 import './intro.js';
-import { buildModule, buildOverlay } from './placement.js';
+import { buildModule, buildOverlay, tintLayer, TINT } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
 import { orange } from './palette.js';
@@ -133,10 +133,23 @@ try {
     $('#legend').hidden = true;
   }
   function addLayer(data) {
-    const points = new THREE.Points(geometryFrom(data, 1), material);
+    const points = new THREE.Points(geometryFrom(data, TINT.new.weight), material);
     assetGroup.add(points); fadePoints(points, 0);
     reveals.push({ points, start: performance.now() });
     return points;
+  }
+  // 레이어 색만 바꾼다. 점이 채워지는 중이면 그 동작이 baseColor 를 읽어 알아서 새 색으로 그린다
+  function paintLayer(layer, role) {
+    if (!layer?.data.levels || layer.role === role) return;
+    layer.role = role;
+    const srgb = tintLayer(layer.data.levels, role), geometry = layer.points.geometry, base = geometry.userData.baseColor;
+    for (let i = 0; i < base.length; i += 3) {
+      color.setRGB(srgb[i], srgb[i + 1], srgb[i + 2], THREE.SRGBColorSpace);
+      color.toArray(base, i);
+    }
+    const weight = geometry.getAttribute('lineWeight');
+    weight.array.fill(TINT[role].weight); weight.needsUpdate = true;
+    if (!reveals.some(reveal => reveal.points === layer.points)) fadePoints(layer.points, 1);
   }
   // 선택 상태에 맞춰 레이어를 맞춘다: 바뀐 것만 새로 만들고 점이 아래에서 위로 채워진다
   async function syncAssets() {
@@ -158,11 +171,14 @@ try {
       if (overlayLayers.has(id)) continue;
       const data = await buildOverlay(site, id, moduleLayer?.data);
       if (token !== assetToken) return;
-      if (data.positions.length) { overlayLayers.set(id, { points: addLayer(data) }); added = true; }
+      if (data.positions.length) { overlayLayers.set(id, { data, points: addLayer(data) }); added = true; }
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spots ?? data.spot };
     }
+    // 가장 최근에 더한 선지만 흰색으로, 그 전 선지는 주황으로 칠한다
+    paintLayer(moduleLayer, overlayLayers.size ? 'old' : 'new');
+    overlayLayers.forEach(layer => paintLayer(layer, 'new'));
     $('#legend').hidden = !moduleLayer;
-    $('#legend-oxygen').hidden = !overlayLayers.size;
+    $('#legend-old').hidden = !overlayLayers.size;
     if (added) focusAssets();
   }
   // 단계별 선지: 1단계 위치(아래 A·B·C 카드) → 2단계 짓는 방식 → 3단계 숨 쉴 공기

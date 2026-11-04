@@ -13,6 +13,11 @@ const result = await build({ entryPoints: [fileURLToPath(new URL('src/main.js', 
 let html = await readFile(new URL('index.html', root), 'utf8');
 let css = await readFile(new URL('src/style.css', root), 'utf8');
 css = css.replace(/^@import[^\n]*\n/, '');
+// 파일 하나로 열리도록 글꼴과 로봇 이미지도 HTML 안에 담는다
+const dataUrl = async (file, type) => `data:${type};base64,${(await readFile(new URL(file, root))).toString('base64')}`;
+const font = await dataUrl('src/assets/fonts/terrarum-sans-bitmap.woff', 'font/woff'), robot = await dataUrl('src/assets/ori-robot.png', 'image/png');
+css = css.replace('./assets/fonts/terrarum-sans-bitmap.woff', () => font);
+html = html.replace('/src/assets/ori-robot.png', () => robot);
 html = html.replace('<link rel="stylesheet" href="/src/style.css">', () => `<style>${css}</style>`);
 html = html.replace('<script type="module" src="/src/main.js"></script>', () => `<script>${result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script')}</script>`);
 await writeFile(new URL('Teegarden-terrain.html', target), html);
