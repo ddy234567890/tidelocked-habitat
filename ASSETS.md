@@ -166,6 +166,14 @@
 | generator-small.glb | machine_generator | https://kenney.nl/assets/space-kit | Kenney | CC0 | 406 | O-3 분산형 산소 장치 |
 | air-unit-small.glb | machine_wireless | https://kenney.nl/assets/space-kit | Kenney | CC0 | 174 | O-3 분산형 산소 장치 |
 
+## 얼굴 패널 (experiments/face-panel)
+
+| 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 곳 |
+|---|---|---|---|---|---|
+| face/face.glb | Face | https://sketchfab.com/3d-models/face-ffde29cb64584cf1a939ac2b58d0a931 | 2on | CC-BY 4.0 (크레딧 표기 필요) | 좌측 하단 대원 얼굴 패널 |
+
+- 같은 폴더의 `face.landmarks.json`(눈·코·입 기준점), `face.credit.json`(출처)은 패널이 같이 읽어요. 입 안(치아·혀)은 코드로 만들어요.
+
 ## 화면 디자인 (글꼴·이미지)
 
 `experiments/teegarden-terrain-v4/src/assets`에 있어요. 3D 모델이 아니라 선지 화면을 꾸미는 자산이에요.
