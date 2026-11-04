@@ -18,6 +18,6 @@ let html = await readFile(new URL('index.html', root), 'utf8');
 html = html.replace('<link rel="stylesheet" href="/src/style.css">', () => `<style>${css}</style>`);
 html = html.replace('<script type="module" src="/src/main.js"></script>', () => `${menu}<script>function boot(){${result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script')}}
 var startMenu=document.getElementById('start-menu');
-if(location.search){startMenu.remove();boot();}
+if(/[?&]week=/.test(location.search)){startMenu.remove();boot();}
 else startMenu.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){window.startParams=b.dataset.start;startMenu.remove();boot();});});</script>`);
 await writeFile(new URL('../../이번-시안-열기.html', root), html);

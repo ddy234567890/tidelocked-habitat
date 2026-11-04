@@ -4152,6 +4152,6 @@ three/build/three.module.js:
 */
 }
 var startMenu=document.getElementById('start-menu');
-if(location.search){startMenu.remove();boot();}
+if(/[?&]week=/.test(location.search)){startMenu.remove();boot();}
 else startMenu.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){window.startParams=b.dataset.start;startMenu.remove();boot();});});</script>
 </body></html>
