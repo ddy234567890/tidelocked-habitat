@@ -1,0 +1,270 @@
+{
+  "week": 2,
+  "title": "전기 만들기",
+  "goal": "우주선 배터리가 바닥나기 전에 진짜 발전소를 세워요.",
+  "notes": {
+    "requires": "앞 주차 선택을 그대로 읽는다. { 단계id: [선지id…] } 를 만족할 때만 그 문장이나 선지가 나온다",
+    "situation": "화면 위 현재 상황 문구. 조건이 맞는 문장만 이어 붙인다",
+    "extra": "선지 설명 뒤에 조건이 맞을 때만 붙는 문장",
+    "outside": "그 지대에서는 집 근처 대신 정해진 땅 위 [x, z] 에 둔다 (굴 안에 둘 수 없는 태양광)",
+    "box": "parts 에 asset 대신 box: [가로, 높이, 두께] 를 쓰면 모델 없이 상자를 그린다"
+  },
+  "situation": [
+    {
+      "requires": {
+        "location": [
+          "B"
+        ]
+      },
+      "text": "동굴이라 지상 발전 설비까지 전선이 길어요."
+    },
+    {
+      "requires": {
+        "module": [
+          "A1"
+        ]
+      },
+      "text": "노출된 기지라 냉방이 계속 돌아가요."
+    },
+    {
+      "requires": {
+        "module": [
+          "C2"
+        ]
+      },
+      "text": "구역이 나뉘어 있어 전원도 구역마다 필요해요."
+    },
+    {
+      "text": "3주 정수, 4주 재배 설비도 전력을 써요. 지금 고른 전원이 이후 확장의 한계가 돼요."
+    }
+  ],
+  "layers": {
+    "overlay": {
+      "solar_field": {
+        "label": "태양광 패널 밭",
+        "parts": [
+          {
+            "asset": "solar-panel",
+            "offset": [
+              -1.2,
+              0
+            ],
+            "scale": 1.6
+          },
+          {
+            "asset": "solar-panel",
+            "offset": [
+              0,
+              0
+            ],
+            "scale": 1.6
+          },
+          {
+            "asset": "solar-panel",
+            "offset": [
+              1.2,
+              0
+            ],
+            "scale": 1.6
+          }
+        ],
+        "outside": {
+          "B": [
+            -9.5,
+            2.0
+          ]
+        }
+      },
+      "reactor": {
+        "label": "꼬마 원자력 발전소",
+        "scaleAt": {
+          "B": 0.7
+        },
+        "parts": [
+          {
+            "asset": "generator-large"
+          }
+        ]
+      },
+      "battery_main": {
+        "label": "커다란 배터리 하나",
+        "scaleAt": {
+          "B": 0.7
+        },
+        "parts": [
+          {
+            "asset": "structure-closed",
+            "scale": 0.8
+          },
+          {
+            "asset": "battery",
+            "scale": 1.2
+          }
+        ]
+      },
+      "battery_zones": {
+        "label": "동네마다 비상 배터리",
+        "perHome": true,
+        "parts": [
+          {
+            "asset": "battery",
+            "scale": 0.7
+          }
+        ]
+      },
+      "radiator": {
+        "label": "거대한 방열판",
+        "scaleAt": {
+          "B": 0.7
+        },
+        "parts": [
+          {
+            "box": [
+              1.5,
+              1.1,
+              0.06
+            ],
+            "offset": [
+              0,
+              -0.5
+            ]
+          },
+          {
+            "box": [
+              1.5,
+              1.1,
+              0.06
+            ],
+            "offset": [
+              0,
+              0
+            ]
+          },
+          {
+            "box": [
+              1.5,
+              1.1,
+              0.06
+            ],
+            "offset": [
+              0,
+              0.5
+            ]
+          }
+        ]
+      },
+      "air_conditioners": {
+        "label": "에어컨 더 달기",
+        "perHome": true,
+        "parts": [
+          {
+            "asset": "air-unit-small"
+          }
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "power",
+      "short": "전기",
+      "label": "전기를 무엇으로 만들까?",
+      "choices": [
+        {
+          "id": "P1",
+          "label": "태양광 패널 밭",
+          "line": "별빛으로 전기를 만들어요.",
+          "gain": "넓게 깔기만 하면 돼서 설치가 쉬워요",
+          "cost": "별 폭풍이 오면 전기가 확 줄어요",
+          "extra": [
+            {
+              "requires": {
+                "location": [
+                  "B"
+                ]
+              },
+              "text": "동굴은 패널이 굴 밖에 있어서 전선이 길어 손해를 봐요."
+            }
+          ],
+          "overlays": [
+            "solar_field"
+          ]
+        },
+        {
+          "id": "P2",
+          "label": "꼬마 원자력 발전소",
+          "line": "밤낮없이 똑같이 전기를 줘요.",
+          "gain": "빛이나 날씨와 상관없이 늘 같은 양을 만들어요",
+          "cost": "무겁고 설치가 힘들고, 한번 멈추면 다시 켜기 어려워요",
+          "overlays": [
+            "reactor"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "storage",
+      "short": "저장",
+      "label": "남는 전기는 어디에 모아 둘까?",
+      "choices": [
+        {
+          "id": "S1",
+          "label": "커다란 배터리 하나",
+          "line": "한곳에 모아 두기.",
+          "gain": "관리가 쉬워요",
+          "cost": "선이 끊기면 모든 집의 불이 한꺼번에 꺼져요",
+          "extra": [
+            {
+              "requires": {
+                "module": [
+                  "C2"
+                ]
+              },
+              "text": "집이 흩어져 있어서 선을 멀리까지 깔아야 해요."
+            }
+          ],
+          "overlays": [
+            "battery_main"
+          ]
+        },
+        {
+          "id": "S2",
+          "label": "동네마다 비상 배터리",
+          "line": "정전돼도 불이 켜져 있게.",
+          "gain": "정전이 나도 몇몇 동네는 계속 불이 켜져 있어요",
+          "cost": "처음 비용이 크고, 매주 조금씩 전기를 먹어요",
+          "overlays": [
+            "battery_zones"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "heat",
+      "short": "열",
+      "label": "기지에 쌓이는 열은 어떻게 뺄까?",
+      "choices": [
+        {
+          "id": "T1",
+          "label": "거대한 방열판",
+          "line": "처음엔 비싸도 나중엔 이득.",
+          "gain": "매주 에어컨 전기가 줄어요",
+          "cost": "설치가 비싸요",
+          "overlays": [
+            "radiator"
+          ]
+        },
+        {
+          "id": "T2",
+          "label": "에어컨 더 달기",
+          "line": "지금은 싸지만 전기를 계속 먹어요.",
+          "gain": "금방 설치돼요",
+          "cost": "정전되면 바로 멈춰서 기지가 더워져요",
+          "overlays": [
+            "air_conditioners"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -53,3 +53,11 @@ GitHub 수정만으로 위 Sites 배포가 자동 갱신되지는 않습니다.
   - tests/choices.test.js 가 길이(이름 12자·한 줄 36자·얻는 것/감수 28자)와 해요체를 검사한다.
 - 글꼴(Terrarum Sans Bitmap, SIL OFL 1.1)과 ORI 로봇 이미지는 src/assets 에 있고 ASSETS.md 에 적었다. 로봇 이미지의 작가·라이선스는 올린 팀원이 확인해 적어야 한다.
 - `node scripts/deliver.mjs` 로 만드는 독립 HTML 은 글꼴·로봇 이미지를 담지 못해 시스템 글꼴로 나온다 (상대 경로 파일이라서).
+
+## 주차 이어가기 (2026-11-04)
+- 주차 파일은 따로 둔다: 1주차 src/choices.json, 2주차부터 src/weeks/weekN.json. 새 주차는 src/choices.js 의 WEEKS 에 추가한다.
+- 선택 상태는 하나에 쌓인다: { location, module, oxygen, power, storage, heat, … }. 뒤 주차는 requires 로 앞 주차 선택을 읽는다 (선지 조건, situation 현재 상황 문구, extra 설명 뒤 문장).
+- 장치(오버레이)는 주차가 지나도 남고, buildOverlay 의 placed 로 앞 장치 자리를 비워 둔다.
+- 2주차만 바로 보기: 주소 뒤에 `?intro=0&week=2&site=lavaTube` (site 는 plain·lavaTube·ridge). 1주차는 단계마다 첫 선지를 고른 것으로 친다.
+- 오버레이 outside: { B: [x, z] } 는 그 지대에서 집 근처 대신 땅 위 자리에 둔다. 부품 box: [가로, 높이, 두께] 는 모델 없는 상자다.
+- 게이지·숫자 효과는 아직 없다.

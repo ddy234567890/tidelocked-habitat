@@ -1,34 +1,44 @@
 import data from './choices.json' with { type: 'json' };
+import week2 from './weeks/week2.json' with { type: 'json' };
 import definitions from './sites.json' with { type: 'json' };
 import { plainSurface } from './plain.js';
 import { ridgeSurface, ridgeCrest, ridgeFrame, TOP_HALF_WIDTH } from './ridge.js';
-import { caveSection, tubeFrame, PILLAR_SPOTS } from './lavaTube.js';
+import { caveSection, tubeFrame, tubeSurface, PILLAR_SPOTS } from './lavaTube.js';
 
 // 단계별 선지 (플레이테스트 1주차 갈래): 위치(A·B·C) → 짓는 방식(위치마다 2개) → 숨 쉴 공기(3개). 앞 단계를 고르면 다음 단계 선지가 열린다.
 // 선택 상태는 { location, module, oxygen } 이다. 메인 게임 composer.js 의 resolve·requires 규칙과 같다.
 export { data as choiceData };
 export const STEP_IDS = data.steps.map(step => step.id);
+// 주차 파일은 따로 두고 선택 상태 하나에 쌓는다: { location, module, oxygen, power, … }. 그래서 뒤 주차가 앞 주차 선택을 그대로 읽는다.
+// 1주차는 choices.json, 2주차부터 src/weeks/weekN.json. 새 주차는 여기에 추가한다
+export const WEEKS = [{ week: 1, steps: data.steps }, week2];
+export const ALL_STEPS = WEEKS.flatMap(week => week.steps);
+for (const { layers } of WEEKS.slice(1)) Object.assign(data.layers.overlay, layers.overlay);
 export const siteLetter = site => data.sites[site];
 
-const isAvailable = (choice, selection) =>
-  !choice.hidden && Object.entries(choice.requires ?? {}).every(([step, ids]) => ids.includes(selection[step]));
+const meets = (requires, selection) => Object.entries(requires ?? {}).every(([step, ids]) => ids.includes(selection[step]));
+const isAvailable = (choice, selection) => !choice.hidden && meets(choice.requires, selection);
+
+/** [{ requires?, text }] 에서 지금 선택에 맞는 문장만 고른다 (현재 상황 문구, 선지 설명 뒤에 붙는 문장) */
+export const textsFor = (items, selection) => (items ?? []).filter(item => meets(item.requires, selection)).map(item => item.text);
 
 /** 그 단계에서 지금 고를 수 있는 선지 */
 export function availableChoices(stepId, selection) {
-  return (data.steps.find(step => step.id === stepId)?.choices ?? []).filter(choice => isAvailable(choice, selection));
+  return (ALL_STEPS.find(step => step.id === stepId)?.choices ?? []).filter(choice => isAvailable(choice, selection));
 }
 
 /** 앞 단계를 바꾸면 그 뒤 단계 선택은 지운다 */
 export function choose(selection, stepId, choiceId) {
   const next = { ...selection, [stepId]: choiceId };
-  for (const id of STEP_IDS.slice(STEP_IDS.indexOf(stepId) + 1)) delete next[id];
+  const ids = ALL_STEPS.map(step => step.id);
+  for (const id of ids.slice(ids.indexOf(stepId) + 1)) delete next[id];
   return next;
 }
 
 /** 선택 상태 → 그릴 레이어 */
 export function resolve(selection) {
   const layers = { module: null, overlays: [] };
-  for (const step of data.steps) {
+  for (const step of ALL_STEPS) {
     const choice = step.choices.find(c => c.id === selection[step.id]);
     if (!choice || !isAvailable(choice, selection)) continue;
     if (choice.module) layers.module = choice.module;
@@ -46,6 +56,10 @@ export function floorAt(site, x, z) {
 }
 
 /** JSON 의 자리 → 지대 좌표 [x, y, z]. crest 면 x 를 능선 마루에서 잰다 */
+/** 땅 위 자리. 동굴(B) 지대에서 굴 밖 지표에 놓는 장치가 쓴다 */
+export function surfaceSpot(site, [x, z]) {
+  return [x, site === 'lavaTube' ? tubeSurface(x, z, definitions.lavaTube) : floorAt(site, x, z), z];
+}
 export function placeAt(site, position, crest = false) {
   const [a, b, c] = position;
   const z = position.length === 3 && typeof c === 'number' ? c : b;
