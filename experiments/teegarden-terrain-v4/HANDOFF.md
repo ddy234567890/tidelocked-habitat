@@ -55,10 +55,12 @@ GitHub 수정만으로 위 Sites 배포가 자동 갱신되지는 않습니다.
 - `node scripts/deliver.mjs` 로 만드는 독립 HTML 은 글꼴·로봇 이미지를 담지 못해 시스템 글꼴로 나온다 (상대 경로 파일이라서).
 
 ## 주차 이어가기 (2026-11-04)
-- 주차 파일은 따로 둔다: 1주차 src/choices.json, 2주차부터 src/weeks/weekN.json. 새 주차는 src/choices.js 의 WEEKS 에 추가한다.
+- 주차 파일은 따로 둔다: 1주차 src/choices.json, 2~5주차 src/weeks/weekN.json. src/choices.js 의 WEEKS 에 등록되어 있다.
+- 색: 지형은 파랑, 가장 최근에 더한 선지 하나는 크림(겹쳐 흰색으로 보인다), 그 전 선지는 모두 주황 (main.js syncAssets, 모든 주차 공통).
 - 선택 상태는 하나에 쌓인다: { location, module, oxygen, power, storage, heat, … }. 뒤 주차는 requires 로 앞 주차 선택을 읽는다 (선지 조건, situation 현재 상황 문구, extra 설명 뒤 문장).
 - 장치(오버레이)는 주차가 지나도 남고, buildOverlay 의 placed 로 앞 장치 자리를 비워 둔다.
 - 2주차만 바로 보기: 주소 뒤에 `?intro=0&week=2&site=lavaTube` (site 는 plain·lavaTube·ridge). 1주차는 단계마다 첫 선지를 고른 것으로 친다.
 - 오버레이 outside: { B: [x, z] } 는 그 지대에서 집 근처 대신 땅 위 자리에 둔다. 부품 box: [가로, 높이, 두께] 는 모델 없는 상자다.
-- 게이지·숫자 효과는 아직 없다.
+- 오버레이 partsAt: { A, B, C } 는 지대마다 장치 묶음이 다르다 (3주 W1).
+- 게이지·숫자 효과는 아직 없다. 5주 U1 의 {low} 와 점수 문구는 게이지가 들어온 뒤에 넣는다.
 - 더블클릭으로 여는 파일: `npm run open-file` 이 저장소 맨 위 이번-시안-열기.html 을 새로 만든다. 시작 메뉴에서 1주차 또는 2주차(지대별)를 고른다. 새 주차를 넣으면 이 파일도 다시 만든다.

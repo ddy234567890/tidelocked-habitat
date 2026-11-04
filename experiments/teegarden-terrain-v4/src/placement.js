@@ -39,6 +39,20 @@ import rockLarge from './models/rock-large.glb';
 import rocksSmall from './models/rocks-small.glb';
 import solarPanel from './models/solar-panel.glb';
 import battery from './models/battery.glb';
+import machine from './models/machine.glb';
+import waterTowerB from './models/water-tower-b.glb';
+import barrelB from './models/barrel-b.glb';
+import glassCylinder from './models/glass-cylinder.glb';
+import landerB from './models/lander-b.glb';
+import spaceTruck from './models/space-truck.glb';
+import drill from './models/drill.glb';
+import oven from './models/oven.glb';
+import shelf from './models/shelf.glb';
+import cabbage from './models/cabbage.glb';
+import wheat from './models/wheat.glb';
+import corn from './models/corn.glb';
+import astronaut from './models/astronaut.glb';
+import spaceship from './models/spaceship.glb';
 
 const MODELS = {
   'hangar-round': hangarRound, 'hangar-round-glass': hangarRoundGlass, 'hangar-small': hangarSmall, 'hangar-large': hangarLarge,
@@ -48,7 +62,8 @@ const MODELS = {
   'structure-detailed': structureDetailed, 'supports-high': supportsHigh, 'generator-large': generatorLarge, 'tank-large': tankLarge,
   recycler, 'pipe-straight': pipeStraight, 'pipe-split': pipeSplit, 'pipe-ring': pipeRing, 'generator-small': generatorSmall,
   'air-unit-small': airUnitSmall, 'rock-large': rockLarge, 'rocks-small': rocksSmall,
-  'solar-panel': solarPanel, battery
+  'solar-panel': solarPanel, battery,
+  machine, 'water-tower-b': waterTowerB, 'barrel-b': barrelB, 'glass-cylinder': glassCylinder, 'lander-b': landerB, 'space-truck': spaceTruck, drill, oven, shelf, cabbage, wheat, corn, astronaut, spaceship
 };
 // 와이어프레임: 모델의 면을 채우지 않고 모서리 선을 따라 점을 촘촘히 늘어놓는다. 머티리얼은 지형과 같은 하나 그대로다.
 // EDGE_ANGLE 보다 덜 꺾인 모서리(둥근 면을 이루는 잔 선)는 그리지 않아 선이 뭉치지 않는다
@@ -60,9 +75,18 @@ const ROOF_REACH = 1.4; // 집마다 두는 장치가 집 벽에서 이보다 �
 const LINE_MIN = 0.55; // 선 점의 가장 어두운 밝기 (파랑 단계 기준)
 const MAX_POINTS = 60000; // 한 레이어의 상한
 const GAIN = { module: 0.95, overlay: 1 }; // 선은 가늘어서 면보다 밝게 둔다
-const KIND_TINT = { module: cream, overlay: orange }; // 지형은 파랑, 주거 모듈은 크림, 산소 장치는 주황
-const TINT_RANGE = { module: [0.3, 0.25], overlay: [0.35, 0.15] }; // [가장 어두운 밝기, 밝기 폭]. 한 점 기준이라 겹쳐 그려지면 약 2배로 밝아진다
+// 지형은 파랑. 방금 더한 선지는 크림(선이 겹쳐 흰색으로 보인다), 그 전 선지는 주황.
+// range 는 [가장 어두운 밝기, 밝기 폭]. 한 점 기준이라 겹쳐 그려지면 약 2배로 밝아진다.
+// weight 는 main.js lineWeight: 작을수록 선이 굵고 밝다. 방금 더한 선지는 또렷하게, 그 전 선지는 가늘고 연하게 둔다
+export const TINT = { new: { color: cream, range: [0.3, 0.25], weight: 0.75 }, old: { color: orange, range: [0.22, 0.1], weight: 0.9 } };
 export const LAYER_POINTS = { seal: 9000, coat: 1800 };
+
+/** 점마다의 밝기(levels)를 role('new' 방금 더한 선지, 'old' 그 전 선지) 색으로 칠한다 */
+export function tintLayer(levels, role) {
+  const { color, range: [low, span] } = TINT[role], out = new Float32Array(levels.length * 3);
+  for (let i = 0; i < levels.length; i++) out.set(color(low + span * levels[i]), i * 3);
+  return out;
+}
 
 const loader = new GLTFLoader();
 const models = new Map();
@@ -163,15 +187,16 @@ async function sampleParts(site, parts, kind, spot, seed, { spacing = EDGE_SPACI
   toneColors(out.positions, out.colors);
   // 가는 선은 어두우면 배경에 묻힌다: 파랑 단계 LINE_MIN 보다 어두운 점은 그 밝기까지 올린다
   const floor = blue(LINE_MIN), lum = c => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2], min = lum(floor);
+  out.levels = new Float32Array(out.shake.length);
   for (let i = 0; i < out.colors.length; i += 3) {
     const c = out.colors.subarray(i, i + 3), l = lum(c);
     if (l < min) for (let j = 0; j < 3; j++) c[j] = Math.max(c[j] * (min / (l || 1)), floor[j] * (1 - l / min));
     for (let j = 0; j < 3; j++) c[j] = Math.min(1, c[j] * gain);
-    // 선지로 더해진 것은 지형(파랑)과 구분되게 색을 바꾼다: 주거는 크림, 산소 장치는 주황. 밝기 차이는 그대로 둔다.
+    // 색은 선택 순서에 따라 바뀌므로(tintLayer) 밝기 차이만 남긴다.
     // 선 점은 촘촘해서 더하기 블렌딩으로 겹쳐 밝아지므로, 한 점은 어둡게 둬야 주황이 흰색으로 날아가지 않는다
-    const [low, span] = TINT_RANGE[kind];
-    c.set(KIND_TINT[kind](low + span * Math.min(1, lum(c) / (lum(blue(1)) || 1))));
+    out.levels[i / 3] = Math.min(1, lum(c) / (lum(blue(1)) || 1));
   }
+  out.colors.set(tintLayer(out.levels, 'new'));
   out.blocks = Float32Array.from(blocks);
   return out;
 }
@@ -221,7 +246,7 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
   }
   // scaleAt: 지대마다 장치 묶음 크기 배율 (좁은 동굴에서는 작게 둬야 바닥에 들어간다)
   const k0 = def.scaleAt?.[siteLetter(site)] ?? 1;
-  const parts = (def.parts ?? [def]).map(p => ({ ...p, scale: (p.scale ?? 1) * k0, offset: (p.offset ?? [0, 0]).map(v => v * k0) }));
+  const parts = (def.partsAt?.[siteLetter(site)] ?? def.parts ?? [def]).map(p => ({ ...p, scale: (p.scale ?? 1) * k0, offset: (p.offset ?? [0, 0]).map(v => v * k0) }));
   const footprint = await footprintOf(parts), cells = occupancy(blocks ?? modulePoints);
   // 장치 자리는 바닥 원 전체를 막는다 (큰 장치도 틈으로 다른 장치가 들어오지 않게)
   const reserve = (spot, { r, h }) => {
@@ -252,7 +277,8 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
   }
   const n = chunks.reduce((sum, c) => sum + c.shake.length, 0), out = empty(n);
   let offset = 0;
-  for (const c of chunks) { out.positions.set(c.positions, offset * 3); out.colors.set(c.colors, offset * 3); offset += c.shake.length; }
+  out.levels = new Float32Array(n);
+  for (const c of chunks) { out.positions.set(c.positions, offset * 3); out.colors.set(c.colors, offset * 3); out.levels.set(c.levels, offset); offset += c.shake.length; }
   out.spot = spots[0]; out.spots = spots; out.footprint = footprint;
   return out;
 }

@@ -43,7 +43,7 @@
 
 <div class="hud" id="hud">
  <aside class="panel p-left" aria-label="탐사 상태">
-  <div class="tabs" role="tablist" aria-label="주차"><button type="button" class="tab on" role="tab" aria-selected="true">WEEK 1</button><button type="button" class="tab" role="tab" aria-selected="false" disabled title="아직 열리지 않았어요">WEEK 2</button><button type="button" class="tab" role="tab" aria-selected="false" disabled title="아직 열리지 않았어요">WEEK 3</button></div>
+  <div class="tabs" role="tablist" aria-label="주차"><button type="button" class="tab on" role="tab" aria-selected="true" aria-label="1주차">W1</button><button type="button" class="tab" role="tab" aria-selected="false" disabled aria-label="2주차">W2</button><button type="button" class="tab" role="tab" aria-selected="false" disabled aria-label="3주차">W3</button><button type="button" class="tab" role="tab" aria-selected="false" disabled aria-label="4주차">W4</button><button type="button" class="tab" role="tab" aria-selected="false" disabled aria-label="5주차">W5</button></div>
   <div class="panel-body">
    <div class="stat"><span class="chip">TEMP</span><strong id="hud-temp">—</strong><small id="hud-temp-note"></small></div>
    <div class="stat"><span class="chip">O₂</span><strong id="hud-o2">측정 중</strong><span class="gauge" aria-hidden="true"><span id="hud-o2-bar"></span></span></div>
@@ -66,7 +66,7 @@
    <div class="local-nav" id="local-nav" hidden><button id="back">← 행성으로</button><button id="cave-view" hidden>동굴 전체 보기</button><button id="section">단면 보기</button></div>
    <div class="orbit-note" id="orbit-note"><span class="orbit-line"></span><small>항성 방향 고정</small><p>낮의 현무암 평원에서<br>밤의 습윤 지대까지.</p></div>
    <div id="landmark" class="landmark" hidden></div>
-   <div class="stage-bottom"><span id="interaction">행성 위 A · B · C를 선택해 접근하세요</span><span id="legend" class="legend" hidden><i class="terrain"></i>지형 <i class="module"></i>주거 <span id="legend-oxygen" hidden><i class="oxygen"></i>산소 장치</span></span><span id="build-time" role="status">행성 모델 준비 중</span></div>
+   <div class="stage-bottom"><span id="interaction">행성 위 A · B · C를 선택해 접근하세요</span><span id="legend" class="legend" hidden><i class="terrain"></i>지형 <i class="new"></i>방금 추가 <span id="legend-old" hidden><i class="old"></i>이전 선택</span></span><span id="build-time" role="status">행성 모델 준비 중</span></div>
    <div id="travel-status" class="travel-status" role="status" hidden>탐사 지점으로 접근 중</div>
    <div id="error" hidden role="alert"></div>
   </div>

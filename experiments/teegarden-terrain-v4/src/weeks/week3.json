@@ -1,0 +1,361 @@
+{
+  "week": 3,
+  "title": "물 구하기",
+  "goal": "가져온 물이 떨어지기 전에, 물을 구하고 다시 쓰는 방법을 만들어요.",
+  "notes": {
+    "partsAt": "지대(A·B·C)마다 장치 묶음이 다르다. 평지는 운반차, 동굴은 웅덩이, 능선은 얼음 드릴",
+    "scaleAt": "좁은 동굴(B)과 능선(C)에서는 장치를 줄여야 주차가 쌓여도 겹치지 않는다"
+  },
+  "situation": [
+    {
+      "requires": {
+        "oxygen": [
+          "O2"
+        ]
+      },
+      "text": "1주에 자원 회수형을 골라 물을 아끼고 있어요."
+    },
+    {
+      "requires": {
+        "oxygen": [
+          "O1",
+          "O3"
+        ]
+      },
+      "text": "산소 장치가 매주 물을 많이 쓰고 있어요."
+    },
+    {
+      "requires": {
+        "location": [
+          "A"
+        ]
+      },
+      "text": "평지 근처에는 큰 수원이 없어 멀리서 날라야 해요."
+    },
+    {
+      "requires": {
+        "location": [
+          "B"
+        ]
+      },
+      "text": "동굴 안쪽에 물이 고인 곳이 있어요."
+    },
+    {
+      "requires": {
+        "location": [
+          "C"
+        ]
+      },
+      "text": "그늘진 비탈에서 얼음을 찾았어요."
+    },
+    {
+      "requires": {
+        "module": [
+          "C2"
+        ]
+      },
+      "text": "구역이 나뉘어 있어 물도 나눠 보내야 해요."
+    }
+  ],
+  "layers": {
+    "overlay": {
+      "water_source": {
+        "label": "한 우물만 파기",
+        "partsAt": {
+          "A": [
+            {
+              "box": [
+                2.4,
+                0.04,
+                1.6
+              ],
+              "offset": [
+                -0.9,
+                0
+              ]
+            },
+            {
+              "asset": "space-truck",
+              "offset": [
+                1.2,
+                0
+              ],
+              "scale": 0.8,
+              "rotation": 90
+            }
+          ],
+          "B": [
+            {
+              "box": [
+                2.0,
+                0.04,
+                1.2
+              ],
+              "offset": [
+                -0.4,
+                0
+              ]
+            },
+            {
+              "asset": "pipe-straight",
+              "offset": [
+                1.1,
+                0
+              ],
+              "scale": 0.5,
+              "rotation": 90
+            }
+          ],
+          "C": [
+            {
+              "box": [
+                1.3,
+                0.5,
+                1.1
+              ],
+              "offset": [
+                -0.8,
+                0
+              ]
+            },
+            {
+              "asset": "drill",
+              "offset": [
+                0.7,
+                0
+              ],
+              "scale": 0.9
+            }
+          ]
+        },
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        }
+      },
+      "soil_heater": {
+        "label": "흙 짜서 물 얻기",
+        "scaleAt": {
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "oven",
+            "scale": 0.8
+          }
+        ],
+        "outside": {
+          "B": [
+            -8.5,
+            6.0
+          ]
+        }
+      },
+      "basic_filter": {
+        "label": "기본 정수기만",
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "machine",
+            "scale": 0.5
+          }
+        ]
+      },
+      "water_plant": {
+        "label": "물 되살리기 공장",
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "recycler",
+            "offset": [
+              -0.5,
+              0
+            ]
+          },
+          {
+            "asset": "tank-large",
+            "offset": [
+              0.6,
+              0
+            ]
+          }
+        ]
+      },
+      "water_tower": {
+        "label": "큰 물탱크 하나",
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        },
+        "parts": [
+          {
+            "asset": "water-tower-b",
+            "offset": [
+              0,
+              0
+            ]
+          },
+          {
+            "asset": "pipe-split",
+            "offset": [
+              0.9,
+              0
+            ],
+            "scale": 0.6,
+            "rotation": 90
+          }
+        ]
+      },
+      "zone_tanks": {
+        "label": "동네마다 물탱크",
+        "perHome": true,
+        "parts": [
+          {
+            "asset": "barrel-b",
+            "scale": 0.45
+          }
+        ],
+        "scaleAt": {
+          "B": 0.55,
+          "C": 0.7
+        }
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "source",
+      "short": "물",
+      "label": "새 물은 어디서 구할까?",
+      "choices": [
+        {
+          "id": "W1",
+          "label": "한 우물만 파기",
+          "line": "많이 얻지만, 그 우물이 더러워지면 큰일.",
+          "gain": "물을 많이 얻어요",
+          "cost": "물을 한 곳에서만 얻으니, 그곳이 더러워지면 물이 크게 끊겨요",
+          "extra": [
+            {
+              "requires": {
+                "location": [
+                  "A"
+                ]
+              },
+              "text": "멀리 있는 물웅덩이에서 물을 실어 와요."
+            },
+            {
+              "requires": {
+                "location": [
+                  "B"
+                ]
+              },
+              "text": "동굴 안 물웅덩이에서 퍼 와요."
+            },
+            {
+              "requires": {
+                "location": [
+                  "C"
+                ]
+              },
+              "text": "그늘 비탈의 얼음을 캐서 녹여요."
+            }
+          ],
+          "overlays": [
+            "water_source"
+          ]
+        },
+        {
+          "id": "W2",
+          "label": "흙 짜서 물 얻기",
+          "line": "어디서나 되지만 조금씩.",
+          "gain": "기지 주변 어디서든 할 수 있어서 물이 더러워질 걱정이 적어요",
+          "cost": "전기를 많이 쓰고 나오는 물은 적어요",
+          "overlays": [
+            "soil_heater"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reuse",
+      "short": "재사용",
+      "label": "쓴 물은 다시 쓸까?",
+      "choices": [
+        {
+          "id": "R1",
+          "label": "기본 정수기만",
+          "line": "싸지만 쓴 물은 버려요.",
+          "gain": "비용이 적어요",
+          "cost": "한 번 쓴 물은 버리니까, 매주 새 물이 많이 필요해요",
+          "overlays": [
+            "basic_filter"
+          ]
+        },
+        {
+          "id": "R2",
+          "label": "물 되살리기 공장",
+          "line": "샤워한 물도 다시 마셔요.",
+          "gain": "물을 아껴요",
+          "cost": "전기를 더 써요",
+          "extra": [
+            {
+              "requires": {
+                "oxygen": [
+                  "O2"
+                ]
+              },
+              "text": "숨 재활용 기계와 함께 쓰면 물은 가장 아끼지만, 전기는 가장 많이 들어요."
+            }
+          ],
+          "overlays": [
+            "water_plant"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "share",
+      "short": "나누기",
+      "label": "물을 어떻게 나눠 줄까?",
+      "choices": [
+        {
+          "id": "D1",
+          "label": "큰 물탱크 하나",
+          "line": "한곳에서 파이프로 보내요.",
+          "gain": "관리가 쉬워요",
+          "cost": "큰 파이프가 막히면 모든 집에 물이 끊겨요",
+          "extra": [
+            {
+              "requires": {
+                "module": [
+                  "C2",
+                  "B2"
+                ]
+              },
+              "text": "집이 멀리 있어서 파이프를 길게 깔아야 해요."
+            }
+          ],
+          "overlays": [
+            "water_tower"
+          ]
+        },
+        {
+          "id": "D2",
+          "label": "동네마다 물탱크",
+          "line": "한쪽이 막혀도 물이 남아요.",
+          "gain": "한쪽 파이프가 고장 나도 다른 동네엔 물이 남아요",
+          "cost": "펌프가 많아서 매주 전기가 들어요",
+          "overlays": [
+            "zone_tanks"
+          ]
+        }
+      ]
+    }
+  ]
+}
