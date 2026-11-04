@@ -6,7 +6,7 @@ import { buildLavaTube } from './lavaTube.js';
 import { buildRidge } from './ridge.js';
 import { buildSurroundings, joinPoints } from './surroundings.js';
 import { availableChoices, choose, resolve, siteLetter } from './choices.js';
-import { buildModule, buildOverlay, tintLayer } from './placement.js';
+import { buildModule, buildOverlay, tintLayer, TINT } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
 import { orange } from './palette.js';
@@ -110,7 +110,7 @@ try {
     $('#legend').hidden = true;
   }
   function addLayer(data) {
-    const points = new THREE.Points(geometryFrom(data, 1), material);
+    const points = new THREE.Points(geometryFrom(data, TINT.new.weight), material);
     assetGroup.add(points); fadePoints(points, 0);
     reveals.push({ points, start: performance.now() });
     return points;
@@ -124,6 +124,8 @@ try {
       color.setRGB(srgb[i], srgb[i + 1], srgb[i + 2], THREE.SRGBColorSpace);
       color.toArray(base, i);
     }
+    const weight = geometry.getAttribute('lineWeight');
+    weight.array.fill(TINT[role].weight); weight.needsUpdate = true;
     if (!reveals.some(reveal => reveal.points === layer.points)) fadePoints(layer.points, 1);
   }
   // 선택 상태에 맞춰 레이어를 맞춘다: 바뀐 것만 새로 만들고 점이 아래에서 위로 채워진다

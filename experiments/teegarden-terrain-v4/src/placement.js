@@ -58,8 +58,9 @@ const LINE_MIN = 0.55; // 선 점의 가장 어두운 밝기 (파랑 단계 기�
 const MAX_POINTS = 60000; // 한 레이어의 상한
 const GAIN = { module: 0.95, overlay: 1 }; // 선은 가늘어서 면보다 밝게 둔다
 // 지형은 파랑. 방금 더한 선지는 크림(선이 겹쳐 흰색으로 보인다), 그 전 선지는 주황.
-// range 는 [가장 어두운 밝기, 밝기 폭]. 한 점 기준이라 겹쳐 그려지면 약 2배로 밝아진다
-const TINT = { new: { color: cream, range: [0.3, 0.25] }, old: { color: orange, range: [0.35, 0.15] } };
+// range 는 [가장 어두운 밝기, 밝기 폭]. 한 점 기준이라 겹쳐 그려지면 약 2배로 밝아진다.
+// weight 는 main.js lineWeight: 작을수록 선이 굵고 밝다. 방금 더한 선지는 또렷하게, 그 전 선지는 가늘고 연하게 둔다
+export const TINT = { new: { color: cream, range: [0.3, 0.25], weight: 0.75 }, old: { color: orange, range: [0.14, 0.08], weight: 1 } };
 export const LAYER_POINTS = { seal: 9000, coat: 1800 };
 
 /** 점마다의 밝기(levels)를 role('new' 방금 더한 선지, 'old' 그 전 선지) 색으로 칠한다 */
