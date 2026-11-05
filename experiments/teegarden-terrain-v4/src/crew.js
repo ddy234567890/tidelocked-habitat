@@ -15,11 +15,10 @@ const SEVERITY = [['hypoxia', '호흡곤란'], ['heat', '열 스트레스'], ['c
 const f1 = (v) => v.toFixed(1);
 
 // 지금 선택된 지점의 기온. 범위의 가운데 값을 쓴다 (지점을 고르기 전에는 평소 상태)
-let siteId = null;
+let siteTempC = null;
 const extra = {}; // 개발용으로 덮어쓰는 값 (window.crew.setEnv)
 function currentEnv() {
-  const range = siteId ? hud.sites[siteId]?.temperature : null;
-  return fromGameStats({ tempC: range ? (range[0] + range[1]) / 2 : undefined, oxygenPct: hud.oxygen ?? undefined }, extra);
+  return fromGameStats({ tempC: siteTempC ?? undefined, oxygenPct: hud.oxygen ?? undefined }, extra);
 }
 const body = createBodyLoop({ getEnv: currentEnv });
 
@@ -82,6 +81,11 @@ function renderDetails() {
 setInterval(renderDetails, 200);
 
 // main.js 가 지점을 바꿀 때 부른다 (null = 지점을 아직 안 고른 상태)
-export function setCrewSite(id) { siteId = id ?? null; }
+export function setCrewSite(id) {
+  const range = id ? hud.sites[id]?.temperature : null;
+  siteTempC = range ? (range[0] + range[1]) / 2 : null;
+}
+// 기온을 직접 넣을 때 (null = 평소 상태)
+export function setCrewTemperature(tempC) { siteTempC = Number.isFinite(tempC) ? tempC : null; }
 // 개발용: 콘솔에서 window.crew.setEnv({ o2Pct: 10 }) 처럼 환경을 직접 넣어 볼 수 있다
 window.crew = { body, panel, setEnv(next) { Object.assign(extra, next); } };
