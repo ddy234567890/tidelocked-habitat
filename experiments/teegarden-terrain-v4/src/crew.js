@@ -26,20 +26,20 @@ const body = createBodyLoop({ getEnv: currentEnv });
 const stage = $('#face-stage');
 const panel = createFacePanel({
   container: stage, getBody: () => body.state, modelUrl: faceUrl, modelOptions: { landmarks, credit },
-  style: 'hologram', holoPose: { yaw: -0.22, pitch: -0.05 },
+  style: 'surface',
 });
 $('#crew-credit').textContent = `얼굴 모델 "${credit.title}" · ${credit.author.replace(/ \(.*\)$/, '')} · CC BY 4.0`;
 
-// ── 팝업: 같은 얼굴 화면을 팝업 안으로 옮겼다가 닫으면 제자리로 ──
+// ── 팝업: 같은 얼굴 화면(표면 보기)을 팝업 안으로 옮겼다가 닫으면 제자리로 ──
 const modal = $('#crew-modal'), openBtn = $('#crew-open'), slotSmall = $('#crew-slot'), slotBig = $('#crew-big');
 function open() {
-  slotBig.append(stage); panel.setStyle('surface');
+  slotBig.append(stage);
   modal.hidden = false; $('#crew-close').focus();
   renderDetails();
 }
 function close() {
   if (modal.hidden) return;
-  slotSmall.append(stage); panel.setStyle('hologram');
+  slotSmall.append(stage);
   modal.hidden = true; openBtn.focus();
 }
 openBtn.addEventListener('click', open);

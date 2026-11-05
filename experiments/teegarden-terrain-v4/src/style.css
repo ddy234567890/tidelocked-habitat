@@ -59,7 +59,6 @@ kbd{font:inherit;border:2px solid var(--edge);padding:0 6px}
 .crew-slot,.crew-big{display:block;width:100%;height:100%}
 .face-stage{display:block;position:relative;width:100%;height:100%;background:radial-gradient(60% 70% at 50% 45%,rgba(46,77,189,.2),transparent 70%),#000}
 .face-stage canvas{position:absolute;inset:0} /* 캔버스 원래 크기가 칸 높이를 밀어내지 않게 */
-.face-stage[data-style="hologram"] canvas{filter:drop-shadow(0 0 4px rgba(115,168,255,.55)) drop-shadow(0 0 14px rgba(46,77,189,.45))}
 .face-stage[data-style="surface"]{background:linear-gradient(#0b1430,#060b1f)}
 .crew-hint{position:absolute;right:6px;bottom:6px;padding:2px 8px;font-size:12px;letter-spacing:.06em;background:var(--bg0);border:2px solid var(--edge);color:var(--text)}
 .crew-modal{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,3,10,.78)}
