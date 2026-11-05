@@ -3,7 +3,7 @@
   "version": "4.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "vite --host 127.0.0.1", "build": "vite build", "open-file": "node scripts/open-file.mjs", "test": "node tests/terrain.test.js && node tests/navigation.test.js && node tests/effects.test.js && node tests/choices.test.js" },
+  "scripts": { "dev": "vite --host 127.0.0.1", "build": "vite build", "open-file": "node scripts/open-file.mjs", "test": "node tests/terrain.test.js && node tests/navigation.test.js && node tests/effects.test.js && node tests/choices.test.js && node tests/face.test.js" },
   "dependencies": { "three": "0.180.0" },
   "devDependencies": { "vite": "7.1.7" }
 }

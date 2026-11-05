@@ -90,10 +90,10 @@
 
  <aside class="panel p-crew" aria-label="대원 상태">
   <div class="titlebar"><span>CREW_LINK</span><span class="crew-state" id="crew-state">대기 중</span></div>
-  <div class="panel-body crew">
-   <svg width="118" height="116" viewBox="0 0 170 168" fill="none" stroke-width="2" role="img" aria-label="대원 얼굴 자리"><path d="M30 168c4-30 26-46 55-46s51 16 55 46" stroke="#2846B8"/><ellipse cx="85" cy="74" rx="36" ry="46" stroke="#9DB6FF"/><path d="M40 70a45 45 0 0 1 90 0" stroke="#3D6BFF"/><rect x="34" y="66" width="10" height="26" stroke="#3D6BFF"/><rect x="126" y="66" width="10" height="26" stroke="#3D6BFF"/><path d="M66 66l10 10M76 66l-10 10M94 66l10 10M104 66l-10 10" stroke="#9DB6FF"/><path d="M74 100h22" stroke="#9DB6FF"/></svg>
-   <div class="vitals"><div><span>SpO₂ <b id="vital-spo2">—</b></span><span class="gauge"><span style="width:0"></span></span></div><div><span>체온 <b id="vital-temp">—</b></span><span class="gauge"><span style="width:0"></span></span></div><div><span>호흡 <b id="vital-breath">—</b></span><span class="gauge"><span style="width:0"></span></span></div></div>
-  </div>
+  <button class="crew-face" id="crew-open" type="button" aria-haspopup="dialog" aria-label="대원 상태 자세히 보기">
+   <span class="crew-slot" id="crew-slot"><span class="face-stage" id="face-stage" role="img" aria-label="대원 얼굴. 환경에 따라 표정이 바뀝니다."></span></span>
+   <span class="crew-hint" aria-hidden="true">▶ 눌러서 자세히</span>
+  </button>
  </aside>
 
  <section class="p-decision" aria-label="선지">
@@ -116,8 +116,28 @@
   <button id="notes-toggle" aria-expanded="false" aria-controls="notes">자료와 모델 기준 ＋</button>
   <a class="brand" href="#" id="brand-home">ORBITAL RESEARCH INSTITUTE · SECTOR 7</a>
  </footer>
- <section id="notes" hidden><p>첨부 자료의 최소질량 1.16 M⊕, 추정 반지름 1.04 R⊕, 공전주기 4.906일을 표기했습니다. 구형 행성과 건조한 낮·습윤한 밤의 분포는 자료의 기후 가정을 바탕으로 한 시각적 시나리오입니다. 대륙, 해양, 동굴, 능선과 A·B·C 위치는 실제 관측 지도가 아닙니다.</p><p>지역 확대는 서로 다른 축척을 연결하는 탐사 연출입니다. 구형 행성과 지역 지형의 축척은 실제 거리 비율과 다릅니다. 표면 기복은 2.00×로 고정했습니다. 정상 높이 0, 띠 반폭 0.45, 얼음 골짜기 중심과 동굴 z=0 절개면·위험 좌표는 유지했습니다. 동굴의 기준 크기 주변에서 폭과 높이를 변화시켰습니다.</p><p>별과 지형은 움직이지 않습니다. 짓는 방식 단계부터는 에셋이 놓이는 곳으로 다가가 관찰 카메라만 천천히 돕니다. 건물과 산소 장치는 가벼운 모델의 모서리 선을 점으로 그린 와이어프레임입니다(Kenney Space Kit, CC0). 드래그로도 카메라를 움직일 수 있습니다. 얼음 골짜기는 지정된 게임 설정입니다. 초기 원본이 없어 실제 프로젝트 배치 좌표와의 정합성은 별도 확인이 필요합니다.</p><p>화면 글자는 Terrarum Sans Bitmap(SIL OFL 1.1, CuriousTorvald)입니다. 기온은 낮 최고 66°C·밤 최저 12°C이고, 지대별 기온 범위는 시나리오 값입니다. 산소 농도와 대원 상태는 아직 자료가 없어 비워 두었습니다.</p></section>
+ <section id="notes" hidden><p>첨부 자료의 최소질량 1.16 M⊕, 추정 반지름 1.04 R⊕, 공전주기 4.906일을 표기했습니다. 구형 행성과 건조한 낮·습윤한 밤의 분포는 자료의 기후 가정을 바탕으로 한 시각적 시나리오입니다. 대륙, 해양, 동굴, 능선과 A·B·C 위치는 실제 관측 지도가 아닙니다.</p><p>지역 확대는 서로 다른 축척을 연결하는 탐사 연출입니다. 구형 행성과 지역 지형의 축척은 실제 거리 비율과 다릅니다. 표면 기복은 2.00×로 고정했습니다. 정상 높이 0, 띠 반폭 0.45, 얼음 골짜기 중심과 동굴 z=0 절개면·위험 좌표는 유지했습니다. 동굴의 기준 크기 주변에서 폭과 높이를 변화시켰습니다.</p><p>별과 지형은 움직이지 않습니다. 짓는 방식 단계부터는 에셋이 놓이는 곳으로 다가가 관찰 카메라만 천천히 돕니다. 건물과 산소 장치는 가벼운 모델의 모서리 선을 점으로 그린 와이어프레임입니다(Kenney Space Kit, CC0). 드래그로도 카메라를 움직일 수 있습니다. 얼음 골짜기는 지정된 게임 설정입니다. 초기 원본이 없어 실제 프로젝트 배치 좌표와의 정합성은 별도 확인이 필요합니다.</p><p>화면 글자는 Terrarum Sans Bitmap(SIL OFL 1.1, CuriousTorvald)입니다. 기온은 낮 최고 66°C·밤 최저 12°C이고, 지대별 기온 범위는 시나리오 값입니다. 산소 농도는 아직 자료가 없어 비워 두었습니다. 대원 얼굴과 상태 수치는 게임용 근사 모델이며, 기온만 지대 값을 따르고 산소·기압은 지구 해수면 값을 씁니다. 얼굴 모델은 Sketchfab의 &quot;Face&quot;(2on, CC BY 4.0)입니다.</p></section>
 </div>
+ <div class="crew-modal" id="crew-modal" role="dialog" aria-modal="true" aria-labelledby="crew-title" hidden>
+  <div class="crew-card">
+   <div class="titlebar"><span id="crew-title">대원 상태</span><span class="live">BIO · LIVE</span><button class="crew-x" id="crew-close" type="button" aria-label="닫기">X</button></div>
+   <div class="crew-body">
+    <div class="crew-big" id="crew-big"></div>
+    <div class="crew-info">
+     <p class="crew-status" id="crew-status" data-lv="0">정상</p>
+     <div class="chips">
+      <div><small>SpO₂ (추정)</small><b id="c-spo2">—</b></div>
+      <div><small>체온 (추정)</small><b id="c-core">—</b></div>
+      <div><small>호흡</small><b id="c-rr">—</b></div>
+     </div>
+     <ul class="crew-rows" id="crew-rows"></ul>
+     <ul class="crew-bars" id="crew-bars"></ul>
+     <p class="crew-note">게임용 근사값 · 의료 기기 아님</p>
+     <p class="crew-note" id="crew-credit"></p>
+    </div>
+   </div>
+  </div>
+ </div>
 <div class="scanlines" aria-hidden="true"></div>
 <script type="module" src="/src/main.js"></script>
 </body></html>
