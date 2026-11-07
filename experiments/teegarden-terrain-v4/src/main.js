@@ -224,7 +224,7 @@ try {
     setCrewSite(local ? currentSite : null);
     const range = local ? hud.sites[currentSite]?.temperature : null;
     $('#hud-temp').textContent = range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°';
-    $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위 (시나리오)' : '밤 최저 / 낮 최고';
+    $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위' : '밤 최저 / 낮 최고';
     $('#hud-o2').textContent = hud.oxygen == null ? '측정 중' : hud.oxygen + '%';
     $('#hud-o2-bar').style.width = (hud.oxygen ?? 0) + '%';
     const entries = WEEKS[week - 1].steps.map(step => step.id === 'location'
@@ -390,7 +390,6 @@ try {
     $('#local-nav').hidden = !local;
     $('#cave-view').hidden = !local || currentSite !== 'lavaTube';
     $('#cave-view').textContent = caveInterior ? '동굴 전체 보기' : '동굴 내부로';
-    $('#orbit-note').hidden = local;
     $('#planet-labels').hidden = local;
     $('#landmark').hidden = !local;
     if (local) {
@@ -400,7 +399,7 @@ try {
       $('#interaction').textContent = '드래그 회전 · 휠 확대 · 우클릭 이동';
     } else {
       $('#interaction').textContent = '행성 위 A · B · C를 선택해 접근하세요';
-      $('#build-time').textContent = 'TEEGARDEN b / ORBITAL VIEW';
+      $('#build-time').textContent = '';
     }
     document.querySelectorAll('.site[data-site]').forEach(button => {
       const active = local && button.dataset.site === currentSite;
@@ -441,7 +440,7 @@ try {
     localPoints = new THREE.Points(geometryFrom(data), material); localGroup.add(localPoints);
     const site = sites[name]; localGroup.position.copy(site.position); localGroup.quaternion.copy(site.rotation);
     localGroup.visible = true; fadePoints(localPoints, 0);
-    $('#build-time').textContent = total.toLocaleString('en-US') + ' POINTS / ' + (cached ? 'CACHED' : elapsed.toFixed(1) + ' ms');
+    $('#build-time').textContent = '';
     window.terrainDiagnostics = { site: name, count: total, buildMs: elapsed, relief: definitions[name].relief, materialCount: 1, cached };
   }
   function selectSite(name) {
@@ -494,11 +493,6 @@ try {
     setPose(localPose());
   });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') returnToPlanet(); });
-  $('#notes-toggle').addEventListener('click', () => {
-    $('#notes').hidden = !$('#notes').hidden;
-    $('#notes-toggle').setAttribute('aria-expanded', String(!$('#notes').hidden));
-    $('#notes-toggle').textContent = '자료와 모델 기준 ' + ($('#notes').hidden ? '＋' : '−');
-  });
   new ResizeObserver(() => {
     const w = host.clientWidth, h = host.clientHeight;
     renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
@@ -533,7 +527,7 @@ try {
       localGroup.localToWorld(temporary); projected.copy(temporary).project(camera);
       const x = (projected.x + 1) * host.clientWidth / 2, y = (1 - projected.y) * host.clientHeight / 2;
       // 주거 모듈이 놓이면 지명 표지는 건물 위에 겹치므로 숨긴다. 왼쪽 위 제목·설명 글과 겹쳐도 숨긴다
-      const head = $('.heading'), underHeading = x < head.offsetLeft + head.offsetWidth + 10 && y - 54 < head.offsetTop + head.offsetHeight;
+      const head = $('.heading'), underHeading = !!head && x < head.offsetLeft + head.offsetWidth + 10 && y - 54 < head.offsetTop + head.offsetHeight;
       $('#landmark').style.display = !moduleLayer && !underHeading && projected.z < 1 && x > 30 && x < host.clientWidth - 150 && y > 160 ? 'block' : 'none';
       $('#landmark').style.left = x + 8 + 'px'; $('#landmark').style.top = y - 54 + 'px';
     }

@@ -37,8 +37,6 @@ kbd{border:1px solid var(--c)}
 
 /* 지형 창: 행성 둘레에 눈금 고리 */
 .window-body{background-color:var(--ink)}
-.window-body::after{content:"";position:absolute;left:60%;top:53%;height:94%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;background:var(--rings) center/contain no-repeat}
-body.local .window-body::after{display:none}
 .compass{color:var(--c);border-bottom:1px solid var(--c);background:var(--ticks) bottom/100% 8px no-repeat}
 .cross{border-color:rgba(232,223,200,.3)}
 .heading{background:var(--ink);border-left:2px solid var(--o);left:0;padding:10px 26px 12px 16px;clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%)}
@@ -133,12 +131,12 @@ canvas.robot{filter:none;image-rendering:pixelated}
 @media(max-height:820px) and (min-width:1101px){
  .heading h1{font-size:32px;line-height:38px}
  .stat strong{font-size:32px;line-height:38px}
+ .eyebrow,#description,.orbit-note small,.orbit-note p{font-size:12px;line-height:18px}
 }
 
 /* 좁은 화면 */
 @media(max-width:1100px){
  .robot{left:24px;top:84px;bottom:auto;width:150px}
- .window-body::after{display:none} /* 좁은 화면은 행성 자리가 달라 고리를 뺀다 */
 }
 @media(max-width:640px){
  .heading{max-width:230px}.heading h1{font-size:26px;line-height:30px}.eyebrow,#description{font-size:12px;line-height:18px}
@@ -153,3 +151,95 @@ canvas.robot{filter:none;image-rendering:pixelated}
  .robot{top:150px;width:120px}
  .bubble{padding:10px 14px}
 }
+
+/* 오른쪽 칸: 낮은 화면에서도 틀 밖으로 넘치지 않게 */
+.p-right .panel-body{gap:10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--c) transparent}
+.p-right .globe{width:clamp(88px,15vh,164px);height:clamp(88px,15vh,164px);flex-shrink:0}
+.p-right .globe div{width:68%;height:68%}
+.p-right .scenario{margin-top:auto;flex-shrink:0}
+
+/* 창 버튼: 누를 수 있는 _ □ × */
+.wbtn{display:flex;align-items:flex-end;justify-content:center;width:18px;height:18px;padding:0;border:1px solid var(--c);background:var(--ink);color:var(--c);font-size:16px;line-height:12px;cursor:pointer}
+.wbtn:hover,.wbtn:focus-visible{background:var(--o);border-color:var(--o);color:var(--ink)}
+.p-right.collapsed .panel-body{display:none}
+.p-right.collapsed{align-self:start}
+
+/* PLANET_DATA 큰 창: 수치는 카드, 설명은 짧은 목록, 긴 기준 글은 접어 둔다 */
+.data-modal{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.82)}
+.data-modal[hidden]{display:none}
+.data-card{width:min(920px,100%);max-height:calc(100vh - 48px);display:flex;flex-direction:column;border:6px solid transparent;border-image:var(--frame) 16 / 16px / 4px stretch;background:var(--ink);background-clip:padding-box;color:var(--c)}
+.data-card .titlebar{background:var(--ink);color:var(--c);height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border-bottom:1px solid var(--c);text-shadow:1px 0 currentColor;letter-spacing:.06em}
+.data-body{display:flex;flex-direction:column;gap:30px;padding:26px 34px 34px;overflow:auto;line-height:26px}
+.data-hero{display:flex;align-items:center;gap:28px}
+.data-globe{width:180px;flex-shrink:0;aspect-ratio:1;background:var(--rings) center/contain no-repeat;display:grid;place-items:center}
+.data-globe canvas{width:68%;height:68%;image-rendering:pixelated}
+.data-meta{display:flex;flex-direction:column;gap:4px;line-height:24px}.data-meta b.on{color:var(--o);border:1px solid var(--o);font-weight:400;padding:0 4px}
+.data-meta span:nth-child(2){text-shadow:1px 0 currentColor}
+.data-body section{display:flex;flex-direction:column;gap:14px}
+.data-body h2{margin:0;font-size:16px;font-weight:400;color:var(--o);letter-spacing:.08em;display:flex;align-items:center;gap:12px}
+.data-body h2::after{content:"";flex:1;border-top:1px solid rgba(232,223,200,.4)}
+.data-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.data-stat{display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;border:1px solid rgba(232,223,200,.45)}
+.data-stat span{letter-spacing:.04em}
+.data-stat b{font-weight:400;font-size:32px;line-height:38px;color:var(--c);text-shadow:1px 0 currentColor}
+.data-stat p{margin:0;line-height:24px}
+.data-points{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;max-width:64ch}
+.data-points li{display:flex;gap:10px}.data-points li::before{content:"▶";color:var(--o);flex-shrink:0}
+.data-notes{border:1px solid rgba(232,223,200,.45)}
+.data-notes summary{cursor:pointer;padding:10px 16px;list-style:none;display:flex;justify-content:space-between}
+.data-notes summary::-webkit-details-marker{display:none}
+.data-notes summary::after{content:"＋";color:var(--o)}.data-notes[open] summary::after{content:"−"}
+.data-notes summary:hover,.data-notes summary:focus-visible{color:var(--o)}
+.data-notes div{padding:4px 16px 16px;display:flex;flex-direction:column;gap:14px;max-width:72ch}
+.data-notes p{margin:0}
+@media(max-width:700px){
+ .data-body{padding:18px;gap:24px}
+ .data-hero{flex-direction:column;align-items:flex-start}
+ .data-globe{width:140px}
+}
+
+/* 창 버튼의 확대(□) 아이콘 */
+.wbtns .wbtn .max-icon{display:block;width:10px;height:9px;border:1px solid currentColor;border-top-width:3px;margin:0}
+.wbtn{align-items:center}
+
+/* CREW_LINK: 창 버튼으로 연다 (얼굴을 눌러도 열린다) */
+.crew-hint{display:none}
+.p-crew .titlebar{gap:8px}.p-crew .titlebar>span:first-child{flex:1}
+.p-crew.collapsed .crew-face{display:none}
+.p-crew.collapsed{align-self:start}
+
+/* CREW_LINK: 파란색을 검정·크림·주황으로 (얼굴 3D 그림 자체는 그대로) */
+.crew-face{background:var(--ink);color:var(--c)}
+.face-stage,.face-stage[data-style="surface"]{background:var(--ink)}
+.crew-hint{background:var(--ink);border:1px solid var(--c);color:var(--c);font-size:16px}
+.crew-face:hover .crew-hint,.crew-face:focus-visible .crew-hint{background:var(--o);border-color:var(--o);color:var(--ink)}
+.crew-modal{background:rgba(0,0,0,.8)}
+.crew-card{border:6px solid transparent;border-image:var(--frame) 16 / 16px / 4px stretch;background:var(--ink);background-clip:padding-box;box-shadow:none;color:var(--c)}
+.crew-card .titlebar{height:30px;background:var(--ink);color:var(--c);border-bottom:1px solid var(--c);padding:0 8px;text-shadow:1px 0 currentColor}
+.crew-card .live{color:var(--o);font-size:16px}
+.crew-x{width:18px;height:18px;border:1px solid var(--c);background:var(--ink);color:var(--c);font-size:16px;line-height:14px}
+.crew-x:hover,.crew-x:focus-visible{background:var(--o);border-color:var(--o);color:var(--ink)}
+.crew-big{border:1px solid var(--c)}
+.crew-status{border:1px solid var(--c);color:var(--c)}
+.crew-status[data-lv="1"]{border-color:var(--o);color:var(--o)}
+.crew-status[data-lv="2"]{border-color:var(--o);background:var(--o);color:var(--ink)}
+.chips{border:1px solid var(--c)}.chips>div{border-right:1px solid var(--c)}
+.chips small{color:var(--c);font-size:16px}.chips b{color:var(--c)}
+.crew-rows,.crew-bars{font-size:16px}
+.crew-rows li{border-bottom:1px dotted var(--c)}.crew-rows b{color:var(--c)}
+.crew-bars .bar{background:repeating-linear-gradient(90deg,rgba(232,223,200,.35) 0 5px,transparent 5px 8px)}
+.crew-bars .bar i{background:var(--c)}
+.crew-bars .bar[data-lv="1"] i,.crew-bars .bar[data-lv="2"] i{background:var(--o)}
+.crew-bars em,.crew-note{color:var(--c);font-size:16px}
+
+/* 게임 화면에서 뺀 정보: 점 개수 표시 자리는 비면 숨긴다 */
+#build-time:empty{display:none}
+
+/* 선지 카드: 단어 단위 줄바꿈, 기호 칸과 글 칸을 나눠 둘째 줄도 가지런히, A·B·C 는 이름 옆에 */
+.site{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:6px;align-content:start;word-break:keep-all;overflow-wrap:break-word;padding:10px 14px 12px}
+.site>b{grid-row:1;grid-column:1;align-self:center;min-width:26px;text-align:center;border:1px solid currentColor;padding:0 6px;letter-spacing:0}
+.site .name{grid-row:1;grid-column:2;align-self:center}
+.site .line,.site .effects{grid-column:1 / -1}
+.effects li{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;align-items:start}
+.effects i{margin:0;min-width:64px;text-align:center}
+.step-title,.decided{word-break:keep-all}
