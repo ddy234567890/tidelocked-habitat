@@ -243,3 +243,7 @@ canvas.robot{filter:none;image-rendering:pixelated}
 .effects li{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;align-items:start}
 .effects i{margin:0;min-width:64px;text-align:center}
 .step-title,.decided{word-break:keep-all}
+
+/* 지난 주차 건물 정보창 (PR #38) */
+.past-tip{max-width:280px;padding:8px 12px;background:var(--ink);border:1px solid var(--c);color:var(--c);font-size:16px;line-height:22px;word-break:keep-all}
+.past-tip small{color:var(--o);font-size:16px}.past-tip b{font-size:16px;color:var(--c);text-shadow:1px 0 currentColor}.past-tip span{color:var(--c)}

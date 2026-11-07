@@ -40,13 +40,16 @@ export function choose(selection, stepId, choiceId) {
 
 /** 선택 상태 → 그릴 레이어 */
 export function resolve(selection) {
-  const layers = { module: null, overlays: [] };
-  for (const step of ALL_STEPS) {
-    const choice = step.choices.find(c => c.id === selection[step.id]);
-    if (!choice || !isAvailable(choice, selection)) continue;
-    if (choice.module) layers.module = choice.module;
-    if (choice.overlays) layers.overlays.push(...choice.overlays);
-  }
+  // weeks: 레이어마다 몇 주차 선지로 생겼는지 ('module' 또는 오버레이 id → 주차 번호)
+  const layers = { module: null, overlays: [], weeks: {} };
+  WEEKS.forEach(({ steps }, w) => {
+    for (const step of steps) {
+      const choice = step.choices.find(c => c.id === selection[step.id]);
+      if (!choice || !isAvailable(choice, selection)) continue;
+      if (choice.module) { layers.module = choice.module; layers.weeks.module = w + 1; }
+      for (const id of choice.overlays ?? []) { layers.overlays.push(id); layers.weeks[id] ??= w + 1; }
+    }
+  });
   return layers;
 }
 
