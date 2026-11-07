@@ -1,0 +1,155 @@
+/* 화면 스타일 (와이어프레임 + 1비트 망점, 2026-11 팀 참고 이미지).
+   style.css 위에 겉모습만 덮어쓴다. 글·칸·배치는 style.css·index.html 그대로다.
+   대원 얼굴 패널(.crew-face, .crew-modal)의 안쪽은 건드리지 않는다 */
+:root{
+  --ink:#000;--c:#E8DFC8;--o:#F2B84B;
+  --ticks:repeating-linear-gradient(90deg,var(--c) 0 1px,transparent 1px 8px);
+  --frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23E8DFC8' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%23E8DFC8' stroke-opacity='.45' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%23E8DFC8' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
+  --frame-o:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23F2B84B' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%23F2B84B' stroke-opacity='.6' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%23F2B84B' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
+  --rings:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='none' stroke='%23E8DFC8'%3E%3Ccircle cx='400' cy='400' r='392' stroke-opacity='.5'/%3E%3Ccircle cx='400' cy='400' r='380' stroke-opacity='.8' stroke-width='10' stroke-dasharray='1 18.9'/%3E%3Ccircle cx='400' cy='400' r='372' stroke-opacity='.3'/%3E%3Ccircle cx='400' cy='400' r='300' stroke-opacity='.18' stroke-dasharray='4 8'/%3E%3Cpath stroke-opacity='.3' d='M0 400H130M670 400H800M400 0V130M400 670V800'/%3E%3C/svg%3E")}
+body{background-color:var(--ink);background-image:linear-gradient(rgba(232,223,200,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(232,223,200,.11) 1px,transparent 1px),linear-gradient(rgba(232,223,200,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(232,223,200,.045) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px;color:var(--c)}
+a{color:var(--c)}a:hover{color:var(--o)}
+.scanlines{background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px)}
+kbd{border:1px solid var(--c)}
+
+/* 창 틀: 모서리를 깎은 이중 선 */
+.panel,.window{border:6px solid transparent;border-image:var(--frame) 16 / 16px / 4px stretch;box-shadow:none;background:var(--ink);background-clip:padding-box}
+.panel>.titlebar,.window>.titlebar{height:30px;background:var(--ink);color:var(--c);border-bottom:1px solid var(--c);padding:0 8px;position:relative;text-shadow:1px 0 currentColor}
+.panel>.titlebar>span:first-child,.window>.titlebar>span:first-child{background:var(--ink);padding-right:14px}
+.panel>.titlebar .wbtns,.window>.titlebar .wbtns,.crew-state{background:var(--ink);padding:0 4px}.wbtns i{border:1px solid var(--c)}
+
+/* 탭 */
+.tabs{background:var(--ink);border-bottom:1px solid var(--c)}
+.tab{border:1px solid var(--c);border-bottom:0;background:var(--ink);color:var(--c);clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px)}
+.tab.on{background:var(--c);color:var(--ink);border-color:var(--c)}
+
+/* 상태 */
+.chip{color:var(--o);background:none;border:1px solid var(--o);padding:0 8px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
+.stat strong{color:var(--c);text-shadow:1px 0 currentColor}.stat small{color:var(--c)}
+.gauge{height:14px;border:1px solid var(--c);padding:0;background:repeating-linear-gradient(90deg,rgba(232,223,200,.55) 0 1px,transparent 1px 7px)}
+.gauge>span{background:var(--c)}
+.log{border-top:1px dashed var(--c);color:var(--c)}
+.meta b.on{background:none;color:var(--o);border:1px solid var(--o)}
+.globe{width:164px;height:164px;border:0;position:relative;background:var(--rings) center/contain no-repeat}
+.globe div{width:112px;height:112px;background:none;box-shadow:none;border:1px solid var(--c)}
+.facts{color:var(--c)}.facts i{border-bottom:1px dotted var(--c)}.facts b{color:var(--c)}.facts li{border-bottom:1px solid rgba(232,223,200,.16);padding-bottom:3px}
+.scenario{color:var(--c);border-left:2px solid var(--o);padding-left:8px}
+
+/* 지형 창: 행성 둘레에 눈금 고리 */
+.window-body{background-color:var(--ink)}
+.window-body::after{content:"";position:absolute;left:60%;top:53%;height:94%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;background:var(--rings) center/contain no-repeat}
+body.local .window-body::after{display:none}
+.compass{color:var(--c);border-bottom:1px solid var(--c);background:var(--ticks) bottom/100% 8px no-repeat}
+.cross{border-color:rgba(232,223,200,.3)}
+.heading{background:var(--ink);border-left:2px solid var(--o);left:0;padding:10px 26px 12px 16px;clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%)}
+.eyebrow,#description{color:var(--c)}.heading h1{color:var(--c);text-shadow:1px 0 currentColor}.heading h1 em{color:var(--o);font-style:normal}
+.pin{color:var(--c)}.pin b{border:1px solid var(--c);background:var(--ink);box-shadow:0 0 0 3px var(--ink),0 0 0 4px var(--c);color:var(--c)}
+.pin span{background:var(--ink);border-left:2px solid var(--c)}.pin small{color:var(--c)}
+.pin:hover b,.pin:focus-visible b{background:var(--o);color:var(--ink);border-color:var(--o);box-shadow:0 0 0 3px var(--ink),0 0 0 4px var(--o)}
+.local-nav button{border:1px solid var(--c);background:var(--ink);color:var(--c)}.local-nav button:hover:not(:disabled){background:var(--c);color:var(--ink)}
+.orbit-note small,.orbit-note p{color:var(--c)}.orbit-note{background:var(--ink);padding:4px 8px}.orbit-line{border-top:1px solid var(--o)}
+.stage-bottom{color:var(--c)}.stage-bottom span{background:var(--ink)}
+.travel-status,#error{border:1px solid var(--c);background:var(--ink);color:var(--c)}
+.landmark{border-left:1px solid var(--c);color:var(--c);text-shadow:none}.landmark small{color:var(--c)}
+
+/* 선지 */
+.step-title{color:var(--c)}.step-title b{background:var(--o);color:var(--ink);clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
+.decided{color:var(--c);border-left:2px solid var(--o)}
+.site{color:var(--c);border:6px solid transparent;border-image:var(--frame) 16 / 16px / 2px stretch;box-shadow:none;background:var(--ink);background-clip:padding-box;position:relative;padding:8px 12px}
+.site>b{color:var(--c)}
+.site .name{color:var(--c);text-shadow:1px 0 currentColor}
+.effects{border-top:1px dashed var(--c)}
+.effects i{background:none;color:var(--c);border:1px solid var(--c)}
+.effects .cost i{background:none;color:var(--o);border-color:var(--o)}
+.site:hover:not(:disabled){border-image-source:var(--frame-o)}
+.site.active{color:var(--c);background:var(--ink);background-clip:padding-box;border-image-source:var(--frame-o);box-shadow:none}
+.site.active .name{color:var(--o)}.site.active .line,.site.active .effects{color:var(--c)}
+.site.active .effects{border-top-color:var(--o)}.site.active .effects i{background:none;color:var(--c)}.site.active .effects .cost i{color:var(--o)}
+.decide{border:6px solid transparent;border-image:var(--frame-o) 16 / 16px / 2px stretch;background:var(--ink);background-clip:padding-box;color:var(--o);box-shadow:none;text-shadow:1px 0 currentColor}
+.decide:hover:not(:disabled){background:var(--o);background-clip:padding-box;color:var(--ink)}
+
+/* 하단 */
+.p-foot{border-top:1px solid var(--c);background:var(--ink);padding:4px 10px 0;color:var(--c)}
+.foot-note,.p-foot button{color:var(--c)}.p-foot button:hover{color:var(--o)}
+#notes{border:6px solid transparent;border-image:var(--frame) 16 / 16px / 4px stretch;box-shadow:none;background:var(--ink);background-clip:padding-box;color:var(--c)}
+
+/* 시작 화면: 그림 모양은 그대로, 색만 맞춘다 */
+.intro{background:var(--ink)}
+.intro svg,.robot{filter:grayscale(1) brightness(1.15)}
+.star{display:none}
+.scene{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.travel{justify-content:flex-start;align-items:flex-start;gap:0;padding:44px 56px}
+.travel>:not(.scene){position:relative}
+.travel h1{margin:0 0 10px;padding:4px 18px;font-size:32px;letter-spacing:.3em;line-height:44px;color:var(--c);background:var(--ink);border:1px solid var(--c);text-shadow:1px 0 currentColor;text-align:left}
+.news{background:var(--ink);padding:2px 10px;color:var(--c);text-align:left;font-size:16px}
+.route{position:absolute!important;left:56px;right:56px;bottom:84px;width:auto;margin:0;gap:18px}
+.end{color:var(--c);background:var(--ink);border:1px solid var(--c);padding:6px 6px 2px}.end canvas{width:80px;height:80px;display:block;image-rendering:pixelated}.end span{background:var(--ink);padding:0 8px}
+.track{height:18px;max-width:none;border:1px solid var(--c);box-shadow:none;background:var(--ink);padding:3px}
+.track .fill{background:var(--c)}
+.rocket{top:auto;bottom:calc(100% + 34px);transform:none;width:132px;height:0}
+.rocket canvas{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:510px;height:252px;image-rendering:pixelated}
+.pct{right:auto;left:calc(100% + 8px);top:-26px;transform:none;background:var(--ink);color:var(--c);right:0;left:auto;padding:0 6px}
+.eta{position:absolute!important;left:50%;bottom:30px;transform:translateX(-50%);background:var(--ink);padding:2px 10px;color:var(--c);font-size:16px}
+.skip{position:absolute!important;border:1px solid var(--c);background:var(--ink);color:var(--c)}.skip:hover{color:var(--o);border-color:var(--o)}
+.brief-view{border:6px solid transparent;border-image:var(--frame) 16 / 16px / 4px stretch;background:var(--ink);background-clip:padding-box}
+.glow{display:none}
+.bracket{border-color:var(--c)}.cam-l,.cam-r{color:var(--c)}.hi{color:var(--o)}
+.bubble{background:var(--ink);border:1px solid var(--c);box-shadow:none}.who,.send{color:var(--c)}.bubble p{color:var(--c)}
+.send .bar{background:repeating-linear-gradient(90deg,var(--c) 0 1px,transparent 1px 7px)}
+.brief-box .tabs{border:1px solid var(--c);border-bottom:1px solid var(--c)}
+.brief-body{border:1px solid var(--c);border-top:0;box-shadow:none;background:var(--ink)}
+.avatar{border:1px solid var(--c);box-shadow:none;background:var(--ink)}.avatar svg{stroke:var(--c)}
+.report{color:var(--c)}
+.next{background:var(--o);color:var(--ink);box-shadow:none;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}.next:hover{background:var(--c)}
+.foot-keys{border-top:1px solid var(--c);color:var(--c)}
+
+/* 글자: 비트맵 글꼴이 또렷한 16px 로 통일, 큰 값은 그 배수로 */
+body{font-size:16px;line-height:22px}
+.panel>.titlebar,.window>.titlebar,.tab,.chip,.stat small,.log,.meta,.facts,.scenario,.compass,.eyebrow,#description,.pin span,.pin small,.orbit-note small,.orbit-note p,.stage-bottom,.landmark,.landmark small,.travel-status,.local-nav button,.step-title,.decided,.site>b,.site .name,.site .line,.effects,.decide,.p-foot,.foot-note,.p-foot button,#notes,.cam-l,.cam-r,.who,.send,.bubble p,.report,.foot-keys{font-size:16px}
+.site .line,.effects{line-height:22px}
+.stat strong{font-size:48px;line-height:54px}
+.heading h1{font-size:48px;line-height:56px}
+.site{padding:6px 12px;gap:4px}.effects{gap:2px}
+.p-foot{letter-spacing:0}
+
+/* 왼쪽 상태 칸: 빈 공간 없이 나눠 쓴다 */
+.p-left .panel-body{gap:24px}.p-left .stat{gap:10px}.p-left .gauge{height:20px}
+.globe div{border:0;width:112px;height:112px;background:none}
+.globe canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+
+/* 브리핑: 풍경 위에 ORI */
+.scene{object-fit:cover}
+canvas.robot{filter:none;image-rendering:pixelated}
+.bubble{background:var(--ink);padding:14px 20px}
+@media(min-width:1101px){
+ .robot{left:7%;top:auto;bottom:11%;width:clamp(170px,17vw,248px)}
+ .bubble{left:calc(7% + clamp(190px,19vw,280px));top:24%}
+}
+.cam-l,.cam-r{background:var(--ink);padding:2px 8px}
+.brief{grid-template-rows:minmax(0,1fr) 220px 28px}
+.next{font-size:16px}
+
+/* 낮은 화면: 큰 제목이 행성 위 A·B·C 를 가리지 않게 */
+@media(max-height:820px) and (min-width:1101px){
+ .heading h1{font-size:32px;line-height:38px}
+ .stat strong{font-size:32px;line-height:38px}
+}
+
+/* 좁은 화면 */
+@media(max-width:1100px){
+ .robot{left:24px;top:84px;bottom:auto;width:150px}
+ .window-body::after{display:none} /* 좁은 화면은 행성 자리가 달라 고리를 뺀다 */
+}
+@media(max-width:640px){
+ .heading{max-width:230px}.heading h1{font-size:26px;line-height:30px}.eyebrow,#description{font-size:12px;line-height:18px}
+ .travel{padding:28px 16px}
+ .travel h1{font-size:16px;line-height:30px;letter-spacing:.3em;padding:2px 12px}
+ .route{left:16px;right:16px;bottom:76px;flex-wrap:wrap;justify-content:space-between;row-gap:12px}
+ .track{order:-1;flex-basis:100%}
+ .end{flex-direction:row;gap:8px;align-items:center;padding:4px 8px 4px 4px}.end canvas{width:40px;height:40px}
+ .rocket canvas{width:255px;height:126px}
+ .rocket{bottom:calc(100% + 14px)}
+ .cam-r{right:auto;left:36px;top:84px;text-align:left}
+ .robot{top:150px;width:120px}
+ .bubble{padding:10px 14px}
+}
