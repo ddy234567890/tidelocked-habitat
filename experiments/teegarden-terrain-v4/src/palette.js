@@ -7,6 +7,8 @@ const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * clamp(t));
 export const blue = (brightness = 1) => BLUE.map(v => v * brightness);
 export const cream = (brightness = 1) => CREAM.map(v => v * brightness);
 export const orange = (brightness = 1) => ORANGE.map(v => v * brightness);
+// 무채색: 지난 주차 건물 면에만 쓴다 (존재감 없이 뒤로 물러나 보이게)
+export const gray = (brightness = 1) => [brightness, brightness, brightness];
 export function temperatureColor(value, range) {
   const t = clamp((value - range[0]) / (range[1] - range[0] || 1));
   return t < 0.68 ? mix(BLUE, CREAM, t / 0.68) : mix(CREAM, ORANGE, (t - 0.68) / 0.32);

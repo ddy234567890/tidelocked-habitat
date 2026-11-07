@@ -9,7 +9,7 @@ import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_S
 import hud from './hud.json' with { type: 'json' };
 import { openBriefing } from './intro.js';
 import { setCrewSite } from './crew.js';
-import { buildModule, buildOverlay, tintLayer, TINT } from './placement.js';
+import { buildModule, buildOverlay, tintLayer, TINT, faceColors } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
 import { orange } from './palette.js';
@@ -77,6 +77,10 @@ try {
       '#include <fog_vertex>\nfloat lineSize = uLineBase * clamp(-mvPosition.z / uLineNear, uLineMin, 1.0);\n'
       + 'gl_PointSize *= mix(1.0, lineSize, lineWeight);\nvColor.rgb *= mix(1.0, uLineBase * uLineMin / lineSize, lineWeight);');
   };
+  // 지난 주차 건물만 점·선 대신 면(로우 폴리)으로 그린다. 면 머티리얼도 이것 하나만 쓴다 (2026-11-07, CLAUDE.md 예외).
+  // 존재감 없게 무채색 반투명: 색은 faceColors(회색 밝기 단계), 깊이를 남기지 않고 점들 뒤에 마지막으로 얹는다
+  const FACE_OPACITY = 0.22;
+  const faceMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: FACE_OPACITY, depthWrite: false });
   const color = new THREE.Color();
   function geometryFrom(data, lineWeight = 0) {
     const geometry = new THREE.BufferGeometry();
@@ -126,7 +130,91 @@ try {
   const assetGroup = new THREE.Group(); localGroup.add(assetGroup);
   let selection = {}, decided = {}, week = 1, moduleLayer = null, assetToken = 0, focusTween = null;
   const overlayLayers = new Map(), reveals = [];
-  function dropLayer(layer) { if (!layer) return; assetGroup.remove(layer.points); layer.points.geometry.dispose(); }
+  function dropLayer(layer) {
+    if (!layer) return;
+    if (layer === hovered) setHover(null);
+    assetGroup.remove(layer.points); layer.points.geometry.dispose();
+    if (layer.mesh) { assetGroup.remove(layer.mesh); layer.mesh.geometry.dispose(); }
+  }
+  // 지난 주차 레이어는 면으로 바꾸고 선 점은 숨긴다. 면이 없는 레이어(동굴 봉쇄막·벽 조류 점)는 주황 점 그대로 둔다
+  function showPast(layer, past) {
+    if (!layer) return;
+    const faces = past && layer.data.faces?.length ? layer.data.faces : null;
+    if (faces && !layer.mesh) {
+      const geometry = new THREE.BufferGeometry(), srgb = faceColors(faces), linear = new Float32Array(srgb.length);
+      for (let i = 0; i < srgb.length; i += 3) { color.setRGB(srgb[i], srgb[i + 1], srgb[i + 2], THREE.SRGBColorSpace); color.toArray(linear, i); }
+      geometry.setAttribute('position', new THREE.BufferAttribute(faces, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(linear, 3));
+      layer.mesh = new THREE.Mesh(geometry, faceMaterial);
+      layer.mesh.renderOrder = 1;
+      assetGroup.add(layer.mesh);
+    }
+    if (layer.mesh) layer.mesh.visible = Boolean(faces);
+    layer.points.visible = !faces || layer === hovered; // 마우스를 올린 건물은 선(외곽선)도 함께 보인다
+  }
+  // 지난 주차 건물 호버: 선 점을 다시 켜 외곽선으로 보이고, 어떤 선지였는지 정보창을 건물 옆에 띄운다
+  const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(), tip = $('#past-tip');
+  let hovered = null, pointerInside = false, pointerDown = false;
+  host.addEventListener('pointermove', event => {
+    const rect = host.getBoundingClientRect();
+    pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+    pointerInside = true; pointerDown = event.buttons !== 0;
+  });
+  host.addEventListener('pointerleave', () => { pointerInside = false; });
+  // 그 레이어를 만든 선지: 주차 · 단계 이름 · 선지 이름 · 한 줄 설명
+  function choiceOf(layer) {
+    for (const [w, { steps }] of WEEKS.entries()) for (const step of steps) {
+      const choice = step.choices.find(c => c.id === selection[step.id]);
+      if (!choice) continue;
+      const id = layer === moduleLayer ? null : [...overlayLayers].find(([, l]) => l === layer)?.[0];
+      if (id ? choice.overlays?.includes(id) : choice.module && layer === moduleLayer) {
+        const short = { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[step.id] ?? step.short ?? step.label;
+        return { week: w + 1, short, label: choice.label, line: choice.line };
+      }
+    }
+    return null;
+  }
+  function setHover(layer) {
+    if (layer === hovered) return;
+    const before = hovered;
+    hovered = layer;
+    if (before) showPast(before, before.week < week);
+    if (!layer) { tip.hidden = true; return; }
+    layer.points.visible = true;
+    const info = choiceOf(layer);
+    tip.replaceChildren(...[['small', info ? info.week + '주차 · ' + info.short : '지난 주차'], ['b', info?.label ?? ''], ['span', info?.line ?? '']]
+      .filter(([, text]) => text).map(([tag, text]) => Object.assign(document.createElement(tag), { textContent: text })));
+    tip.hidden = false;
+  }
+  const corner = new THREE.Vector3();
+  // 정보창 자리: 건물의 화면 범위(상자 8개 꼭짓점) 오른쪽 → 왼쪽 → 위 → 아래 중 들어가는 첫 곳. 창 밖으로 나가지 않게 맞춘다
+  function placeTip() {
+    const box = hovered.mesh.geometry.boundingBox ?? (hovered.mesh.geometry.computeBoundingBox(), hovered.mesh.geometry.boundingBox);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let k = 0; k < 8; k++) {
+      corner.set(k & 1 ? box.max.x : box.min.x, k & 2 ? box.max.y : box.min.y, k & 4 ? box.max.z : box.min.z).applyMatrix4(hovered.mesh.matrixWorld).project(camera);
+      const x = (corner.x + 1) * host.clientWidth / 2, y = (1 - corner.y) * host.clientHeight / 2;
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    }
+    const w = tip.offsetWidth, h = tip.offsetHeight, W = host.clientWidth, H = host.clientHeight, gap = 12, pad = 8;
+    const middleY = (y0 + y1) / 2 - h / 2, middleX = (x0 + x1) / 2 - w / 2;
+    const spots = [[x1 + gap, middleY, x1 + gap + w <= W - pad], [x0 - gap - w, middleY, x0 - gap - w >= pad], [middleX, y0 - gap - h, y0 - gap - h >= pad], [middleX, y1 + gap, y1 + gap + h <= H - pad]];
+    const [x, y] = spots.find(spot => spot[2]) ?? [W - w - pad, pad];
+    tip.style.left = Math.round(Math.min(Math.max(pad, x), W - w - pad)) + 'px';
+    tip.style.top = Math.round(Math.min(Math.max(pad, y), H - h - pad)) + 'px';
+  }
+  function pickPast() {
+    const meshes = mode === 'local' && !transition && pointerInside && !pointerDown
+      ? [moduleLayer, ...overlayLayers.values()].filter(layer => layer?.mesh?.visible).map(layer => layer.mesh) : [];
+    let found = null;
+    if (meshes.length) {
+      raycaster.setFromCamera(pointer, camera);
+      const hit = raycaster.intersectObjects(meshes, false)[0];
+      found = hit && [moduleLayer, ...overlayLayers.values()].find(layer => layer?.mesh === hit.object);
+    }
+    setHover(found ?? null);
+    if (hovered) placeTip();
+  }
   function clearAssets() {
     assetToken++; selection = {}; decided = {}; week = 1; focusTween = null;
     dropLayer(moduleLayer); moduleLayer = null;
@@ -164,7 +252,7 @@ try {
       if (layers.module) {
         const data = await buildModule(site, layers.module, view);
         if (token !== assetToken) return;
-        moduleLayer = { key: moduleKey, data, points: addLayer(data) }; added = true;
+        moduleLayer = { key: moduleKey, week: layers.weeks.module, data, points: addLayer(data) }; added = true;
       }
     }
     for (const [id, layer] of overlayLayers) if (!layers.overlays.includes(id)) { dropLayer(layer); overlayLayers.delete(id); }
@@ -172,16 +260,21 @@ try {
       if (overlayLayers.has(id)) continue;
       const data = await buildOverlay(site, id, moduleLayer?.data, [...overlayLayers.values()].map(layer => layer.data));
       if (token !== assetToken) return;
-      if (data.positions.length) { overlayLayers.set(id, { data, points: addLayer(data) }); added = true; }
+      if (data.positions.length) { overlayLayers.set(id, { week: layers.weeks[id], data, points: addLayer(data) }); added = true; }
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spots ?? data.spot };
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlayRadius = { ...window.terrainDiagnostics.overlayRadius, [id]: data.footprint?.r };
     }
     // 가장 최근에 더한 선지만 흰색으로, 그 전 선지는 주황으로 칠한다
-    const newest = [...overlayLayers.values()].at(-1);
-    paintLayer(moduleLayer, newest ? 'old' : 'new');
+    // 지난 주차 레이어는 '방금 추가'가 될 수 없다 (호버 외곽선은 모두 주황)
+    const newest = [...overlayLayers.values()].filter(layer => layer.week >= week).at(-1);
+    paintLayer(moduleLayer, newest || moduleLayer?.week < week ? 'old' : 'new');
     overlayLayers.forEach(layer => paintLayer(layer, layer === newest ? 'new' : 'old'));
+    // 주차가 끝난 선지(앞 주차에 생긴 레이어)는 면으로 그린다
+    const all = [moduleLayer, ...overlayLayers.values()].filter(Boolean);
+    all.forEach(layer => showPast(layer, layer.week < week));
     $('#legend').hidden = !moduleLayer;
-    $('#legend-old').hidden = !overlayLayers.size;
+    $('#legend-old').hidden = !all.some(layer => layer.points.visible && layer.role === 'old');
+    $('#legend-past').hidden = !all.some(layer => layer.mesh?.visible);
     if (added) focusAssets();
   }
   // 단계별 선지: 1단계 위치(아래 A·B·C 카드) → 2단계 짓는 방식 → 3단계 숨 쉴 공기
@@ -325,7 +418,7 @@ try {
     openBriefing(shown, textsFor(shown.situation, selection), week, showBrief);
   };
   document.querySelectorAll('#hud .tab').forEach((tab, i) => tab.addEventListener('click', () => showBrief(i + 1)));
-  $('#next-week').addEventListener('click', () => { week++; renderSteps(true); showBrief(week); });
+  $('#next-week').addEventListener('click', () => { week++; renderSteps(true); syncAssets(); showBrief(week); });
 
   // A와 B는 사용자 표시 위치, C는 기존 위치다. 실제 경위도 자료는 아니다.
   const sun = new THREE.Vector3(PLANET_SUN.x, PLANET_SUN.y, PLANET_SUN.z).normalize();
@@ -607,7 +700,7 @@ try {
     backgroundStars(backgroundAmount);
     stage.dataset.mode = transition ? transition.kind === 'site' ? 'travelling' : 'flying' : mode;
     stage.dataset.site = currentSite ?? '';
-    renderer.render(scene, camera); labels();
+    renderer.render(scene, camera); labels(); pickPast();
   }
   requestAnimationFrame(frame);
 } catch (error) {
