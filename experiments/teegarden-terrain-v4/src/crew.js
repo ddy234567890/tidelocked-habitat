@@ -17,15 +17,17 @@ const f1 = (v) => v.toFixed(1);
 // 지금 선택된 지점의 기온. 범위의 가운데 값을 쓴다 (지점을 고르기 전에는 평소 상태)
 let siteTempC = null;
 const extra = {}; // 개발용으로 덮어쓰는 값 (window.crew.setEnv)
-// 위치를 결정한 뒤에는 실내 기본값에 결정한 선지들의 stats(weeks/weekN.json)를 더한 값이 계속 유지된다
+// 산소 방식을 결정한 뒤에는 실내 기본값에 결정한 선지들의 stats(weeks/weekN.json)를 더한 값이 계속 유지된다
 const INDOOR = { tempC: 22, oxygenPct: 20.9, activityMET: 1.5 };
+const OUTSIDE_O2 = 0; // 바깥 공기의 산소 % (hud.json oxygen 이 정해지면 그 값을 쓴다)
 let decidedStats = null;
 function currentEnv() {
   if (decidedStats) {
     const sum = key => INDOOR[key] + (decidedStats[key] ?? 0);
     return fromGameStats({ tempC: sum('tempC'), oxygenPct: hud.oxygen ?? sum('oxygenPct'), activityMET: sum('activityMET') }, extra);
   }
-  return fromGameStats({ tempC: siteTempC ?? undefined, oxygenPct: hud.oxygen ?? undefined }, extra);
+  // 산소 방식을 결정하기 전에는 바깥 공기를 그대로 마신다: 이 행성은 숨 쉴 산소가 없다 (가상의 대원으로 바깥 상태를 보여 준다)
+  return fromGameStats({ tempC: siteTempC ?? undefined, oxygenPct: hud.oxygen ?? OUTSIDE_O2 }, extra);
 }
 const body = createBodyLoop({ getEnv: currentEnv });
 
@@ -92,7 +94,7 @@ export function setCrewSite(id) {
   const range = id ? hud.sites[id]?.temperature : null;
   siteTempC = range ? (range[0] + range[1]) / 2 : null;
 }
-// main.js 가 결정할 때마다 부른다: 지금까지 결정한 선지 stats 의 합 (null = 위치를 아직 결정하지 않음)
+// main.js 가 결정할 때마다 부른다: 지금까지 결정한 선지 stats 의 합 (null = 산소 방식을 아직 결정하지 않아 바깥 공기)
 export function setCrewStats(stats) { decidedStats = stats; }
 // 기온을 직접 넣을 때 (null = 평소 상태)
 export function setCrewTemperature(tempC) { siteTempC = Number.isFinite(tempC) ? tempC : null; }
