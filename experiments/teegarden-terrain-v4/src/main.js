@@ -324,8 +324,9 @@ try {
   // 왼쪽 상태 칸: 기온(행성 전체 또는 고른 지대의 시나리오 범위) · 산소 · 결정 기록. 값이 없으면 '측정 중'이다
   function updateHud(local) {
     setCrewSite(local ? currentSite : null);
-    // 대원 얼굴: 결정한 선지들의 stats 를 더해 넘긴다. 카드를 눌러 미리 보기만 할 때는 바뀌지 않는다
-    if (local && decided.location) {
+    // 대원 얼굴: 산소 방식을 결정하기 전에는 바깥 공기(숨 쉴 산소 없음)다.
+    // 결정한 뒤에는 결정한 선지들의 stats 를 더해 넘긴다. 카드를 눌러 미리 보기만 할 때는 바뀌지 않는다
+    if (local && decided.oxygen) {
       const total = {};
       for (const step of ALL_STEPS) {
         if (!decided[step.id]) continue;
