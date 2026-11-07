@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { choiceData, placeAt, overlaySpot, surfaceSpot, findSpot, occupancy, siteLetter } from './choices.js';
 import { buildCaveSeal } from './lavaTube.js';
-import { toneColors, cream, blue, orange } from './palette.js';
+import { toneColors, cream, blue, orange, gray } from './palette.js';
 import definitions from './sites.json' with { type: 'json' };
 import modelSizes from './modelSizes.json' with { type: 'json' };
 import { mulberry32 } from './terrain.js';
@@ -167,15 +167,15 @@ function collectFaces(root, matrix) {
   return out;
 }
 const FACE_LIGHT = new THREE.Vector3(0.45, 1, 0.3).normalize(); // 면 밝기를 정하는 고정 빛 방향 (지역 좌표)
-export const FACE_RANGE = [0.16, 0.3]; // 지난 건물 면의 [가장 어두운 밝기, 밝기 폭]. 지금 주차의 흰 선이 늘 더 밝다
-/** 삼각형 목록(faces)의 면마다 하나의 주황 밝기를 준다. 면이 빛을 향할수록 밝아 각진 로우 폴리로 보인다 */
+export const FACE_RANGE = [0.35, 0.3]; // 지난 건물 면의 [가장 어두운 밝기, 밝기 폭]. 반투명(main.js FACE_OPACITY)이라 실제로는 더 흐리다
+/** 삼각형 목록(faces)의 면마다 하나의 회색 밝기를 준다. 면이 빛을 향할수록 밝아 각진 로우 폴리로 보인다 */
 export function faceColors(faces) {
   const out = new Float32Array(faces.length), a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
   const [low, span] = FACE_RANGE;
   for (let i = 0; i < faces.length; i += 9) {
     a.fromArray(faces, i); b.fromArray(faces, i + 3); c.fromArray(faces, i + 6);
     const normal = c.sub(b).cross(a.sub(b)).normalize();
-    const color = orange(low + span * Math.abs(normal.dot(FACE_LIGHT)));
+    const color = gray(low + span * Math.abs(normal.dot(FACE_LIGHT)));
     for (let k = 0; k < 9; k += 3) out.set(color, i + k);
   }
   return out;

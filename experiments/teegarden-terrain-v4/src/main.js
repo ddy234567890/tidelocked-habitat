@@ -77,9 +77,10 @@ try {
       '#include <fog_vertex>\nfloat lineSize = uLineBase * clamp(-mvPosition.z / uLineNear, uLineMin, 1.0);\n'
       + 'gl_PointSize *= mix(1.0, lineSize, lineWeight);\nvColor.rgb *= mix(1.0, uLineBase * uLineMin / lineSize, lineWeight);');
   };
-  // 지난 주차 건물만 점·선 대신 면(로우 폴리)으로 그린다. 면 머티리얼도 이것 하나만 쓴다 (팀 결정 2026-11-07, CLAUDE.md 예외).
-  // 불투명이라 깊이를 남겨, 뒤에 있는 점은 가리고 앞에 있는 지형 점은 그대로 보인다. 색은 faceColors(주황 밝기 단계)
-  const faceMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  // 지난 주차 건물만 점·선 대신 면(로우 폴리)으로 그린다. 면 머티리얼도 이것 하나만 쓴다 (2026-11-07, CLAUDE.md 예외).
+  // 존재감 없게 무채색 반투명: 색은 faceColors(회색 밝기 단계), 깊이를 남기지 않고 점들 뒤에 마지막으로 얹는다
+  const FACE_OPACITY = 0.22;
+  const faceMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, opacity: FACE_OPACITY, depthWrite: false });
   const color = new THREE.Color();
   function geometryFrom(data, lineWeight = 0) {
     const geometry = new THREE.BufferGeometry();
@@ -144,6 +145,7 @@ try {
       geometry.setAttribute('position', new THREE.BufferAttribute(faces, 3));
       geometry.setAttribute('color', new THREE.BufferAttribute(linear, 3));
       layer.mesh = new THREE.Mesh(geometry, faceMaterial);
+      layer.mesh.renderOrder = 1;
       assetGroup.add(layer.mesh);
     }
     if (layer.mesh) layer.mesh.visible = Boolean(faces);
