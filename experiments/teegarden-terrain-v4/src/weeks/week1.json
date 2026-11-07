@@ -125,9 +125,9 @@
       "id": "location",
       "label": "기지를 세울 위치를 골라 주세요",
       "choices": [
-        { "id": "A", "label": "현무암 평원", "line": "넓은 평지라 건설과 확장이 쉬워요.", "gain": "넓은 부지, 태양광·온실 자리", "cost": "그늘이 없어 냉방 전력이 계속 들어요", "site": "plain" },
-        { "id": "B", "label": "용암동굴", "line": "두꺼운 암반이 바깥 환경을 막아 줘요.", "gain": "냉방 부담이 적고, 안쪽에 물이 있을 수 있어요", "cost": "장비 반입 전력이 크고 지상과 멀어져요", "site": "lavaTube" },
-        { "id": "C", "label": "황혼 능선", "line": "낮과 밤의 경계라 빛을 안정적으로 받아요.", "gain": "일조 확보, 그늘 사면의 얼음 가능성", "cost": "평지가 좁아 기초 공사가 필요해요", "site": "ridge" }
+        { "id": "A", "stats": { "tempC": 4 }, "label": "현무암 평원", "line": "넓은 평지라 건설과 확장이 쉬워요.", "gain": "넓은 부지, 태양광·온실 자리", "cost": "그늘이 없어 냉방 전력이 계속 들어요", "site": "plain" },
+        { "id": "B", "stats": { "activityMET": 0.5 }, "label": "용암동굴", "line": "두꺼운 암반이 바깥 환경을 막아 줘요.", "gain": "냉방 부담이 적고, 안쪽에 물이 있을 수 있어요", "cost": "장비 반입 전력이 크고 지상과 멀어져요", "site": "lavaTube" },
+        { "id": "C", "stats": { "tempC": 1, "activityMET": 0.5 }, "label": "황혼 능선", "line": "낮과 밤의 경계라 빛을 안정적으로 받아요.", "gain": "일조 확보, 그늘 사면의 얼음 가능성", "cost": "평지가 좁아 기초 공사가 필요해요", "site": "ridge" }
       ]
     },
     {
@@ -139,7 +139,7 @@
         { "id": "B1", "label": "동굴 입구 거점", "line": "입구 가까이에 지어 드나들기 쉬워요.", "gain": "반입·대피가 쉽고 지상과 가까워요", "cost": "입구로 들어오는 먼지와 별 활동의 영향", "requires": { "location": ["B"] }, "module": "cave_entrance" },
         { "id": "B2", "label": "동굴 안쪽 거점", "line": "암반 깊숙이 들어가 바깥 영향을 거의 받지 않아요.", "gain": "외부 사건에 강해요", "cost": "전선·배관이 길어 비용이 늘어요", "requires": { "location": ["B"] }, "module": "cave_deep" },
         { "id": "C1", "label": "집약형 단지", "line": "건물을 한곳에 모아 연결을 짧게 해요.", "gain": "시공비 절감, 관리 용이", "cost": "설비 고장이 여러 동으로 번져요", "requires": { "location": ["C"] }, "module": "terrace" },
-        { "id": "C2", "label": "분산형 단지", "line": "건물을 나누어 지어 사고가 번지지 않게 해요.", "gain": "한 구역의 사고가 격리돼요", "cost": "기초 공사와 연결선이 늘어요", "requires": { "location": ["C"] }, "module": "scattered" }
+        { "id": "C2", "stats": { "activityMET": 0.3 }, "label": "분산형 단지", "line": "건물을 나누어 지어 사고가 번지지 않게 해요.", "gain": "한 구역의 사고가 격리돼요", "cost": "기초 공사와 연결선이 늘어요", "requires": { "location": ["C"] }, "module": "scattered" }
       ]
     },
     {

@@ -8,7 +8,7 @@ import { buildSurroundings, joinPoints } from './surroundings.js';
 import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor } from './choices.js';
 import hud from './hud.json' with { type: 'json' };
 import { openBriefing } from './intro.js';
-import { setCrewSite } from './crew.js';
+import { setCrewSite, setCrewStats } from './crew.js';
 import { buildModule, buildOverlay, tintLayer, TINT, faceColors } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
@@ -25,7 +25,7 @@ const BUILDERS = { plain: buildPlain, lavaTube: buildLavaTube, ridge: buildRidge
 const COPY = {
   plain: { letter: 'A', title: '현무암 평원', text: '낮게 겹친 용암엽과 오래된 충돌 흔적. 중앙의 평탄면을 거주 후보지로 남겼습니다.', tag: '주거 후보지', sub: '중앙 평탄면', position: [0, 0, 0] },
   lavaTube: { letter: 'B', title: '용암동굴', text: '아치 입구에서 내려가 큰 방과 좁은 목이 번갈아 이어지고, 옆 굴이 갈라집니다. 천장에서 떨어진 바위가 큰 방 바닥에 쌓여 있습니다.', tag: '용암 유동 통로', sub: '아치 입구 · 큰 방 · 옆 굴 · 바위 더미', position: [2, -2, -0.5] },
-  ridge: { letter: 'C', title: '황혼 능선', text: '굽이치는 마루에서 마른 완사면과 곁가지 능선이 갈라져 내려가고, 반대편은 침식 홈과 퇴적 부채, 얼음 골짜기와 낮은 지맥으로 이어집니다.', tag: '거주 가능한 정상 띠', sub: '높이 0 · 반폭 0.45', position: [0, 0, 0] }
+  ridge: { letter: 'C', title: '황혼 능선', text: '굽이치는 마루에서 마른 완사면과 곁가지 능선이 갈라져 내려가고, 반대편은 침식 홈과 퇴적 부채, 얼음 골짜기와 낮은 지맥으로 이어집니다.', tag: '거주 가능한 정상 띠', sub: '', position: [0, 0, 0] }
 };
 const $ = selector => document.querySelector(selector);
 const host = $('#canvas-host'), stage = $('#stage');
@@ -128,10 +128,14 @@ try {
   localGroup.scale.setScalar(LOCAL_SCALE); localGroup.visible = false; scene.add(localGroup);
   // 선지로 고른 주거 모듈·산소 장치. 지형과 같은 지역 좌표·같은 머티리얼을 쓴다
   const assetGroup = new THREE.Group(); localGroup.add(assetGroup);
+  let logWeek = null;
   let selection = {}, decided = {}, week = 1, moduleLayer = null, assetToken = 0, focusTween = null;
-  const overlayLayers = new Map(), reveals = [];
+  const overlayLayers = new Map(), reveals = [], pastFades = new Set();
+  const REVEAL_MS = 1600; // 새 건물 점이 아래에서 위로 채워지는 시간
+  const PAST_FADE_MS = 1400; // 지난 주차 건물 선이 사라지며 회색 면으로 바뀌는 시간
   function dropLayer(layer) {
     if (!layer) return;
+    pastFades.delete(layer);
     if (layer === hovered) setHover(null);
     assetGroup.remove(layer.points); layer.points.geometry.dispose();
     if (layer.mesh) { assetGroup.remove(layer.mesh); layer.mesh.geometry.dispose(); }
@@ -149,6 +153,10 @@ try {
       layer.mesh.renderOrder = 1;
       assetGroup.add(layer.mesh);
     }
+    // 막 지난 주차가 된 건물은 브리핑을 닫은 뒤 선 점이 천천히 사라지며 회색 면으로 바뀐다 (frame 의 pastFades)
+    if (faces && !layer.past && !reducedMotion) { layer.fade = { start: null }; pastFades.add(layer); }
+    layer.past = Boolean(faces);
+    if (layer.fade && faces) { layer.mesh.visible = layer.fade.start != null; layer.points.visible = true; return; }
     if (layer.mesh) layer.mesh.visible = Boolean(faces);
     layer.points.visible = !faces || layer === hovered; // 마우스를 올린 건물은 선(외곽선)도 함께 보인다
   }
@@ -282,12 +290,13 @@ try {
     element.hidden = !visible;
     const nav = element.querySelector('nav');
     if (!visible) return nav.replaceChildren();
-    nav.replaceChildren(...availableChoices(stepId, selection).map(choice => {
+    nav.replaceChildren(...availableChoices(stepId, selection).map((choice, index) => {
       const button = document.createElement('button');
       button.className = 'site choice'; button.dataset.step = stepId; button.dataset.choice = choice.id;
       const active = selection[stepId] === choice.id;
       button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
-      const letter = document.createElement('b'); letter.textContent = choice.id;
+      // 이름표는 순서 번호만 쓴다. 선지 id(W1·O2 등)는 주차 탭 W1·산소 칸 O₂ 와 헷갈려서 화면에 내지 않는다
+      const letter = document.createElement('b'); letter.textContent = index + 1;
       const name = document.createElement('span'), line = document.createElement('em'), effects = document.createElement('ul');
       name.className = 'name'; line.className = 'line'; effects.className = 'effects';
       button.append(letter, name, line, effects); fillCard(button, choice, selection);
@@ -307,7 +316,7 @@ try {
     button.addEventListener('click', () => {
       if (transition || !selection[stepId]) return;
       decided[stepId] = true; renderSteps(true);
-      if (stepId === 'oxygen') focusAssets(); // 최종 결정: 주거와 산소 장치를 함께 담는다
+      if (stepId !== 'location') focusAssets(true); // 결정하면 지금까지 지은 기지 전체가 화면에 알맞게 들어오게 물러선다
     });
     return button;
   }
@@ -315,22 +324,34 @@ try {
   // 왼쪽 상태 칸: 기온(행성 전체 또는 고른 지대의 시나리오 범위) · 산소 · 결정 기록. 값이 없으면 '측정 중'이다
   function updateHud(local) {
     setCrewSite(local ? currentSite : null);
+    // 대원 얼굴: 결정한 선지들의 stats 를 더해 넘긴다. 카드를 눌러 미리 보기만 할 때는 바뀌지 않는다
+    if (local && decided.location) {
+      const total = {};
+      for (const step of ALL_STEPS) {
+        if (!decided[step.id]) continue;
+        const stats = step.choices.find(choice => choice.id === selection[step.id])?.stats ?? {};
+        for (const [key, value] of Object.entries(stats)) total[key] = (total[key] ?? 0) + value;
+      }
+      setCrewStats(total);
+    } else setCrewStats(null);
     const range = local ? hud.sites[currentSite]?.temperature : null;
     $('#hud-temp').textContent = range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°';
     $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위' : '밤 최저 / 낮 최고';
     $('#hud-o2').textContent = hud.oxygen == null ? '측정 중' : hud.oxygen + '%';
     $('#hud-o2-bar').style.width = (hud.oxygen ?? 0) + '%';
-    const entries = WEEKS[week - 1].steps.map(step => step.id === 'location'
+    const shownWeek = logWeek ?? week; // 왼쪽 주차 탭으로 고른 주 (없으면 지금 주)
+    const entries = WEEKS[shownWeek - 1].steps.map(step => step.id === 'location'
       ? (local && decided.location ? siteLetter(currentSite) + ' ' + COPY[currentSite].title : '—')
       : decided[step.id] ? choiceLabel(step.id) : '—');
     entries.forEach((text, i) => { $('#hud-log-' + (i + 1)).textContent = '▶ LOG 0' + (i + 1) + ' ........ ' + text; });
     document.querySelectorAll('#hud .tab').forEach((tab, i) => {
       tab.hidden = i >= week; // 아직 오지 않은 주차는 탭을 보이지 않는다
-      tab.classList.toggle('on', i === week - 1); tab.setAttribute('aria-selected', String(i === week - 1));
+      tab.classList.toggle('on', i === shownWeek - 1); tab.setAttribute('aria-selected', String(i === shownWeek - 1));
     });
   }
   // 1단계 지대 카드는 누르면 그 지역으로 날아가 둘러볼 수 있고, '지대 결정'을 눌러야 다음 단계가 열린다
   function renderSteps(local) {
+    logWeek = null; // 무언가 고르거나 결정하면 LOG 는 지금 주로 돌아온다
     if (local) selection.location = siteLetter(currentSite);
     const sites = $('nav.sites');
     sites.querySelector('.decide')?.remove();
@@ -360,8 +381,9 @@ try {
   const FOCUS = { plain: [[0, 0.6, 0], 4.2], lavaTube: [[3.6, -3.4, -1.1], 6.5], ridge: [[-1.6, -0.6, 0], 5.5] };
   const FOCUS_ELEVATION = 28 * Math.PI / 180;
   const FOCUS_ZOOM = { plain: 1, lavaTube: 0.6, ridge: 1 }; // 동굴 속은 더 가까이 (벽에 가리지 않게 거리만 줄인다)
+  const LOCAL_MIN_DISTANCE = 2.5; // 지역에서 카메라가 다가갈 수 있는 가장 가까운 거리. 6 이면 기지 전체 보기가 이 거리에 막혀 건물이 작게 보였다
   const ORBIT_SPEED = 0.25; // OrbitControls 기준. 2.0 이면 30초에 한 바퀴, 0.25 면 약 4분
-  function focusAssets() {
+  function focusAssets(whole = false) {
     if (mode !== 'local' || transition) return;
     if (currentSite === 'lavaTube' && (caveInterior || localSection)) {
       // 동굴 안에서는 돌 수 없으므로 전체 보기로 나와서 다가간다
@@ -373,7 +395,7 @@ try {
     // 비출 레이어: 산소를 결정했으면 주거 + 산소, 산소 선지를 골랐으면 그 장치, 아니면 주거 모듈
     // 2주차부터는 방금 더한 장치만 비춘다
     const overlays = [...overlayLayers.values()].slice(week > 1 ? -1 : 0);
-    const shown = week > 1 && overlays.length ? overlays : decided.oxygen ? [moduleLayer, ...overlays] : selection.oxygen && overlays.length ? overlays : [moduleLayer];
+    const shown = whole ? [moduleLayer, ...overlayLayers.values()] : week > 1 && overlays.length ? overlays : decided.oxygen ? [moduleLayer, ...overlays] : selection.oxygen && overlays.length ? overlays : [moduleLayer];
     const [anchor, size] = FOCUS[currentSite], center = new THREE.Vector3(...anchor);
     let radius = size;
     const box = new THREE.Box3();
@@ -403,7 +425,10 @@ try {
     }
     flat.addScaledVector(up, -flat.dot(up)).normalize();
     const direction = flat.multiplyScalar(Math.cos(FOCUS_ELEVATION)).addScaledVector(up, Math.sin(FOCUS_ELEVATION));
-    const position = target.clone().addScaledVector(direction, radius * 2.3 * FOCUS_ZOOM[currentSite] * LOCAL_SCALE);
+    // 기지 전체 보기: 감싸는 구가 세로·가로 시야 중 좁은 쪽에 여유 15% 를 두고 꼭 들어오는 거리 (멀리 빠져 작아지지 않게)
+    const half = Math.min(camera.fov / 2, THREE.MathUtils.radToDeg(Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect))) * Math.PI / 180;
+    const distance = whole && !box.isEmpty() ? Math.max(box.getSize(new THREE.Vector3()).length() / 2, 2) * 1.15 / Math.sin(half) : radius * 2.3;
+    const position = target.clone().addScaledVector(direction, distance * FOCUS_ZOOM[currentSite] * LOCAL_SCALE);
     focusTween = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
     controls.autoRotate = false;
   }
@@ -413,7 +438,11 @@ try {
     const shown = WEEKS[number - 1];
     openBriefing(shown, textsFor(shown.situation, selection), week, showBrief);
   };
-  document.querySelectorAll('#hud .tab').forEach((tab, i) => tab.addEventListener('click', () => showBrief(i + 1)));
+  // 왼쪽 주차 탭: 그 주 브리핑을 다시 띄우고, LOG 도 그 주에 결정한 것으로 바꿔 보여 준다
+  document.querySelectorAll('#hud .tab').forEach((tab, i) => tab.addEventListener('click', () => {
+    logWeek = i + 1 === week ? null : i + 1; updateHud(mode === 'local' && !transition);
+    showBrief(i + 1);
+  }));
   $('#next-week').addEventListener('click', () => { week++; renderSteps(true); syncAssets(); showBrief(week); });
 
   // A와 B는 사용자 표시 위치, C는 기존 위치다. 실제 경위도 자료는 아니다.
@@ -470,7 +499,7 @@ try {
     controls.target.copy(pose.target);
     controls.enableDamping = true; controls.dampingFactor = 0.09;
     controls.autoRotate = false; controls.enablePan = mode === 'local';
-    controls.minDistance = mode === 'local' ? 6 * LOCAL_SCALE : 18;
+    controls.minDistance = mode === 'local' ? LOCAL_MIN_DISTANCE * LOCAL_SCALE : 18;
     controls.maxDistance = mode === 'local' ? 65 * LOCAL_SCALE : 65;
     controls.update();
   }
@@ -484,7 +513,7 @@ try {
     if (local) {
       const text = COPY[currentSite];
       $('#landmark').replaceChildren(document.createTextNode(text.tag));
-      const sub = document.createElement('small'); sub.textContent = text.sub; $('#landmark').appendChild(sub);
+      if (text.sub) { const sub = document.createElement('small'); sub.textContent = text.sub; $('#landmark').appendChild(sub); }
       $('#interaction').textContent = '드래그 회전 · 휠 확대 · 우클릭 이동';
     } else {
       $('#interaction').textContent = '행성 위 A · B · C를 선택해 접근하세요';
@@ -581,7 +610,26 @@ try {
     buildLocal(currentSite); fadePoints(localPoints, 1); syncAssets();
     setPose(localPose());
   });
-  document.addEventListener('keydown', event => { if (event.key === 'Escape') returnToPlanet(); });
+  // 키보드: 아래 줄 안내(선택 ◀ ▶ · 확정 OK)대로 ◀ ▶ 로 지금 보이는 카드를 고르고 Enter 로 결정 버튼을 누른다
+  const visibleNow = element => element && !element.disabled && element.offsetParent !== null;
+  document.addEventListener('keydown', event => {
+    const blocked = !$('#intro').hidden || !$('#crew-modal').hidden || [...document.querySelectorAll('.data-modal')].some(modal => !modal.hidden);
+    if (event.key === 'Escape') { if (!blocked) returnToPlanet(); return; }
+    if (blocked || transition || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.target.closest?.('input, textarea, select')) return;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      const cards = [...document.querySelectorAll('#hud .cards .site')].filter(visibleNow);
+      if (!cards.length) return;
+      event.preventDefault();
+      const now = cards.findIndex(card => card.classList.contains('active'));
+      const next = now < 0 ? (event.key === 'ArrowRight' ? 0 : cards.length - 1) : (now + (event.key === 'ArrowRight' ? 1 : -1) + cards.length) % cards.length;
+      cards[next].focus({ preventScroll: true }); cards[next].click();
+    } else if (event.key === 'Enter') {
+      const button = [...document.querySelectorAll('#hud .decide')].find(visibleNow);
+      if (!button) return;
+      event.preventDefault(); button.click();
+    }
+  });
   new ResizeObserver(() => {
     const w = host.clientWidth, h = host.clientHeight;
     renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
@@ -678,10 +726,19 @@ try {
         if (t >= 1) { focusTween = null; controls.autoRotate = !reducedMotion; controls.autoRotateSpeed = ORBIT_SPEED; }
       }
       controls.update(); stage.dataset.phase = 'idle';
+      if (pastFades.size && $('#intro').hidden) {
+        for (const layer of pastFades) {
+          layer.fade.start ??= time;
+          if (layer.mesh) layer.mesh.visible = true;
+          const progress = clamp((time - layer.fade.start) / PAST_FADE_MS);
+          fadePoints(layer.points, 1 - smooth(0, 1, progress));
+          if (progress >= 1) { pastFades.delete(layer); delete layer.fade; fadePoints(layer.points, 1); showPast(layer, true); }
+        }
+      }
       if (reveals.length) {
         prepareProjection();
         for (let i = reveals.length - 1; i >= 0; i--) {
-          const progress = clamp((time - reveals[i].start) / 900);
+          const progress = clamp((time - reveals[i].start) / REVEAL_MS);
           assemblePoints(reveals[i].points, progress, 'in');
           if (progress >= 1) reveals.splice(i, 1);
         }
