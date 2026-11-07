@@ -2,12 +2,12 @@
    style.css 위에 겉모습만 덮어쓴다. 글·칸·배치는 style.css·index.html 그대로다.
    대원 얼굴 패널(.crew-face, .crew-modal)의 안쪽은 건드리지 않는다 */
 :root{
-  --ink:#000;--c:#E8DFC8;--o:#F2B84B;
+  --ink:#0A1434;--bg:#02040C;--c:#8FC1FF;--t:#DCE6FF;--o:#E8DFC8;--sel:#0E1B48;
   --ticks:repeating-linear-gradient(90deg,var(--c) 0 1px,transparent 1px 8px);
-  --frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23E8DFC8' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%23E8DFC8' stroke-opacity='.45' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%23E8DFC8' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
-  --frame-o:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23F2B84B' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%23F2B84B' stroke-opacity='.6' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%23F2B84B' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
-  --rings:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='none' stroke='%23E8DFC8'%3E%3Ccircle cx='400' cy='400' r='392' stroke-opacity='.5'/%3E%3Ccircle cx='400' cy='400' r='380' stroke-opacity='.8' stroke-width='10' stroke-dasharray='1 18.9'/%3E%3Ccircle cx='400' cy='400' r='372' stroke-opacity='.3'/%3E%3Ccircle cx='400' cy='400' r='300' stroke-opacity='.18' stroke-dasharray='4 8'/%3E%3Cpath stroke-opacity='.3' d='M0 400H130M670 400H800M400 0V130M400 670V800'/%3E%3C/svg%3E")}
-body{background-color:var(--ink);background-image:linear-gradient(rgba(232,223,200,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(232,223,200,.11) 1px,transparent 1px),linear-gradient(rgba(232,223,200,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(232,223,200,.045) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px;color:var(--c)}
+  --frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%232B47C4' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%231A2B72' stroke-opacity='1' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%238FC1FF' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
+  --frame-o:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23E8DFC8' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%23E8DFC8' stroke-opacity='.6' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%23E8DFC8' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
+  --rings:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='none' stroke='%238FC1FF'%3E%3Ccircle cx='400' cy='400' r='392' stroke-opacity='.5'/%3E%3Ccircle cx='400' cy='400' r='380' stroke-opacity='.8' stroke-width='10' stroke-dasharray='1 18.9'/%3E%3Ccircle cx='400' cy='400' r='372' stroke-opacity='.3'/%3E%3Ccircle cx='400' cy='400' r='300' stroke-opacity='.18' stroke-dasharray='4 8'/%3E%3Cpath stroke-opacity='.3' d='M0 400H130M670 400H800M400 0V130M400 670V800'/%3E%3C/svg%3E")}
+body{background-color:var(--ink);background-image:linear-gradient(rgba(143,193,255,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(143,193,255,.11) 1px,transparent 1px),linear-gradient(rgba(143,193,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(143,193,255,.045) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px;color:var(--c)}
 a{color:var(--c)}a:hover{color:var(--o)}
 .scanlines{background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px)}
 kbd{border:1px solid var(--c)}
@@ -26,21 +26,19 @@ kbd{border:1px solid var(--c)}
 /* 상태 */
 .chip{color:var(--o);background:none;border:1px solid var(--o);padding:0 8px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
 .stat strong{color:var(--c);text-shadow:1px 0 currentColor}.stat small{color:var(--c)}
-.gauge{height:14px;border:1px solid var(--c);padding:0;background:repeating-linear-gradient(90deg,rgba(232,223,200,.55) 0 1px,transparent 1px 7px)}
+.gauge{height:14px;border:1px solid var(--c);padding:0;background:repeating-linear-gradient(90deg,rgba(143,193,255,.55) 0 1px,transparent 1px 7px)}
 .gauge>span{background:var(--c)}
 .log{border-top:1px dashed var(--c);color:var(--c)}
 .meta b.on{background:none;color:var(--o);border:1px solid var(--o)}
 .globe{width:164px;height:164px;border:0;position:relative;background:var(--rings) center/contain no-repeat}
 .globe div{width:112px;height:112px;background:none;box-shadow:none;border:1px solid var(--c)}
-.facts{color:var(--c)}.facts i{border-bottom:1px dotted var(--c)}.facts b{color:var(--c)}.facts li{border-bottom:1px solid rgba(232,223,200,.16);padding-bottom:3px}
+.facts{color:var(--c)}.facts i{border-bottom:1px dotted var(--c)}.facts b{color:var(--c)}.facts li{border-bottom:1px solid rgba(143,193,255,.16);padding-bottom:3px}
 .scenario{color:var(--c);border-left:2px solid var(--o);padding-left:8px}
 
 /* 지형 창: 행성 둘레에 눈금 고리 */
 .window-body{background-color:var(--ink)}
-.window-body::after{content:"";position:absolute;left:60%;top:53%;height:94%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;background:var(--rings) center/contain no-repeat}
-body.local .window-body::after{display:none}
 .compass{color:var(--c);border-bottom:1px solid var(--c);background:var(--ticks) bottom/100% 8px no-repeat}
-.cross{border-color:rgba(232,223,200,.3)}
+.cross{border-color:rgba(143,193,255,.3)}
 .heading{background:var(--ink);border-left:2px solid var(--o);left:0;padding:10px 26px 12px 16px;clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%)}
 .eyebrow,#description{color:var(--c)}.heading h1{color:var(--c);text-shadow:1px 0 currentColor}.heading h1 em{color:var(--o);font-style:normal}
 .pin{color:var(--c)}.pin b{border:1px solid var(--c);background:var(--ink);box-shadow:0 0 0 3px var(--ink),0 0 0 4px var(--c);color:var(--c)}
@@ -133,12 +131,12 @@ canvas.robot{filter:none;image-rendering:pixelated}
 @media(max-height:820px) and (min-width:1101px){
  .heading h1{font-size:32px;line-height:38px}
  .stat strong{font-size:32px;line-height:38px}
+ .eyebrow,#description,.orbit-note small,.orbit-note p{font-size:12px;line-height:18px}
 }
 
 /* 좁은 화면 */
 @media(max-width:1100px){
  .robot{left:24px;top:84px;bottom:auto;width:150px}
- .window-body::after{display:none} /* 좁은 화면은 행성 자리가 달라 고리를 뺀다 */
 }
 @media(max-width:640px){
  .heading{max-width:230px}.heading h1{font-size:26px;line-height:30px}.eyebrow,#description{font-size:12px;line-height:18px}
@@ -153,3 +151,113 @@ canvas.robot{filter:none;image-rendering:pixelated}
  .robot{top:150px;width:120px}
  .bubble{padding:10px 14px}
 }
+
+/* 오른쪽 칸: 낮은 화면에서도 틀 밖으로 넘치지 않게 */
+.p-right .panel-body{gap:10px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--c) transparent}
+.p-right .globe{width:clamp(88px,15vh,164px);height:clamp(88px,15vh,164px);flex-shrink:0}
+.p-right .globe div{width:68%;height:68%}
+.p-right .scenario{margin-top:auto;flex-shrink:0}
+
+/* 창 버튼: 누를 수 있는 _ □ × */
+.wbtn{display:flex;align-items:flex-end;justify-content:center;width:18px;height:18px;padding:0;border:1px solid var(--c);background:var(--ink);color:var(--c);font-size:16px;line-height:12px;cursor:pointer}
+.wbtn:hover,.wbtn:focus-visible{background:var(--o);border-color:var(--o);color:var(--ink)}
+.p-right.collapsed .panel-body{display:none}
+.p-right.collapsed{align-self:start}
+
+/* PLANET_DATA 큰 창: 수치는 카드, 설명은 짧은 목록, 긴 기준 글은 접어 둔다 */
+.data-modal{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.82)}
+.data-modal[hidden]{display:none}
+.data-card{width:min(920px,100%);max-height:calc(100vh - 48px);display:flex;flex-direction:column;border:6px solid transparent;border-image:var(--frame) 16 / 16px / 4px stretch;background:var(--ink);background-clip:padding-box;color:var(--c)}
+.data-card .titlebar{background:var(--ink);color:var(--c);height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border-bottom:1px solid var(--c);text-shadow:1px 0 currentColor;letter-spacing:.06em}
+.data-body{display:flex;flex-direction:column;gap:30px;padding:26px 34px 34px;overflow:auto;line-height:26px}
+.data-hero{display:flex;align-items:center;gap:28px}
+.data-globe{width:180px;flex-shrink:0;aspect-ratio:1;background:var(--rings) center/contain no-repeat;display:grid;place-items:center}
+.data-globe canvas{width:68%;height:68%;image-rendering:pixelated}
+.data-meta{display:flex;flex-direction:column;gap:4px;line-height:24px}.data-meta b.on{color:var(--o);border:1px solid var(--o);font-weight:400;padding:0 4px}
+.data-meta span:nth-child(2){text-shadow:1px 0 currentColor}
+.data-body section{display:flex;flex-direction:column;gap:14px}
+.data-body h2{margin:0;font-size:16px;font-weight:400;color:var(--o);letter-spacing:.08em;display:flex;align-items:center;gap:12px}
+.data-body h2::after{content:"";flex:1;border-top:1px solid rgba(143,193,255,.4)}
+.data-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.data-stat{display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;border:1px solid rgba(143,193,255,.45)}
+.data-stat span{letter-spacing:.04em}
+.data-stat b{font-weight:400;font-size:32px;line-height:38px;color:var(--c);text-shadow:1px 0 currentColor}
+.data-stat p{margin:0;line-height:24px}
+.data-points{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;max-width:64ch}
+.data-points li{display:flex;gap:10px}.data-points li::before{content:"▶";color:var(--o);flex-shrink:0}
+.data-notes{border:1px solid rgba(143,193,255,.45)}
+.data-notes summary{cursor:pointer;padding:10px 16px;list-style:none;display:flex;justify-content:space-between}
+.data-notes summary::-webkit-details-marker{display:none}
+.data-notes summary::after{content:"＋";color:var(--o)}.data-notes[open] summary::after{content:"−"}
+.data-notes summary:hover,.data-notes summary:focus-visible{color:var(--o)}
+.data-notes div{padding:4px 16px 16px;display:flex;flex-direction:column;gap:14px;max-width:72ch}
+.data-notes p{margin:0}
+@media(max-width:700px){
+ .data-body{padding:18px;gap:24px}
+ .data-hero{flex-direction:column;align-items:flex-start}
+ .data-globe{width:140px}
+}
+
+/* 창 버튼의 확대(□) 아이콘 */
+.wbtns .wbtn .max-icon{display:block;width:10px;height:9px;border:1px solid currentColor;border-top-width:3px;margin:0}
+.wbtn{align-items:center}
+
+/* CREW_LINK: 창 버튼으로 연다 (얼굴을 눌러도 열린다) */
+.crew-hint{display:none}
+.p-crew .titlebar{gap:8px}.p-crew .titlebar>span:first-child{flex:1}
+.p-crew.collapsed .crew-face{display:none}
+.p-crew.collapsed{align-self:start}
+
+/* CREW_LINK: 파란색을 검정·크림·주황으로 (얼굴 3D 그림 자체는 그대로) */
+.crew-face{background:var(--ink);color:var(--c)}
+.face-stage,.face-stage[data-style="surface"]{background:var(--ink)}
+.crew-hint{background:var(--ink);border:1px solid var(--c);color:var(--c);font-size:16px}
+.crew-face:hover .crew-hint,.crew-face:focus-visible .crew-hint{background:var(--o);border-color:var(--o);color:var(--ink)}
+.crew-modal{background:rgba(0,0,0,.8)}
+.crew-card{border:6px solid transparent;border-image:var(--frame) 16 / 16px / 4px stretch;background:var(--ink);background-clip:padding-box;box-shadow:none;color:var(--c)}
+.crew-card .titlebar{height:30px;background:var(--ink);color:var(--c);border-bottom:1px solid var(--c);padding:0 8px;text-shadow:1px 0 currentColor}
+.crew-card .live{color:var(--o);font-size:16px}
+.crew-x{width:18px;height:18px;border:1px solid var(--c);background:var(--ink);color:var(--c);font-size:16px;line-height:14px}
+.crew-x:hover,.crew-x:focus-visible{background:var(--o);border-color:var(--o);color:var(--ink)}
+.crew-big{border:1px solid var(--c)}
+.crew-status{border:1px solid var(--c);color:var(--c)}
+.crew-status[data-lv="1"]{border-color:var(--o);color:var(--o)}
+.crew-status[data-lv="2"]{border-color:var(--o);background:var(--o);color:var(--ink)}
+.chips{border:1px solid var(--c)}.chips>div{border-right:1px solid var(--c)}
+.chips small{color:var(--c);font-size:16px}.chips b{color:var(--c)}
+.crew-rows,.crew-bars{font-size:16px}
+.crew-rows li{border-bottom:1px dotted var(--c)}.crew-rows b{color:var(--c)}
+.crew-bars .bar{background:repeating-linear-gradient(90deg,rgba(143,193,255,.35) 0 5px,transparent 5px 8px)}
+.crew-bars .bar i{background:var(--c)}
+.crew-bars .bar[data-lv="1"] i,.crew-bars .bar[data-lv="2"] i{background:var(--o)}
+.crew-bars em,.crew-note{color:var(--c);font-size:16px}
+
+/* 게임 화면에서 뺀 정보: 점 개수 표시 자리는 비면 숨긴다 */
+#build-time:empty{display:none}
+
+/* 선지 카드: 단어 단위 줄바꿈, 기호 칸과 글 칸을 나눠 둘째 줄도 가지런히, A·B·C 는 이름 옆에 */
+.site{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:6px;align-content:start;word-break:keep-all;overflow-wrap:break-word;padding:10px 14px 12px}
+.site>b{grid-row:1;grid-column:1;align-self:center;min-width:26px;text-align:center;border:1px solid currentColor;padding:0 6px;letter-spacing:0}
+.site .name{grid-row:1;grid-column:2;align-self:center}
+.site .line,.site .effects{grid-column:1 / -1}
+.effects li{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;align-items:start}
+.effects i{margin:0;min-width:64px;text-align:center}
+.step-title,.decided{word-break:keep-all}
+
+/* 지난 주차 건물 정보창 (PR #38) */
+.past-tip{max-width:280px;padding:8px 12px;background:var(--ink);border:1px solid var(--c);color:var(--c);font-size:16px;line-height:22px;word-break:keep-all}
+.past-tip small{color:var(--o);font-size:16px}.past-tip b{font-size:16px;color:var(--c);text-shadow:1px 0 currentColor}.past-tip span{color:var(--c)}
+
+/* CREW_LINK 제목줄: 상태 글이 길어도 한 줄로, 넘치면 말줄임 */
+.p-crew .titlebar>span:first-child{flex:0 0 auto}
+.p-crew .crew-state{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.p-crew .titlebar .wbtns{flex:0 0 auto}
+.p-crew .titlebar{gap:6px;letter-spacing:0}.p-crew .titlebar>span:first-child{padding-right:4px}.p-crew .crew-state{padding:0}
+
+/* 파랑 테마 (팀 화면 토큰): 바탕은 짙은 남색, 선·제목은 하이라이트 파랑, 긴 글은 본문색 */
+body{background-color:var(--bg);color:var(--t)}
+.intro{background:var(--bg)}
+.site .line,.effects,.facts,.meta,.log,.stat small,.report,.bubble p,.data-stat p,.data-points,.data-meta,.past-tip span,.scenario,#description{color:var(--t)}
+.site.active{background:var(--sel);background-clip:padding-box}
+.window{background:#000;background-clip:padding-box}
+.window-body{background-color:#000}

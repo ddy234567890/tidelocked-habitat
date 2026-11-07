@@ -317,7 +317,7 @@ try {
     setCrewSite(local ? currentSite : null);
     const range = local ? hud.sites[currentSite]?.temperature : null;
     $('#hud-temp').textContent = range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°';
-    $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위 (시나리오)' : '밤 최저 / 낮 최고';
+    $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위' : '밤 최저 / 낮 최고';
     $('#hud-o2').textContent = hud.oxygen == null ? '측정 중' : hud.oxygen + '%';
     $('#hud-o2-bar').style.width = (hud.oxygen ?? 0) + '%';
     const entries = WEEKS[week - 1].steps.map(step => step.id === 'location'
@@ -343,19 +343,15 @@ try {
       if (nav.childElementCount) nav.append(decideButton(stepId));
     }
     // 2주차부터: 지금 주차에서 아직 결정하지 않은 첫 단계를 연다. 앞 주차 선택은 selection 에 그대로 남아 있다
-    const { steps, situation, goal } = WEEKS[week - 1], open = local && week > 1 ? steps.find(step => !decided[step.id]) : null;
+    const { steps } = WEEKS[week - 1], open = local && week > 1 ? steps.find(step => !decided[step.id]) : null;
     renderStep(open?.id, $('#step-week'), Boolean(open));
     if (open) {
       $('#step-week .step-title b').textContent = steps.indexOf(open) + 1;
       $('#step-week .step-title span').textContent = open.label;
-      $('#week-situation').textContent = [goal, ...textsFor(situation, selection)].join(' ');
       $('#step-week nav').append(decideButton(open.id));
     }
     $('#next-week').hidden = !(local && WEEKS[week] && steps.every(step => decided[step.id]));
     $('#back').hidden = week > 1; // 결정은 되돌릴 수 없다. 2주차부터는 행성으로 돌아가 처음부터 고르지 않는다
-    const summary = $('#decided');
-    summary.hidden = !(local && decided.location);
-    if (!summary.hidden) summary.textContent = '결정 · ' + [COPY[currentSite].title, ...ALL_STEPS.slice(1).filter(step => decided[step.id]).map(step => choiceLabel(step.id))].join(' / ');
     updateHud(local);
   }
   // 짓는 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.
@@ -483,7 +479,6 @@ try {
     $('#local-nav').hidden = !local;
     $('#cave-view').hidden = !local || currentSite !== 'lavaTube';
     $('#cave-view').textContent = caveInterior ? '동굴 전체 보기' : '동굴 내부로';
-    $('#orbit-note').hidden = local;
     $('#planet-labels').hidden = local;
     $('#landmark').hidden = !local;
     if (local) {
@@ -493,7 +488,7 @@ try {
       $('#interaction').textContent = '드래그 회전 · 휠 확대 · 우클릭 이동';
     } else {
       $('#interaction').textContent = '행성 위 A · B · C를 선택해 접근하세요';
-      $('#build-time').textContent = 'TEEGARDEN b / ORBITAL VIEW';
+      $('#build-time').textContent = '';
     }
     document.querySelectorAll('.site[data-site]').forEach(button => {
       const active = local && button.dataset.site === currentSite;
@@ -534,7 +529,7 @@ try {
     localPoints = new THREE.Points(geometryFrom(data), material); localGroup.add(localPoints);
     const site = sites[name]; localGroup.position.copy(site.position); localGroup.quaternion.copy(site.rotation);
     localGroup.visible = true; fadePoints(localPoints, 0);
-    $('#build-time').textContent = total.toLocaleString('en-US') + ' POINTS / ' + (cached ? 'CACHED' : elapsed.toFixed(1) + ' ms');
+    $('#build-time').textContent = '';
     window.terrainDiagnostics = { site: name, count: total, buildMs: elapsed, relief: definitions[name].relief, materialCount: 1, cached };
   }
   function selectSite(name) {
@@ -587,11 +582,6 @@ try {
     setPose(localPose());
   });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') returnToPlanet(); });
-  $('#notes-toggle').addEventListener('click', () => {
-    $('#notes').hidden = !$('#notes').hidden;
-    $('#notes-toggle').setAttribute('aria-expanded', String(!$('#notes').hidden));
-    $('#notes-toggle').textContent = '자료와 모델 기준 ' + ($('#notes').hidden ? '＋' : '−');
-  });
   new ResizeObserver(() => {
     const w = host.clientWidth, h = host.clientHeight;
     renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
@@ -626,7 +616,7 @@ try {
       localGroup.localToWorld(temporary); projected.copy(temporary).project(camera);
       const x = (projected.x + 1) * host.clientWidth / 2, y = (1 - projected.y) * host.clientHeight / 2;
       // 주거 모듈이 놓이면 지명 표지는 건물 위에 겹치므로 숨긴다. 왼쪽 위 제목·설명 글과 겹쳐도 숨긴다
-      const head = $('.heading'), underHeading = x < head.offsetLeft + head.offsetWidth + 10 && y - 54 < head.offsetTop + head.offsetHeight;
+      const head = $('.heading'), underHeading = !!head && x < head.offsetLeft + head.offsetWidth + 10 && y - 54 < head.offsetTop + head.offsetHeight;
       $('#landmark').style.display = !moduleLayer && !underHeading && projected.z < 1 && x > 30 && x < host.clientWidth - 150 && y > 160 ? 'block' : 'none';
       $('#landmark').style.left = x + 8 + 'px'; $('#landmark').style.top = y - 54 + 'px';
     }
