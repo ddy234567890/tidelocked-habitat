@@ -97,6 +97,9 @@ canvas{display:block;width:100%;height:100%;touch-action:none;mix-blend-mode:scr
 .heading h1{margin:0;font-size:clamp(28px,3.2vw,44px);font-weight:400;line-height:1.1;color:var(--hi)}.heading h1 em{font-style:normal;color:var(--mid)}
 #description{margin:12px 0 0;font-size:13px;line-height:1.7;color:var(--text);max-width:320px}
 .local .heading{display:none}
+/* 지난 주차 건물에 마우스를 올리면 뜨는 정보창. 건물 화면 범위 바깥 옆에 띄워 가리지 않는다 (main.js placeTip) */
+.past-tip{position:absolute;z-index:4;pointer-events:none;max-width:240px;padding:8px 10px;background:var(--panel);border:1px solid var(--line);color:var(--hi);font-size:12px;line-height:1.5}
+.past-tip small{display:block;color:var(--text);letter-spacing:.06em}.past-tip b{display:block;font-weight:400;font-size:14px;color:var(--cream)}.past-tip span{display:block;color:var(--mid)}
 
 .pin{position:absolute;display:flex;align-items:center;gap:10px;border:0;background:transparent;color:var(--hi);padding:6px;z-index:3;white-space:nowrap;text-align:left;transform:translate(-20px,-22px)}
 .pin b{display:grid;place-items:center;width:32px;height:32px;border:2px solid var(--edge);background:var(--panel);font-weight:400;box-shadow:0 0 0 4px rgba(110,146,255,.12)}

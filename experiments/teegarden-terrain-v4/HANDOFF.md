@@ -61,7 +61,7 @@ GitHub 수정만으로 위 Sites 배포가 자동 갱신되지는 않습니다.
 ## 주차 이어가기 (2026-11-04)
 - 주차 파일은 따로 둔다: 1~5주차 모두 src/weeks/weekN.json. src/choices.js 의 WEEKS 에 등록되어 있다.
 - 색: 지형은 파랑, 가장 최근에 더한 선지 하나는 크림(겹쳐 흰색으로 보인다), 그 전 선지는 모두 주황 (main.js syncAssets, 모든 주차 공통).
-- 지난 주차 건물은 면 (2026-11-07): 다음 주로 넘어가면 앞 주차에 생긴 레이어는 선 점을 숨기고 모델 삼각형을 그대로 면으로 그린다 (main.js showPast, faceMaterial 하나). 면마다 고정 빛 방향으로 밝기가 달라 각진 로우 폴리로 보이고, 존재감 없게 무채색 반투명이다: 색은 placement.js faceColors(palette gray, FACE_RANGE), 투명도는 main.js FACE_OPACITY. 몇 주차 레이어인지는 choices.js resolve 의 weeks 다. 면이 없는 동굴 봉쇄막·벽 조류 점은 주황 점 그대로다. 범례에 '지난 주차'가 뜬다. 저장소 CLAUDE.md 의 점 셰이더 규칙에 이 예외를 적었다.
+- 지난 주차 건물은 면 (2026-11-07): 다음 주로 넘어가면 앞 주차에 생긴 레이어는 선 점을 숨기고 모델 삼각형을 그대로 면으로 그린다 (main.js showPast, faceMaterial 하나). 면마다 고정 빛 방향으로 밝기가 달라 각진 로우 폴리로 보이고, 존재감 없게 무채색 반투명이다: 색은 placement.js faceColors(palette gray, FACE_RANGE), 투명도는 main.js FACE_OPACITY. 몇 주차 레이어인지는 choices.js resolve 의 weeks 다. 면이 없는 동굴 봉쇄막·벽 조류 점은 주황 점 그대로다. 범례에 '지난 주차'가 뜬다. 지난 건물에 마우스를 올리면 그 레이어의 선 점이 주황 외곽선으로 다시 켜지고, 몇 주차·어느 단계·선지 이름·한 줄 설명을 담은 정보창(#past-tip)이 건물 화면 범위 바깥 옆(오른쪽 → 왼쪽 → 위 → 아래)에 뜬다 (main.js pickPast·placeTip). 저장소 CLAUDE.md 의 점 셰이더 규칙에 이 예외를 적었다.
 - 선택 상태는 하나에 쌓인다: { location, module, oxygen, power, storage, heat, … }. 뒤 주차는 requires 로 앞 주차 선택을 읽는다 (선지 조건, situation 현재 상황 문구, extra 설명 뒤 문장).
 - 장치(오버레이)는 주차가 지나도 남고, buildOverlay 의 placed 로 앞 장치 자리를 비워 둔다.
 - 2주차만 바로 보기: 주소 뒤에 `?intro=0&week=2&site=lavaTube` (site 는 plain·lavaTube·ridge). 1주차는 단계마다 첫 선지를 고른 것으로 친다.
