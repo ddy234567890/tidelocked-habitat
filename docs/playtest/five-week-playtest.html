@@ -1,0 +1,784 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>기지 5주 플레이테스트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* 레이아웃: 위에 고정된 게이지 판, 아래로 한 주씩 진행되는 결정 카드 */
+:root{
+  --bg:#EEF0EC; --panel:#FFFFFF; --ink:#1C2321; --muted:#5D6862; --line:#D5DAD4;
+  --accent:#B9461C; --accent-soft:#F6E3DA; --pick:#1F5E57; --pick-soft:#DCEDE9;
+  --good:#2F7D4F; --warn:#B07A12; --bad:#B3362D;
+  --sans:"IBM Plex Sans KR",system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151A19; --panel:#1E2523; --ink:#E6EBE7; --muted:#9AA6A0; --line:#33403C;
+  --accent:#F08A5D; --accent-soft:#3A2820; --pick:#7CC9BC; --pick-soft:#1E3A36;
+  --good:#6CC08B; --warn:#E0B04A; --bad:#EE7B70; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151A19; --panel:#1E2523; --ink:#E6EBE7; --muted:#9AA6A0; --line:#33403C;
+  --accent:#F08A5D; --accent-soft:#3A2820; --pick:#7CC9BC; --pick-soft:#1E3A36;
+  --good:#6CC08B; --warn:#E0B04A; --bad:#EE7B70; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:820px;margin:0 auto}
+h1{font-size:22px;margin:24px 0 2px;text-wrap:balance}
+h2{font-size:19px;margin:0 0 4px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 16px}
+.gbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:18px}
+.gauges{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.g .top{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
+.g .val{font-family:var(--mono);font-size:18px;font-variant-numeric:tabular-nums}
+.g .track{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:3px 0 2px}
+.g .fill{height:100%;border-radius:3px;transition:width .4s}
+.g .rate{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+.situ{background:var(--accent-soft);border-radius:10px;padding:12px 14px;margin:12px 0 4px;font-size:14px}
+.situ b{color:var(--accent)}
+.dec{margin-top:22px}
+.dec .q{font-weight:700;margin-bottom:8px}
+.opts{display:grid;gap:10px}
+.opt{display:block;width:100%;text-align:left;background:var(--panel);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit;cursor:pointer}
+.opt:hover{border-color:var(--muted)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.opt.on{border-color:var(--pick);background:var(--pick-soft)}
+.opt .nm{font-weight:700}
+.opt .ln{color:var(--muted);font-size:14px}
+.opt .easy{font-size:14px;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;border-radius:999px;padding:2px 9px;background:var(--bg)}
+.chip.gain{color:var(--good)} .chip.cost{color:var(--bad)}
+.survey{font-size:12px;color:var(--muted);margin-top:6px}
+.num{font-family:var(--mono);font-size:12px;color:var(--pick);margin-top:6px}
+.btn{display:inline-block;background:var(--ink);color:var(--bg);border:0;border-radius:8px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer}
+.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn[disabled]{opacity:.35;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+ul.clean{margin:6px 0;padding-left:18px}
+ul.clean li{margin:2px 0}
+.ev{border-left:4px solid var(--bad);border-radius:0;background:var(--panel);padding:10px 14px;margin:12px 0}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px;width:100%;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+.end-code{font-family:var(--mono);color:var(--accent);font-size:13px;letter-spacing:.08em}
+.end-title{font-size:26px;margin:2px 0 6px;text-wrap:balance}
+.verdict{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.vbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.vbox .k{font-size:12px;color:var(--muted)}
+.vbox .v{font-family:var(--mono);font-size:20px}
+.small{font-size:13px;color:var(--muted)}
+label.tog{display:inline-flex;gap:6px;align-items:center;font-size:13px;cursor:pointer}
+@media (max-width:560px){.gauges{grid-template-columns:repeat(2,minmax(0,1fr))}.verdict{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.g .fill{transition:none}}
+</style>
+<div class="wrap">
+  <h1>기지 5주 플레이테스트</h1>
+  <p class="sub">선지를 골라 5주를 보내고, 엔딩 판정이 납득되는지 확인하는 테스트용 페이지예요. 숫자는 모두 플레이테스트용 가정값이에요.</p>
+  <div class="gbar" id="gbar" hidden>
+    <div class="gauges" id="gauges"></div>
+    <div class="meta"><span id="wk"></span><label class="tog"><input type="checkbox" id="tester"> 테스터 모드 (숫자·사건 일정 보기)</label></div>
+  </div>
+  <main id="main"></main>
+</div>
+<script>
+// ===== ENGINE START =====
+const KEYS = ['A','W','F','E'];
+const NAME = {A:'공기', W:'물', F:'식량', E:'전력'};
+const SUBJ = {A:'공기가', W:'물이', F:'식량이', E:'전력이'};
+const OBJ = {A:'공기를', W:'물을', F:'식량을', E:'전력을'};
+const DEMAND = {A:-8, W:-13, F:-15, E:-12}; // 이주민 입주 후 추가 수요(주당)
+const EVENT_INFO = {
+  outage:  {name:'정전', text:'주 전원이 한동안 멈췄어요.'},
+  contam:  {name:'수원 오염', text:'물을 끌어오던 곳에 오염 물질이 섞였어요.'},
+  flare:   {name:'별 활동 폭발', text:'별이 갑자기 강한 빛과 입자를 뿜었어요.'},
+  breakdown:{name:'공기 장치 고장', text:'산소를 만드는 장치 하나가 멈췄어요.'}
+};
+
+function clamp(v){ return Math.max(-50, Math.min(100, Math.round(v))); }
+
+function newGame(rand){
+  rand = rand || Math.random;
+  const types = ['outage','contam','flare','breakdown'];
+  for(let i=types.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[types[i],types[j]]=[types[j],types[i]];}
+  const weeks = [2,3,4]; weeks.splice(Math.floor(rand()*3),1);
+  return {
+    S:{A:60,W:60,F:60,E:60},
+    R:{A:-2,W:-2,F:-3,E:-2},
+    f:{}, harvest:[], log:[], dead:null, picks:[],
+    events:{[weeks[0]]:types[0],[weeks[1]]:types[1]},
+    eventLog:[]
+  };
+}
+
+function imm(g,k,v,why){ g.S[k]=clamp(g.S[k]+v); g.log.push({t:'imm',k,v,why}); }
+function rate(g,k,v,why){ g.R[k]+=v; g.log.push({t:'rate',k,v,why}); }
+
+function checkDead(g,w){
+  if(g.dead) return;
+  for(const k of KEYS){ if(g.S[k]<=0){ g.dead={k,week:w}; return; } }
+}
+
+function harvestAt(g,week){
+  const out={A:0,W:0,F:0,E:0};
+  for(const h of g.harvest){ if(week>=h.start){ for(const k of KEYS) out[k]+=(h[k]||0); } }
+  return out;
+}
+
+function endWeek(g,w){
+  const before={...g.S};
+  const hv=harvestAt(g,w);
+  for(const k of KEYS) g.S[k]=clamp(g.S[k]+g.R[k]+hv[k]);
+  const ev=g.events[w]; let evRes=null;
+  if(ev){ evRes=applyEvent(g,ev); g.eventLog.push({week:w,type:ev,res:evRes}); }
+  checkDead(g,w);
+  return {before, after:{...g.S}, hv, ev, evRes};
+}
+
+function applyEvent(g,type){
+  const f=g.f, d={A:0,W:0,F:0,E:0}, why=[];
+  if(type==='outage'){
+    d.E-=6; why.push('발전이 멈춰 저장 전력을 꺼내 씀');
+    if(f.reactor){ d.E-=3; why.push('원자로는 다시 켜는 데 오래 걸림'); }
+    if(f.backup===2){ d.E+=3; why.push('구역별 예비 전원이 일부를 버텨 줌'); }
+    d.A-=5;
+    if(f.airZones){ d.A+=3; why.push('공기 장치가 나뉘어 있어 일부만 멈춤'); }
+    if(f.hotRisk){ d.A-=3; why.push('냉방이 멈춰 기지가 빨리 더워짐'); }
+  }
+  if(type==='contam'){
+    d.W-=f.single?9:4; why.push(f.single?'수원이 한 곳뿐이라 공급이 크게 끊김':'여러 방식으로 물을 얻어 피해가 적음');
+    if(f.tanks===2){ d.W+=3; why.push('구역별 탱크라 깨끗한 물이 일부 남음'); }
+    if(f.crop==='algae'){ d.F-=3; why.push('조류 배양액도 오염됨'); }
+  }
+  if(type==='flare'){
+    if(f.solar){ d.E-=6; why.push('태양광 패널 효율이 떨어짐'); } else { d.E-=2; why.push('원자로라 영향이 작음'); }
+    if(f.gh){ d.F-=4; why.push('지상 온실 작물이 피해를 입음'); }
+    if(f.build==='A1'){ d.A-=4; why.push('지상에 그대로 노출된 기지라 피해가 큼'); }
+    if(f.build==='B1'){ d.E-=3; why.push('동굴 입구 쪽 설비가 영향을 받음'); }
+  }
+  if(type==='breakdown'){
+    if(f.centralAir){ d.A-=8; why.push('중앙 장치 하나에 의존해 전체 공기가 줄어듦'); }
+    else { d.A-=3; why.push('나머지 장치가 버텨 줌'); }
+    if(f.layout==='C1'){ d.A-=3; why.push('모여 있는 구조라 고장 영향이 여러 동으로 번짐'); }
+    if(f.maint){ d.A+=2; why.push('회수 설비 정비 인력이 빨리 고침'); }
+  }
+  for(const k of KEYS) g.S[k]=clamp(g.S[k]+d[k]);
+  return {d,why};
+}
+
+// 입주 후 4주 정상 운영 검증
+function verify(g){
+  const S={...g.S}; const trace=[{...S}];
+  for(let i=0;i<4;i++){
+    const w=6+i; const hv=harvestAt(g,w);
+    let m=1;
+    if(g.f.staged && i<2) m=0.5;
+    for(const k of KEYS){
+      let v=S[k]+g.R[k]+hv[k]+DEMAND[k]*m;
+      if(g.f.staged){ if(k==='F'||k==='E') v-=1; }
+      if(k==='W'){ if(g.f.regen) v+=2*m; if(g.f.recover) v+=1*m; }
+      if(g.f.share){ const low=KEYS.reduce((a,b)=>S[a]<=S[b]?a:b); if(k===low) v+=3; }
+      S[k]=clamp(v);
+    }
+    trace.push({...S});
+    for(const k of KEYS){ if(S[k]<=0) return {ok:false,k,week:i+1,trace}; }
+  }
+  return {ok:true,trace};
+}
+
+// 대표 고장 시뮬레이션 2종
+function stress(g){
+  const f=g.f;
+  const out={E:42, A:24};
+  out.E -= f.backup===2?14:8;
+  if(f.reactor) out.E += 6;
+  if(f.isolate) out.E -= 6;
+  if(f.share) out.E += 4;
+  if(f.airZones) out.A -= 7;
+  if(f.backup===2) out.A -= 4;
+  if(f.hotRisk) out.A += 4;
+  if(f.isolate) out.A -= 4;
+  if(f.share) out.A += 4;
+  const wat={W:40, F:0};
+  wat.W -= (f.tanks||1)*7;
+  if(f.recover) wat.W -= 4;
+  if(f.isolate) wat.W -= 3;
+  if(f.crop) wat.F = 4;
+  const tests=[{name:'주 전원 정지', d:out},{name:'주 정수 설비 고장', d:wat}];
+  const res=tests.map(t=>{
+    const S={...g.S}; for(const k in t.d) S[k]-=Math.max(0,t.d[k]);
+    const low=KEYS.reduce((a,b)=>S[a]<=S[b]?a:b);
+    return {name:t.name, S, low, min:S[low]};
+  });
+  if(f.reinforce){
+    const worst=res.reduce((a,b)=>a.min<=b.min?a:b);
+    const t=tests[res.indexOf(worst)];
+    const S={...g.S}; for(const k in t.d) S[k]-=Math.max(0,t.d[k]-12);
+    const low=KEYS.reduce((a,b)=>S[a]<=S[b]?a:b);
+    res[res.indexOf(worst)]={name:t.name+' (보강함)', S, low, min:S[low]};
+  }
+  const worst=res.reduce((a,b)=>a.min<=b.min?a:b);
+  return {B:worst.min, worst, res};
+}
+
+function judge(g){
+  if(g.dead) return {code:'E1', cause:g.dead.k};
+  const M=Math.min(...KEYS.map(k=>g.S[k]));
+  const Mk=KEYS.reduce((a,b)=>g.S[a]<=g.S[b]?a:b);
+  const H=verify(g); const B=stress(g);
+  if(M<30) return {code:'E2',cause:Mk,M,H,B};
+  if(!H.ok) return {code:'E3',cause:H.k,M,H,B};
+  if(M<60||B.B<30) return {code:'E4',cause:B.B<30?B.worst.low:Mk,M,H,B,weakBy:B.B<30?'test':'low'};
+  return {code:'E5',M,H,B};
+}
+
+// ===== DATA =====
+const WEEKS = [
+ { n:1, title:'거점·생명유지', goal:'안전하게 머물고 숨 쉴 공간을 확보해요.',
+   situation:g=>'착륙선에는 임시 전원, 비축 물, 비축 식량, 비상 산소가 실려 있어요. 이 자원으로 버티면서 첫 기지를 세워야 해요.',
+   decisions:[
+   { q:'① 거점 위치 — 어떤 환경의 위험을 감수할까요?', options:g=>[
+     {id:'A',name:'A. 낮 쪽 평지',line:'넓지만, 별빛에 그대로 노출돼요.',
+      easy:'운동장처럼 넓은 땅이라 기지를 펼치고 넓히기 쉬워요. 대신 그늘이 없어 하루 종일 별빛을 받으니, 기지를 식히는 데 전기가 계속 들어요.',
+      gain:'설치 간단, 태양광·온실 자리 넉넉',cost:'냉방 전력이 매주 듦',survey:'깊이 조사: 먼지와 빛의 세기를 재면 2주 태양광 효율을 미리 알 수 있어요.',
+      apply:g=>{g.f.loc='A';g.f.solarK=1;g.f.ghK=1.2;g.f.water='far';imm(g,'E',-2,'평지라 설치가 간단');rate(g,'E',-2,'별빛 노출로 냉방 필요');}},
+     {id:'B',name:'B. 용암동굴',line:'바위가 지붕이 되지만, 드나들기 불편해요.',
+      easy:'두꺼운 바위 천장이 우산처럼 바깥 환경을 막아 줘요. 그래서 냉방 걱정은 적어요. 대신 장비를 안으로 옮기고 전선을 길게 깔아야 해요.',
+      gain:'냉방 부담 적음, 안에 물이 있을 가능성',cost:'처음 설치 전력 큼, 지상 설비와 멀어짐',survey:'깊이 조사: 안쪽 바위의 안정성과 대체 출구를 확인해요.',
+      apply:g=>{g.f.loc='B';g.f.solarK=0.75;g.f.ghK=0.8;g.f.water='cave';imm(g,'E',-6,'장비를 동굴 안으로 옮김');}},
+     {id:'C',name:'C. 낮·밤 경계 능선',line:'빛은 잘 받지만, 평평한 땅이 부족해요.',
+      easy:'언덕 위처럼 가리는 게 적어 빛을 잘 받아요. 반대쪽 그늘 비탈에는 얼음이 있을지도 몰라요. 대신 비탈이라 땅을 다지는 공사가 필요해요.',
+      gain:'빛 확보, 그늘 쪽 얼음 가능성',cost:'기초 공사 전력, 냉방 약간',survey:'깊이 조사: 비탈의 안정성과 그늘 위치를 확인해요.',
+      apply:g=>{g.f.loc='C';g.f.solarK=1;g.f.ghK=1;g.f.water='ice';imm(g,'E',-4,'비탈을 다지는 공사');rate(g,'E',-1,'낮 쪽 빛으로 약간의 냉방');}}
+   ]},
+   { q:'② 기지 구축 방식 — 위치에 맞는 두 가지 중 골라요.', options:g=>({
+     A:[
+      {id:'A1',name:'A-1. 지상 전개형',line:'빨리 펼치고, 설비로 버텨요.',
+       easy:'가져온 기지 모듈을 바로 펼쳐요. 처음엔 전력이 거의 안 들어요. 대신 바깥에 그대로 있어서 냉방을 더 세게 돌려야 하고, 정전이 나면 금방 더워져요.',
+       gain:'처음 전력 아낌',cost:'매주 냉방 전력↑, 정전·별 활동에 약함',
+       apply:g=>{g.f.build='A1';g.f.hotRisk=true;rate(g,'E',-1,'노출된 기지라 냉방을 더 돌림');}},
+      {id:'A2',name:'A-2. 차폐 보강형',line:'먼저 보호하고, 오래 버텨요.',
+       easy:'기지 위에 현지 흙으로 두꺼운 보호층을 덮어요. 처음엔 공사에 전력이 많이 들지만, 이후 냉방 부담이 줄어요.',
+       gain:'매주 냉방 부담↓',cost:'처음 전력 큼',
+       apply:g=>{g.f.build='A2';imm(g,'E',-7,'보호층 공사');rate(g,'E',1,'보호층이 열을 막아 냉방이 줄어듦');}}],
+     B:[
+      {id:'B1',name:'B-1. 입구 인접형',line:'밖으로 나가기 쉽고, 밖의 영향도 가까워요.',
+       easy:'동굴 입구 근처에 기지를 둬요. 장비를 옮기기 쉽고 지상 설비와도 가까워요. 대신 입구로 들어오는 먼지나 별 활동의 영향을 받아요.',
+       gain:'설치 쉬움, 지상과 가까움',cost:'입구 쪽 사건에 약함',
+       apply:g=>{g.f.build='B1';imm(g,'E',-1,'입구 근처라 운반이 짧음');}},
+      {id:'B2',name:'B-2. 안쪽 보호형',line:'바위 깊숙이 숨고, 연결은 길어져요.',
+       easy:'동굴 안쪽 깊이 기지를 둬요. 바깥 영향은 거의 없지만, 전선과 배관을 길게 끌어와야 해서 이후 설치가 더 비싸져요.',
+       gain:'외부 사건에 강함',cost:'처음 전력 큼, 이후 설치비↑',survey:'깊이 조사를 하면 안쪽 안정성이 확인돼 더 안심하고 고를 수 있어요.',
+       apply:g=>{g.f.build='B2';g.f.longLine=true;imm(g,'E',-6,'깊은 곳까지 운반');}}],
+     C:[
+      {id:'C1',name:'C-1. 집약형 테라스',line:'가까이 모아, 짧게 연결해요.',
+       easy:'계단처럼 땅을 다지고 건물을 한곳에 모아요. 선과 관이 짧아 싸고 관리가 쉬워요. 대신 장치 하나가 고장 나면 여러 동이 함께 영향을 받아요.',
+       gain:'설치비↓, 관리 쉬움',cost:'고장이 여러 동으로 번짐',
+       apply:g=>{g.f.build='C1';g.f.layout='C1';imm(g,'E',-1,'모아 지어서 연결이 짧음');}},
+      {id:'C2',name:'C-2. 분산형 사면',line:'나누어 짓고, 한 번에 잃지 않아요.',
+       easy:'떨어진 곳에 건물을 나눠 지어요. 한 구역에 사고가 나도 다른 구역은 괜찮아요. 대신 땅 공사와 연결선이 많이 들어요.',
+       gain:'사고가 번지지 않음, 구역별 설비와 잘 맞음',cost:'처음 전력 큼, 중앙 설비는 비싸짐',
+       apply:g=>{g.f.build='C2';g.f.layout='C2';g.f.zones=true;imm(g,'E',-6,'여러 구역 기초 공사');}}]
+     }[g.f.loc])},
+   { q:'③ 호흡 환경 유지 전략 — 숨 쉴 공기를 위해 무엇을 먼저 챙길까요?', options:g=>[
+     {id:'O1',name:'O-1. 단순 운영형',line:'설비는 단순하게, 물과 전기는 꾸준히.',
+      easy:'물을 전기로 쪼개 산소를 만드는 큰 장치 하나로 운영해요. 싸고 간단하지만, 물과 전기를 매주 꾸준히 먹고, 그 장치가 고장 나면 전체가 위험해요.',
+      gain:'처음 전력 아낌',cost:'매주 물↓, 중앙 장치 고장에 약함',
+      apply:g=>{g.f.air='O1';g.f.centralAir=true;rate(g,'A',3,'산소 장치 가동');rate(g,'W',-3,'산소를 만드는 데 물을 씀');rate(g,'E',-1,'산소 장치 전력');}},
+     {id:'O2',name:'O-2. 자원 회수형',line:'버리는 자원을 줄이고, 관리할 장치는 늘려요.',
+      easy:'우리가 내쉰 이산화탄소를 다시 물로 되돌리는 장치를 붙여요. 물을 덜 쓰지만, 처음 설치와 정비에 전력이 더 들어요.',
+      gain:'매주 물 아낌',cost:'처음 전력 큼, 매주 정비 전력',
+      apply:g=>{g.f.air='O2';g.f.centralAir=true;g.f.recover=true;g.f.maint=true;imm(g,'E',-8,'회수 장치 설치');rate(g,'A',3,'산소 장치 가동');rate(g,'W',-1,'산소를 만들지만 물을 일부 되찾음');rate(g,'E',-2,'회수 장치 운영 전력');}},
+     {id:'O3',name:'O-3. 고장 분산형',line:'한 대가 멈춰도, 전부 멈추지는 않게.',
+      easy:'작은 산소 장치를 여러 구역에 나눠 둬요. 하나가 고장 나도 나머지가 버텨요. 대신 같은 장치를 여러 개 사야 해서 처음에 전력이 많이 들어요.',
+      gain:'고장·정전 때 공기 피해↓',cost:'처음 전력 큼, 매주 물은 그대로',
+      apply:g=>{g.f.air='O3';g.f.airZones=true;imm(g,'E',-8,'장치를 여러 개 설치');rate(g,'A',3,'산소 장치 가동');rate(g,'W',-3,'산소를 만드는 데 물을 씀');rate(g,'E',-1,'산소 장치 전력');}}
+   ]}
+ ]},
+ { n:2, title:'전력·열관리', goal:'임시 전원을 기지 전력망으로 바꾸고, 열을 관리해요.',
+   situation:g=>{const t=[];t.push(g.S.E<40?'임시 전원이 빠르게 줄고 있어요.':'임시 전원에 아직 여유가 있어요.');
+     if(g.f.loc==='B')t.push('동굴이라 지상 발전 설비까지 전선이 길어요.');
+     if(g.f.build==='A1')t.push('노출된 기지라 냉방이 계속 돌아가요.');
+     if(g.f.zones)t.push('구역이 나뉘어 있어 전원도 구역마다 필요해요.');
+     t.push('3주 정수, 4주 재배 설비도 전력을 쓰니, 지금 고른 전원이 이후 확장의 한계가 돼요.');return t.join(' ');},
+   decisions:[
+   { q:'① 주 전원 — 무엇을 기지의 주 전원으로 삼을까요?', options:g=>[
+     {id:'P1',name:'태양광 발전 확장',line:'가볍게 설치하지만, 빛에 기대요.',
+      easy:'낮 쪽은 별이 지지 않아 계속 발전할 수 있어요. 하지만 붉은 별빛이라 효율이 낮을 수 있고, 별 활동이 강해지면 출력이 떨어져요.'+(g.f.loc==='B'?' 동굴은 지상까지 전선을 끌어와야 해서 효율이 더 낮아요.':''),
+      gain:'설치 가벼움',cost:'별 활동 사건에 약함'+(g.f.loc==='B'?', 동굴이라 효율↓':''),
+      apply:g=>{g.f.solar=true;imm(g,'E',g.f.longLine?-7:-4,g.f.longLine?'패널 설치 + 긴 전선':'패널 설치');rate(g,'E',Math.round(23*g.f.solarK),'태양광 발전');}},
+     {id:'P2',name:'소형 원자로 발전',line:'늘 일정하지만, 무겁고 고치기 어려워요.',
+      easy:'빛이나 위치와 상관없이 늘 같은 양의 전기를 만들어요. 대신 옮기고 설치하는 데 전력이 많이 들고, 멈추면 다시 켜기 어려워요.',
+      gain:'위치와 상관없이 일정한 전력',cost:'처음 전력 큼, 정전 때 회복 느림',
+      apply:g=>{g.f.reactor=true;imm(g,'E',-12,'원자로 운반·설치');rate(g,'E',22,'원자로 발전');}}
+   ]},
+   { q:'② 저장·예비 전원 — 남는 전기를 어디에 모아 둘까요?', options:g=>[
+     {id:'S1',name:'중앙 대용량 배터리',line:'한곳에 모아 단순하게.',
+      easy:'큰 배터리 하나에 모아요. 관리가 쉽지만, 거기로 가는 선이 끊기면 모든 구역이 같이 꺼져요.'+(g.f.zones?' 구역이 나뉜 기지라 선을 멀리 끌어야 해요.':''),
+      gain:'처음 전력 아낌',cost:'정전 때 전 구역이 함께 꺼짐',
+      apply:g=>{g.f.backup=1;imm(g,'E',g.f.zones?-5:-3,g.f.zones?'떨어진 구역까지 연결':'배터리 설치');}},
+     {id:'S2',name:'구역별 예비 전원',line:'나눠 두고, 따로 버티게.',
+      easy:'구역마다 작은 예비 전원을 둬요. 정전이 나도 일부 구역은 계속 돌아가요. 대신 장비가 여러 개라 처음 비용과 대기 전력이 들어요.',
+      gain:'정전 피해↓',cost:'처음 전력 큼, 매주 조금 소비',
+      apply:g=>{g.f.backup=2;imm(g,'E',g.f.zones?-5:-7,g.f.zones?'이미 나뉜 구역에 설치':'구역별 예비 전원 설치');rate(g,'E',-1,'예비 장비 대기 전력');}}
+   ]},
+   { q:'③ 열 배출 — 기지에서 생긴 열을 어떻게 내보낼까요?', options:g=>[
+     {id:'T1',name:'대형 방열 설비',line:'처음엔 비싸고, 나중엔 아껴요.',
+      easy:'큰 방열판으로 열을 밖으로 빼요. 1주가 "벽으로 열을 막는 것"이었다면, 이건 "장비로 열을 빼는 것"이에요. 설치는 비싸지만 매주 냉방 전력이 줄어요.',
+      gain:'매주 냉방 전력↓',cost:'처음 전력 큼',
+      apply:g=>{g.f.radiator=true;imm(g,'E',-7,'방열판 설치');rate(g,'E',g.f.loc==='A'?3:2,'방열판이 냉방을 덜어 줌');g.f.hotRisk=false;}},
+     {id:'T2',name:'전기 냉방기 증설',line:'처음엔 싸고, 매주 전기를 써요.',
+      easy:'에어컨을 더 놓는 것과 비슷해요. 빨리 설치되지만 매주 전기를 더 먹고, 정전이 나면 바로 멈춰요.',
+      gain:'처음 전력 아낌',cost:'매주 전력↓, 정전 때 더워짐',
+      apply:g=>{imm(g,'E',-2,'냉방기 설치');rate(g,'E',g.f.loc==='A'?-1:0,'냉방기 운전');g.f.hotRisk=true;}}
+   ]}
+ ]},
+ { n:3, title:'물 확보·순환', goal:'비축수가 줄기 전에 물을 얻고 다시 쓰는 체계를 만들어요.',
+   situation:g=>{const t=[];
+     t.push(g.f.recover?'1주에 자원 회수형을 골라 물을 아끼고 있어요.':'산소 장치가 매주 물을 많이 쓰고 있어요.');
+     t.push({far:'평지 근처에는 큰 수원이 없어 멀리서 날라야 해요.',cave:'동굴 안쪽에 물이 고인 곳이 있어요.',ice:'그늘진 비탈에서 얼음을 찾았어요.'}[g.f.water]);
+     if(g.f.zones)t.push('구역이 나뉘어 있어 물도 나눠 보내야 해요.');
+     return t.join(' ');},
+   decisions:[
+   { q:'① 보충수 확보 — 새 물을 어디서 얻을까요?', options:g=>[
+     {id:'W1',name:'한 곳 수원 집중 채취',line:'한 번에 많이, 대신 한 곳에 기대요.',
+      easy:{far:'멀리 있는 수원에서 물을 실어 와요. 운반에 전력이 들지만 양이 많아요.',cave:'동굴 안 물웅덩이에서 퍼 와요. 가깝고 양도 많아요.',ice:'그늘 비탈의 얼음을 캐서 녹여요. 가깝고 양도 많아요.'}[g.f.water]+' 대신 그 수원이 오염되면 물이 크게 끊겨요.',
+      gain:'매주 물 많이 확보',cost:'수원 오염에 약함',
+      apply:g=>{g.f.single=true;imm(g,'E',g.f.water==='far'?-7:-4,g.f.water==='far'?'먼 수원까지 운반로 설치':'채취 장비 설치');rate(g,'W',g.f.water==='far'?6:8,'수원에서 물 공급');}},
+     {id:'W2',name:'흙 속 수분 추출',line:'어디서나 가능하지만, 조금씩.',
+      easy:'흙을 데워서 그 안에 숨은 물기를 뽑아내요. 기지 주변 어디서든 할 수 있어 오염에 강하지만, 전기를 많이 쓰고 얻는 양은 적어요.',
+      gain:'수원 오염에 강함',cost:'매주 전력↓, 물 양 적음',
+      apply:g=>{imm(g,'E',-3,'가열 추출기 설치');rate(g,'W',5,'흙에서 물 추출');rate(g,'E',-2,'흙을 데우는 전력');}}
+   ]},
+   { q:'② 정수·폐수 처리 — 쓴 물을 얼마나 되살릴까요?', options:g=>[
+     {id:'R1',name:'기본 정수만',line:'싸게, 대신 새 물을 많이.',
+      easy:'마실 수 있게 거르는 기본 장치만 둬요. 처음 부담은 적지만, 쓴 물은 버리니 매주 새 물이 많이 필요해요.',
+      gain:'처음 전력 아낌',cost:'4주 재배 때 물이 빠듯',
+      apply:g=>{imm(g,'E',-1,'기본 정수기 설치');}},
+     {id:'R2',name:'폐수 재생 설비',line:'다시 쓰고, 대신 전기와 정비가 들어요.',
+      easy:'국제우주정거장처럼 씻은 물, 땀, 습기를 모아 다시 깨끗한 물로 만들어요.'+(g.f.recover?' 1주 자원 회수형과 함께 쓰면 물은 가장 아끼지만 전력이 가장 많이 들어요.':''),
+      gain:'매주 물↑',cost:'처음 전력 큼, 매주 전력',
+      apply:g=>{g.f.regen=true;imm(g,'E',-6,'재생 설비 설치');rate(g,'W',3,'쓴 물을 되살림');rate(g,'E',-2,'재생 설비 전력');}}
+   ]},
+   { q:'③ 저장·분배 — 물을 어떻게 나눠 줄까요?', options:g=>[
+     {id:'D1',name:'중앙 탱크 + 배관망',line:'한곳에서 관리해요.',
+      easy:'큰 물탱크 하나에서 관으로 보내요. 관리가 쉽지만, 중앙 관이 막히면 모든 구역이 단수돼요.'+(g.f.zones?' 나뉜 구역까지 관을 길게 깔아야 해요.':''),
+      gain:'관리 쉬움',cost:'고장 나면 전 구역 단수',
+      apply:g=>{g.f.tanks=1;imm(g,'E',g.f.zones||g.f.longLine?-5:-2,g.f.zones||g.f.longLine?'긴 배관 공사':'탱크·배관 설치');}},
+     {id:'D2',name:'구역별 저장 탱크',line:'나눠 담고, 한 구역 단수를 막아요.',
+      easy:'구역마다 물탱크를 따로 둬요. 한쪽 관이 고장 나도 다른 구역엔 물이 남아요. 대신 탱크와 펌프가 많아 관리가 늘어요.',
+      gain:'고장·오염 피해↓',cost:'매주 펌프 전력',
+      apply:g=>{g.f.tanks=2;imm(g,'E',g.f.zones?-3:-4,'구역별 탱크 설치');rate(g,'E',-1,'구역별 펌프 전력');}}
+   ]}
+ ]},
+ { n:4, title:'식량·지속운영', goal:'가져온 식량이 떨어지기 전에, 비축과 생산 사이 균형을 정해요.',
+   situation:g=>{const t=['착륙선에서 가져온 식량이 매주 줄고 있어요.'];
+     if(g.f.loc==='B')t.push('동굴 안이라 재배실을 안에 두면 조명 전력이 들고, 밖에 두면 오가는 거리가 길어요.');
+     if(g.S.W<40)t.push('물 여유가 적어서 재배를 크게 늘리기 어려워요.');
+     t.push('작물은 바로 자라지 않아요. 잎채소는 몇 주, 주식 작물은 몇 달이 걸려요.');return t.join(' ');},
+   decisions:[
+   { q:'① 생산 시설 위치 — 어디에서 기를까요?', options:g=>[
+     {id:'G1',name:'기지 내부 재배실',line:'관리는 쉽고, 조명 전력이 들어요.',
+      easy:'기지 안 방에서 LED 조명으로 길러요. 바깥 날씨와 상관없이 안정적이지만, 빛을 전부 전기로 만들어야 해요.',
+      gain:'바깥 사건에 강함',cost:'매주 조명 전력↓',
+      apply:g=>{g.f.farm='in';g.f.yieldK=1;imm(g,'E',-4,'재배실 설치');rate(g,'E',-3,'재배 조명 전력');}},
+     {id:'G2',name:'지상 밀폐 온실',line:'별빛을 쓰지만, 바깥에 노출돼요.',
+      easy:'유리 온실을 밖에 지어 별빛을 받아요. 조명 전력은 덜 들지만, 붉은 별빛만으로 잘 자라는지는 확실하지 않아요. 별 활동이 강하면 작물이 다쳐요.'+(g.f.loc==='B'?' 동굴에서는 온실까지 오가는 거리가 멀어요.':''),
+      gain:'매주 조명 전력 적음',cost:'처음 설치 큼, 별 활동에 약함',
+      apply:g=>{g.f.farm='gh';g.f.gh=true;g.f.yieldK=g.f.ghK;imm(g,'E',g.f.loc==='B'?-10:-7,g.f.loc==='B'?'온실 설치 + 먼 연결로':'온실 설치');rate(g,'E',-1,'온실 온도 조절');}}
+   ]},
+   { q:'② 비축과 생산 — 지금 먹을 것과 앞으로 기를 것, 어디에 더 투자할까요?', options:g=>[
+     {id:'K1',name:'비축 유지 중심',line:'지금을 지키고, 앞날은 조금만.',
+      easy:'우주선 화물칸의 예비 식량을 기지로 내리고 보관을 잘해 상하는 걸 줄여요. 당장은 든든하지만 재배 규모는 작게 시작해요.',
+      gain:'지금 식량↑',cost:'재배 수확량 작음',
+      apply:g=>{g.f.mult=1;imm(g,'F',14,'예비 식량을 기지로 옮김');rate(g,'F',1,'보관 손실이 줄어듦');}},
+     {id:'K2',name:'생산 설비 중심',line:'앞날에 투자하고, 지금은 빠듯하게.',
+      easy:'재배 설비를 크게 늘려요. 수확이 시작되면 식량이 많이 나오지만, 그 전까지는 지금 있는 식량으로 버텨야 하고 물과 전기도 더 들어요.',
+      gain:'수확량 1.5배',cost:'지금 식량 보충 없음, 전력 조금',
+      apply:g=>{g.f.mult=1.5;imm(g,'E',-3,'재배 설비 확장');}}
+   ]},
+   { q:'③ 무엇을 기를까요?', options:g=>[
+     {id:'C_leaf',name:'빨리 자라는 잎채소',line:'빨리 먹지만, 배는 덜 불러요.',
+      easy:'상추 같은 잎채소는 몇 주면 먹을 수 있어요. 5주차부터 조금씩 수확돼요. 대신 열량이 낮아 주식이 되긴 어려워요.',
+      gain:'5주차부터 수확',cost:'수확량 작음',
+      apply:g=>{g.f.crop='leaf';rate(g,'W',-2,'재배용수');g.harvest.push({start:5,F:Math.round(4*g.f.mult*g.f.yieldK)});}},
+     {id:'C_staple',name:'주식 작물 (감자·밀)',line:'오래 걸리지만, 배를 채워요.',
+      easy:'감자나 밀처럼 배를 채우는 작물이에요. 수확까지 몇 달이 걸려서, 게임 안에서는 이주민이 들어온 뒤 3주째에 첫 수확이 나와요. 그때까지 버틸 식량이 있어야 해요.',
+      gain:'입주 후 큰 수확',cost:'5주 안에는 수확 없음, 물 많이 씀',
+      apply:g=>{g.f.crop='staple';rate(g,'W',-3,'재배용수');g.harvest.push({start:8,F:Math.round(16*g.f.mult*g.f.yieldK)});}},
+     {id:'C_algae',name:'조류 배양',line:'식량과 산소를 함께, 대신 까다로워요.',
+      easy:'물속에서 자라는 작은 식물(조류)을 길러요. 식량도 조금 되고 산소도 조금 만들어요. 대신 물이 오염되면 배양액 전체를 잃을 수 있어요.',
+      gain:'식량 + 공기 보조',cost:'오염에 약함, 전력 조금',
+      apply:g=>{g.f.crop='algae';rate(g,'W',-1,'배양용수');rate(g,'E',-1,'배양 조명·순환');g.harvest.push({start:5,F:Math.round(3*g.f.mult*g.f.yieldK),A:2});}}
+   ]}
+ ]},
+ { n:5, title:'가동 검증·이주 준비', goal:'이주민이 오기 전에 가장 약한 곳을 보강해요. 지난 선택은 취소할 수 없어요.',
+   situation:g=>{const low=KEYS.reduce((a,b)=>g.S[a]<=g.S[b]?a:b);const st=stress(g);
+     return '지금 가장 부족한 것은 '+NAME[low]+'('+g.S[low]+'점)이에요. 고장 시뮬레이션에서 가장 위험한 것은 "'+st.worst.name+'"이고, 그때 '+SUBJ[st.worst.low]+' '+st.worst.min+'점까지 떨어져요.';},
+   decisions:[
+   { q:'① 최우선 보강 — 무엇부터 고칠까요?', options:g=>{const low=KEYS.reduce((a,b)=>g.S[a]<=g.S[b]?a:b);return [
+     {id:'U1',name:'가장 부족한 공급 늘리기',line:'지금 제일 낮은 '+NAME[low]+'를 채워요.',
+      easy:'가장 낮은 '+OBJ[low]+' 바로 올리고, 매주 조금 더 공급되게 해요. 평소 여유는 커지지만 고장 대비는 그대로예요.',
+      gain:NAME[low]+' +12, 매주 +2',cost:'고장 대비는 그대로',
+      apply:g=>{imm(g,low,12,NAME[low]+' 긴급 보강');rate(g,low,2,NAME[low]+' 공급 개선');}},
+     {id:'U2',name:'가장 위험한 고장 지점 보강',line:'큰 사고 한 번에 무너지지 않게.',
+      easy:'고장 시뮬레이션에서 가장 크게 무너지는 곳을 튼튼하게 해요. 평소 숫자는 그대로지만, 사고가 나도 버틸 힘이 커져요.',
+      gain:'가장 큰 고장 피해 −12',cost:'부족한 게이지는 그대로',
+      apply:g=>{g.f.reinforce=true;imm(g,'E',-3,'보강 공사');}}]}},
+   { q:'② 비상 자원 배분 — 사고가 나면 자원을 어떻게 나눌까요?', options:g=>[
+     {id:'X1',name:'구역 간 적극 공유',line:'남는 걸 바로 보내요.',
+      easy:'한 구역에 남는 물·전기를 부족한 구역으로 바로 보내요. 평소엔 효율이 좋지만, 사고가 나면 다른 구역 자원까지 같이 줄어요.',
+      gain:'입주 후 가장 낮은 게이지 매주 +3',cost:'고장 시뮬레이션 피해↑',
+      apply:g=>{g.f.share=true;}},
+     {id:'X2',name:'일부 구역 독립',line:'사고가 나도 한쪽은 버티게.',
+      easy:'일부 구역을 따로 떼어 자원을 따로 관리해요. 평소엔 조금 비효율적이지만, 사고가 나도 그 구역은 버텨요.',
+      gain:'고장 시뮬레이션 피해↓',cost:'차단 장치 전력',
+      apply:g=>{g.f.isolate=true;imm(g,'E',-3,'차단 장치 설치');}}
+   ]},
+   { q:'③ 이주민 수용 — 이주민을 어떻게 받을까요?', options:g=>[
+     {id:'M1',name:'전원 동시 입주',line:'한 번에 모두 들어와요.',
+      easy:'예정된 이주민이 한 번에 들어와요. 일정은 단순하지만, 수요가 한꺼번에 늘어 약한 곳이 바로 드러나요.',
+      gain:'추가 비용 없음',cost:'첫 주부터 수요 100%',
+      apply:g=>{}},
+     {id:'M2',name:'단계적 입주',line:'나눠 들어와서 점검할 시간을 벌어요.',
+      easy:'절반이 먼저 들어오고 나머지는 우주선에서 2주 기다려요. 처음 2주는 수요가 절반이지만, 기다리는 사람도 먹고 셔틀도 운행해야 해서 매주 식량·전력이 조금 더 들어요. [팀이 정할 가상 설정]',
+      gain:'처음 2주 수요 50%',cost:'셔틀 전력, 매주 식량·전력 −1',
+      apply:g=>{g.f.staged=true;imm(g,'E',-4,'셔틀 운행 준비');}}
+   ]}
+ ]}
+];
+// ===== 문구 덮어쓰기 (대학생 수준, 숫자·규칙은 그대로) =====
+const WEEK_TEXT = {
+ 1:{title:'거점 구축', goal:'착륙 직후예요. 거주와 호흡이 가능한 첫 거점을 세워요.',
+    q:['① 거점 위치 — 어떤 환경 위험을 감수할까?','② 기지 구축 방식 — 위치에 맞는 두 가지 중 하나','③ 호흡 환경 유지 — 공기 체계에서 무엇을 우선할까?']},
+ 2:{title:'전력망 구축', goal:'착륙선 임시 전원을 기지 전력망으로 전환하고, 열 부하를 관리해요.',
+    q:['① 주 전원 — 무엇으로 발전할까?','② 저장·예비 전원 — 전력을 어떻게 비축할까?','③ 열 배출 — 내부 열을 어떻게 내보낼까?']},
+ 3:{title:'수자원 확보', goal:'비축수가 줄기 전에 물을 확보하고 순환시키는 체계를 만들어요.',
+    q:['① 보충수 확보 — 새 물을 어디서 얻을까?','② 정수·재생 — 사용한 물을 얼마나 되살릴까?','③ 저장·분배 — 물을 어떻게 나눠 공급할까?']},
+ 4:{title:'식량 체계 구축', goal:'비축 식량과 자체 생산 사이의 균형을 정해요. 작물은 생육 기간이 필요해요.',
+    q:['① 재배 시설 위치 — 어디에서 기를까?','② 투자 비중 — 비축과 생산 중 어디에 무게를 둘까?','③ 재배 작물 — 무엇을 기를까?']},
+ 5:{title:'가동 검증·이주 준비', goal:'이주민 도착 전 마지막 주예요. 지난 결정은 되돌릴 수 없고, 약점만 보강할 수 있어요.',
+    q:['① 최우선 보강 — 무엇부터 손볼까?','② 비상 자원 정책 — 사고 시 자원을 공유할까, 격리할까?','③ 이주민 수용 — 어떤 방식으로 받을까?']}
+};
+
+const OPT_TEXT = {
+ A:{name:'주간면 평원',line:'넓은 부지, 끊임없는 일사',
+    easy:'부지가 넓어 모듈 배치와 확장이 자유로워요. 다만 항성이 지지 않는 주간면이라 일사에 그대로 노출되고, 실내 온도를 유지하는 냉방 부하가 매주 생겨요.',
+    gain:'배치·확장 용이, 태양광·온실 부지 확보',cost:'상시 냉방 부하',survey:'정찰: 분진 빈도와 일사량을 측정하면 2주차 태양광 효율을 가늠할 수 있어요.'},
+ B:{name:'용암동굴',line:'암반 차폐, 제한된 접근성',
+    easy:'과거 용암이 흐르며 생긴 지하 공동이에요. 두꺼운 암반이 외부 환경을 막아 열 부하가 작아요. 대신 장비 반입과 지상 설비 연결에 초기 비용이 커요.',
+    gain:'열 부하 작음, 내부 수원 가능성',cost:'초기 반입 전력 큼, 지상 설비와 멀어짐',survey:'정찰: 내부 암반의 안정성과 대체 출입로를 확인할 수 있어요.'},
+ C:{name:'명암 경계 능선',line:'일조 확보, 협소한 평지',
+    easy:'주간면과 야간면이 만나는 경계의 능선이에요. 가리는 지형이 적어 빛을 안정적으로 받고, 그늘진 사면에 얼음이 있을 가능성이 있어요. 경사지라 기초 정지 공사가 필요해요.',
+    gain:'일조 확보, 빙하 수원 가능성',cost:'정지 공사, 약한 냉방 부하',survey:'정찰: 사면 안정성과 음영 범위를 확인할 수 있어요.'},
+ A1:{name:'신속 전개형',line:'당일 가동, 높은 노출',
+    easy:'반입한 밀폐 모듈을 그대로 전개해요. 초기 비용은 거의 없지만 직사광에 노출돼 냉방 부하가 커지고, 정전되면 실내 온도가 빠르게 올라가요.',
+    gain:'초기 전력 절감',cost:'냉방 부하 증가, 정전·플레어에 취약'},
+ A2:{name:'차폐 보강형',line:'초기 투자, 장기 안정',
+    easy:'모듈 위를 현지 토양 차폐층으로 덮어요. 시공에 전력이 들지만 일사를 막아 이후 냉방 부하가 줄어요.',
+    gain:'매주 냉방 부하 감소',cost:'초기 시공 전력 큼'},
+ B1:{name:'입구 인접형',line:'짧은 동선, 외부 영향',
+    easy:'동굴 입구 부근의 안정 구간에 설치해요. 반입과 대피가 쉽지만, 입구로 들어오는 분진과 외부 사건의 영향을 받아요.',
+    gain:'반입·대피 쉬움, 지상 설비와 가까움',cost:'입구 쪽 사건에 취약'},
+ B2:{name:'심부 보호형',line:'최대 차폐, 긴 연결선',
+    easy:'동굴 깊은 곳에 설치해요. 외부 영향은 거의 없지만, 전력선과 배관이 길어져 이후 모든 설비 공사비가 늘어나요.',
+    gain:'외부 사건에 강함',cost:'초기 전력 큼, 이후 공사비 증가',survey:'정찰로 심부 안정성을 먼저 확인하면 위험을 줄이고 선택할 수 있어요.'},
+ C1:{name:'집약형 테라스',line:'짧은 연결, 공용 설비 의존',
+    easy:'계단식으로 부지를 정비하고 모듈을 한곳에 모아요. 배선과 배관이 짧아 효율적이지만, 공용 설비 고장이 여러 동에 동시에 번져요.',
+    gain:'시공비 절감, 관리 용이',cost:'고장이 여러 동으로 확산'},
+ C2:{name:'분산형 사면',line:'피해 격리, 높은 공사비',
+    easy:'떨어진 안정 구간에 모듈을 나눠 배치해요. 사고가 한 구역에 머물지만, 기초 공사와 연결선이 늘고 중앙형 설비는 비싸져요.',
+    gain:'사고 확산 차단, 구역형 설비와 궁합',cost:'초기 전력 큼, 중앙형 설비 비용 증가'},
+ O1:{name:'중앙 전기분해형',line:'단순한 구성, 높은 물 소비',
+    easy:'물을 전기분해(전기로 물을 수소와 산소로 나누는 것)하는 중앙 장치 한 대로 운영해요. 단순하고 저렴하지만 매주 물과 전력을 꾸준히 쓰고, 이 장치가 멈추면 기지 전체가 영향을 받아요.',
+    gain:'초기 전력 절감',cost:'매주 물 소비 큼, 중앙 장치 고장에 취약'},
+ O2:{name:'자원 회수형',line:'물 절감, 정비 부담',
+    easy:'호흡으로 나온 이산화탄소를 수소와 반응시켜 물을 되찾는 공정(사바티에 반응)을 덧붙여요. 물 소비가 줄지만 설치와 정비에 전력이 더 들어요.',
+    gain:'매주 물 절감',cost:'초기 전력 큼, 매주 정비 전력'},
+ O3:{name:'분산 이중화형',line:'고장 내성, 장비 중복',
+    easy:'소형 산소 장치를 구역마다 나눠 배치해요. 한 대가 멈춰도 나머지가 공급을 유지해요. 같은 장비를 여러 대 갖춰야 해서 초기 비용이 커요.',
+    gain:'고장·정전 시 공기 피해 감소',cost:'초기 전력 큼, 물 소비는 그대로'},
+ P1:g=>({name:'태양광 발전',line:'가벼운 설치, 항성 활동 의존',
+    easy:'주간면은 항성이 지지 않아 상시 발전이 가능해요. 다만 적색왜성의 빛은 파장이 길어 효율이 낮을 수 있고, 플레어(항성 표면의 폭발)가 일어나면 출력이 급감해요.'+(g.f.loc==='B'?' 동굴 기지는 패널이 지상에 있어 송전 손실이 생겨요.':''),
+    gain:'설치 부담 작음',cost:'플레어에 취약'+(g.f.loc==='B'?', 송전 손실':'')}),
+ P2:{name:'소형 핵분열로',line:'일정한 출력, 높은 초기 비용',
+    easy:'위치나 일조와 상관없이 일정한 전력을 공급해요. NASA가 달·화성 기지용으로 연구 중인 개념을 참고했어요. 운반과 설치 부담이 크고, 한 번 정지되면 재가동에 시간이 걸려요.',
+    gain:'위치와 무관한 안정 출력',cost:'초기 전력 큼, 정전 시 회복 느림'},
+ S1:g=>({name:'중앙 축전 설비',line:'단순한 관리, 단일 경로',
+    easy:'대용량 배터리 한 곳에 전력을 저장해요. 관리가 쉽지만 연결 경로가 끊기면 전 구역이 동시에 정전돼요.'+(g.f.zones?' 분산 배치 기지라 송전선이 길어져요.':''),
+    gain:'초기 전력 절감',cost:'정전 시 전 구역 동시 차단'}),
+ S2:{name:'구역별 예비 전원',line:'부분 유지, 장비 중복',
+    easy:'구역마다 예비 전원을 두어 정전 때도 일부 구역을 독립적으로 유지해요. 초기 비용과 대기 전력이 추가돼요.',
+    gain:'정전 피해 감소',cost:'초기 전력 큼, 매주 대기 전력'},
+ T1:{name:'대형 방열 패널',line:'초기 투자, 냉방 부하 감소',
+    easy:'내부에서 생긴 열을 방열 패널로 외부에 내보내요. 1주차 구축 방식이 구조로 열을 막는 선택이었다면, 이것은 장비로 열을 빼는 선택이에요. 설치비가 크지만 매주 냉방 전력이 줄어요.',
+    gain:'매주 냉방 전력 감소',cost:'초기 전력 큼'},
+ T2:{name:'냉방기 증설',line:'저렴한 설치, 지속 소비',
+    easy:'냉방기를 추가로 설치해요. 설치는 빠르지만 매주 전력을 더 쓰고, 정전되면 바로 멈춰 실내 온도가 올라가요.',
+    gain:'초기 전력 절감',cost:'정전 시 온도 급상승'},
+ W1:g=>({name:'단일 수원 집중 채취',line:'높은 공급량, 단일 의존',
+    easy:{far:'원거리 수원에서 물을 운반해요. 운반로 구축에 전력이 들지만 공급량이 커요.',cave:'동굴 내부 수원에서 취수해요. 거리가 가깝고 공급량이 커요.',ice:'음영 사면의 얼음을 채굴해 녹여요. 거리가 가깝고 공급량이 커요.'}[g.f.water]+' 다만 수원이 하나뿐이라 오염되면 공급이 크게 끊겨요.',
+    gain:'매주 공급량 큼',cost:'수원 오염에 취약'}),
+ W2:{name:'토양 수분 추출',line:'분산 확보, 낮은 효율',
+    easy:'토양을 가열해 그 안의 수분을 뽑아내요. 달·화성 현지 자원 활용 연구에서 쓰는 방식이에요. 어디서든 가능해 오염에 강하지만, 전력 소모가 크고 산출량은 적어요.',
+    gain:'수원 오염에 강함',cost:'매주 전력 소모, 산출량 적음'},
+ R1:{name:'기본 정수',line:'낮은 비용, 높은 보충 수요',
+    easy:'음용 가능한 수준으로만 정수하고 사용한 물은 버려요. 초기 부담은 작지만 새 물이 계속 필요해요.',
+    gain:'초기 전력 절감',cost:'4주차 재배 용수가 빠듯함'},
+ R2:g=>({name:'폐수 재생 설비',line:'물 순환, 전력·정비 부담',
+    easy:'국제우주정거장처럼 생활 폐수와 공기 중 습기를 회수해 다시 음용수로 만들어요. 물 소비가 크게 줄지만 전력이 더 들어요.'+(g.f.recover?' 자원 회수형과 함께 쓰면 물 효율은 가장 높지만 전력 부담도 가장 커요.':''),
+    gain:'매주 물 증가',cost:'초기 전력 큼, 매주 전력 소모'}),
+ D1:g=>({name:'중앙 탱크·배관망',line:'일괄 관리, 일괄 단수 위험',
+    easy:'중앙 탱크에서 배관으로 각 구역에 공급해요. 관리가 단순하지만 주 배관이 막히면 전 구역이 단수돼요.'+(g.f.zones||g.f.longLine?' 구역이 멀어 배관이 길어져요.':''),
+    gain:'관리 단순',cost:'고장 시 전 구역 단수'}),
+ D2:{name:'구역별 저장 탱크',line:'피해 격리, 펌프 부하',
+    easy:'구역마다 탱크를 두어 한 구역의 단수가 다른 구역으로 번지지 않아요. 펌프가 늘어 매주 전력이 들어요.',
+    gain:'고장·오염 피해 감소',cost:'매주 펌프 전력'},
+ G1:{name:'실내 수경 재배실',line:'환경 통제, 조명 전력',
+    easy:'기지 내부에서 LED 조명으로 재배해요. 외부 환경과 상관없이 안정적이지만, 빛을 모두 전력으로 만들어야 해요.',
+    gain:'외부 사건에 강함',cost:'매주 조명 전력'},
+ G2:g=>({name:'지상 밀폐 온실',line:'자연광 활용, 외부 노출',
+    easy:'지상 온실에서 항성광을 활용해요. 조명 전력은 줄지만, 적색광만으로 충분히 자랄지는 검증되지 않았고 플레어에 노출돼요.'+(g.f.loc==='B'?' 동굴 기지에서는 온실까지 이동 거리가 길어요.':''),
+    gain:'매주 전력 소모 적음',cost:'초기 시공 큼, 플레어에 취약'}),
+ K1:{name:'비축 유지 중심',line:'당장의 안정, 제한된 생산',
+    easy:'우주선의 예비 식량을 기지로 옮기고 보관 손실을 줄여요. 당장은 안정적이지만 생산 규모는 작게 유지돼요.',
+    gain:'즉시 식량 증가',cost:'수확량 작음'},
+ K2:{name:'생산 설비 중심',line:'수확량 1.5배, 수확 전 공백',
+    easy:'재배 설비를 확장해 수확량을 늘려요. 다만 첫 수확 전까지는 남은 비축 식량으로 버텨야 해요.',
+    gain:'수확량 1.5배',cost:'식량 보충 없음, 전력 소모'},
+ C_leaf:{name:'엽채류',line:'빠른 수확, 낮은 열량',
+    easy:'상추 같은 엽채류는 수 주 만에 수확할 수 있어 5주차부터 공급돼요. 열량이 낮아 주식을 대신하기는 어려워요.',
+    gain:'5주차부터 수확',cost:'수확량 적음'},
+ C_staple:{name:'주식 작물',line:'높은 열량, 긴 생육 기간',
+    easy:'감자·밀 같은 주식 작물이에요. 생육에 수개월이 걸려 이주민 입주 후 3주차에 첫 수확이 나와요. 그때까지 버틸 비축이 필요해요.',
+    gain:'입주 후 대량 수확',cost:'5주 내 수확 없음, 물 소비 큼'},
+ C_algae:{name:'미세조류 배양',line:'식량·산소 동시 보조, 오염 취약',
+    easy:'광생물반응기(빛으로 미생물을 키우는 배양 장치)에서 미세조류를 길러 식량과 산소를 함께 보조해요. 배양액이 오염되면 전량을 잃을 수 있어요.',
+    gain:'식량 + 공기 보조',cost:'오염에 취약, 전력 소모'},
+ U1:g=>{const low=KEYS.reduce((a,b)=>g.S[a]<=g.S[b]?a:b);return {name:'최저 자원 보강',line:'현재 가장 낮은 '+NAME[low]+' 확충',
+    easy:'지금 가장 부족한 '+OBJ[low]+' 즉시 보충하고 공급량도 늘려요. 평상시 여유는 커지지만 고장 대응력은 그대로예요.',
+    gain:NAME[low]+' +12, 매주 +2',cost:'고장 대응력 그대로'};},
+ U2:{name:'취약 지점 보강',line:'단일 고장 대비',
+    easy:'고장 시뮬레이션에서 가장 크게 무너지는 지점을 보강해요. 평상시 수치는 그대로지만 사고가 나도 피해가 줄어요.',
+    gain:'가장 큰 고장 피해 −12',cost:'부족한 게이지는 그대로'},
+ X1:{name:'자원 적극 공유',line:'평시 효율, 사고 확산',
+    easy:'구역 간 남는 자원을 즉시 돌려써요. 평상시 효율이 높지만, 사고가 나면 다른 구역 자원까지 함께 소모돼요.',
+    gain:'입주 후 최저 게이지 매주 +3',cost:'고장 시 피해 확대'},
+ X2:{name:'구역 격리 운영',line:'피해 차단, 평시 손실',
+    easy:'일부 구역을 독립적으로 운영해요. 평상시엔 다소 비효율적이지만, 사고가 나도 해당 구역은 유지돼요.',
+    gain:'고장 시 피해 감소',cost:'차단 설비 전력'},
+ M1:{name:'일괄 입주',line:'단순한 일정, 즉시 전체 수요',
+    easy:'이주민 전원이 한 번에 입주해요. 일정은 단순하지만 수요가 한꺼번에 늘어 취약점이 바로 드러나요.',
+    gain:'추가 비용 없음',cost:'첫 주부터 전체 수요'},
+ M2:{name:'단계적 입주',line:'수요 분산, 대기 비용',
+    easy:'절반이 먼저 입주하고 나머지는 우주선에서 2주 대기해요. 처음 2주 수요는 절반이지만, 대기 인원과 셔틀 운용 비용이 추가돼요. (팀 결정이 필요한 가상 설정)',
+    gain:'초기 2주 수요 50%',cost:'셔틀 전력, 매주 식량·전력 추가 소모'}
+};
+
+Object.assign(EVENT_INFO,{
+  outage:{name:'정전',text:'주 전원이 일시 정지됐어요.'},
+  contam:{name:'수원 오염',text:'취수원에 오염 물질이 유입됐어요.'},
+  flare:{name:'항성 플레어',text:'항성 표면에서 강한 폭발이 일어나 빛과 입자가 쏟아졌어요.'},
+  breakdown:{name:'산소 장치 고장',text:'산소 생산 장치 하나가 멈췄어요.'}
+});
+
+WEEKS.forEach(W=>{
+  const t=WEEK_TEXT[W.n]; W.title=t.title; W.goal=t.goal;
+  W.decisions.forEach((D,i)=>{
+    D.q=t.q[i];
+    const orig=D.options;
+    D.options=g=>orig(g).map(o=>{const tx=OPT_TEXT[o.id];if(!tx)return o;const v=typeof tx==='function'?tx(g):tx;return Object.assign({},o,v);});
+  });
+});
+
+// ===== UI =====
+const $=s=>document.querySelector(s);
+const main=$('#main');
+let G=null, wi=0, snap=null, weekPicks=[], weekNames=[], allNames=[], tester=false;
+try{tester=localStorage.getItem('tester')==='1';}catch(e){}
+$('#tester').checked=tester;
+$('#tester').addEventListener('change',e=>{tester=e.target.checked;try{localStorage.setItem('tester',tester?'1':'0');}catch(_){}render();});
+
+function cloneG(g){return {S:{...g.S},R:{...g.R},f:{...g.f},harvest:g.harvest.map(h=>({...h})),log:g.log.slice(),dead:g.dead,picks:g.picks.slice(),events:g.events,eventLog:g.eventLog.slice()};}
+const sgn=v=>(v>0?'+':'')+v;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function color(v){return v>=60?'var(--good)':v>=30?'var(--warn)':'var(--bad)';}
+
+function drawGauges(){
+  $('#gbar').hidden=false;
+  $('#gauges').innerHTML=KEYS.map(k=>{const v=Math.max(0,G.S[k]);const r=G.R[k];
+    return `<div class="g"><div class="top"><span>${NAME[k]}</span><span class="val" style="color:${color(v)}">${v}</span></div>
+    <div class="track"><div class="fill" style="width:${v}%;background:${color(v)}"></div></div>
+    <div class="rate">매주 ${sgn(r)}</div></div>`;}).join('');
+  const evs=Object.entries(G.events).map(([w,t])=>w+'주 '+EVENT_INFO[t].name).join(', ');
+  $('#wk').textContent=(wi<5?(wi+1)+'주차 · ':'')+'0점이 되면 즉시 실패 · 30점 미만 위험'+(tester?' · 사건 일정: '+evs:'');
+}
+
+function start(){
+  main.innerHTML=`<section class="panel">
+  <h2>시작 전에 공개하는 판정 기준</h2>
+  <p>5주 동안 결정 15번을 내린 뒤, 이주민이 들어온 기지를 아래 기준으로 판정해요. 엔딩 직전에 처음 알려주면 불공정하니 미리 보여 줘요.</p>
+  <ul class="clean">
+    <li><b>게이지 4개</b>: 공기 · 물 · 식량 · 전력. 모두 60점에서 시작해요. 0~100점의 "운영 여유"이고, 실제 산소 농도나 물의 양은 아니에요.</li>
+    <li><b>돌발 사건 2번</b>: 2~4주 중 두 주의 끝에 무작위로 일어나요. (정전, 수원 오염, 항성 플레어, 산소 장치 고장)</li>
+    <li><b>최저점</b>: 네 게이지 중 가장 낮은 점수로 판정해요. 평균이 높아도 하나가 바닥이면 소용없어요.</li>
+    <li><b>입주 후 4주 운영 검증</b>: 이주민이 들어오면 매주 공기 ${DEMAND.A}, 물 ${DEMAND.W}, 식량 ${DEMAND.F}, 전력 ${DEMAND.E}만큼 더 쓰여요. 4주 동안 한 번도 0이 되지 않아야 통과예요.</li>
+    <li><b>고장 시뮬레이션 2종</b>: 주 전원 정지와 주 정수 설비 고장을 가정하고 가장 낮아지는 점수를 봐요. 실제 사건이 아니라 판정용 가상 시험이에요.</li>
+  </ul>
+  <table style="margin-top:10px"><tr><th>엔딩</th><th style="text-align:left">조건</th></tr>
+  <tr><td>E1 생존 실패</td><td style="text-align:left;white-space:normal">5주 플레이 중 어느 게이지든 0</td></tr>
+  <tr><td>E2 수용 준비 미달</td><td style="text-align:left;white-space:normal">살아남았지만 최저점 30 미만</td></tr>
+  <tr><td>E3 시한부 정착</td><td style="text-align:left;white-space:normal">최저점 30 이상, 입주 후 4주 검증 실패</td></tr>
+  <tr><td>E4 취약한 정착</td><td style="text-align:left;white-space:normal">검증 통과, 그러나 최저점 60 미만 또는 고장 시뮬레이션 30 미만</td></tr>
+  <tr><td>E5 안정적 이주</td><td style="text-align:left;white-space:normal">최저점 60 이상, 검증 통과, 고장 시뮬레이션 30 이상</td></tr></table>
+  <div class="row"><button class="btn" id="go">1주차 시작</button></div></section>`;
+  $('#go').onclick=()=>{G=newGame();wi=0;allNames=[];beginWeek();};
+}
+
+function beginWeek(){snap=cloneG(G);weekPicks=[];render();window.scrollTo(0,0);}
+
+function rebuild(){
+  G=cloneG(snap);G.log=[];
+  const W=WEEKS[wi];
+  weekNames=[];
+  weekPicks.forEach((id,i)=>{const o=W.decisions[i].options(G).find(o=>o.id===id);o.apply(G);G.picks.push(id);weekNames.push({w:W.n,name:o.name,why:o.line});});
+}
+
+function preview(opt){
+  const h=cloneG(G);h.log=[];opt.apply(h);
+  const parts=[];
+  const im=h.log.filter(l=>l.t==='imm').map(l=>NAME[l.k]+' '+sgn(l.v));
+  const rt=h.log.filter(l=>l.t==='rate').map(l=>NAME[l.k]+' '+sgn(l.v));
+  if(im.length)parts.push('즉시: '+im.join(', '));
+  if(rt.length)parts.push('매주: '+rt.join(', '));
+  if(h.harvest.length>G.harvest.length){const hv=h.harvest[h.harvest.length-1];parts.push((hv.start<=5?hv.start+'주차부터':'입주 후 '+(hv.start-5)+'주째부터')+' 매주 식량 +'+hv.F+(hv.A?', 공기 +'+hv.A:''));}
+  return parts.join(' · ')||'수치 변화는 판정 단계에서 적용돼요';
+}
+
+function render(){
+  if(!G){return;}
+  drawGauges();
+  const W=WEEKS[wi];
+  let html=`<section><div class="end-code">${W.n}주차</div><h2>${W.title}</h2><div class="small">${W.goal}</div>
+  <div class="situ"><b>현재 상황</b> ${esc(W.situation(snap))}</div>`;
+  for(let i=0;i<3;i++){
+    if(i>weekPicks.length)break;
+    const D=W.decisions[i];const opts=D.options(i===0?snap:G);
+    html+=`<div class="dec"><div class="q">${D.q}</div><div class="opts">`;
+    for(const o of opts){
+      const on=weekPicks[i]===o.id;
+      html+=`<button class="opt${on?' on':''}" data-i="${i}" data-id="${o.id}" aria-pressed="${on}">
+        <div class="nm">${esc(o.name)}</div><div class="ln">${esc(o.line)}</div>
+        <div class="easy">${esc(o.easy)}</div>
+        <div class="chips"><span class="chip gain">얻는 것 · ${esc(o.gain)}</span><span class="chip cost">감수 · ${esc(o.cost)}</span></div>
+        ${o.survey?`<div class="survey">${esc(o.survey)}</div>`:''}
+        ${tester?`<div class="num">${esc(previewFor(i,o))}</div>`:''}
+      </button>`;
+    }
+    html+=`</div></div>`;
+  }
+  html+=`<div class="row"><button class="btn" id="fin" ${weekPicks.length<3?'disabled':''}>${wi<4?'이번 주 마치기':'이주민 받고 판정하기'}</button>
+    <span class="small">${weekPicks.length<3?'결정 '+(3-weekPicks.length)+'개가 남았어요.':'이번 주를 마치면 되돌릴 수 없어요.'}</span></div></section>`;
+  main.innerHTML=html;
+  main.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;weekPicks=weekPicks.slice(0,i);weekPicks[i]=b.dataset.id;rebuild();render();
+    const next=main.querySelectorAll('.dec')[i+1];if(next)next.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});});
+  const fin=$('#fin');if(fin)fin.onclick=finishWeek;
+}
+function previewFor(i,o){
+  // 미리보기는 해당 결정 직전 상태 기준
+  const saved=G; const savedPicks=weekPicks;
+  G=cloneG(snap);G.log=[];const W=WEEKS[wi];
+  savedPicks.slice(0,i).forEach((id,j)=>{const op=W.decisions[j].options(G).find(x=>x.id===id);op.apply(G);});
+  const r=preview(o); G=saved; return r;
+}
+
+function finishWeek(){
+  const W=WEEKS[wi];
+  const choiceLog=G.log.slice();
+  allNames=allNames.concat(weekNames);
+  const res=endWeek(G,W.n);
+  showResult(W,choiceLog,res);
+}
+
+function showResult(W,choiceLog,res){
+  drawGauges();
+  const names=weekNames.map(n=>n.name);
+  let html=`<section class="panel"><div class="end-code">${W.n}주차 결과</div><h2>이번 주에 무엇이 바뀌었나요?</h2>
+  <p class="small">고른 선지: ${names.map(esc).join(' → ')}</p>`;
+  const im=choiceLog.filter(l=>l.t==='imm'), rt=choiceLog.filter(l=>l.t==='rate');
+  if(im.length)html+=`<h3>선택하자마자 생긴 변화</h3><ul class="clean">${im.map(l=>`<li><span class="${l.v>0?'pos':'neg'}">${NAME[l.k]} ${sgn(l.v)}</span> — ${esc(l.why)}</li>`).join('')}</ul>`;
+  if(rt.length)html+=`<h3>다음부터 매주 달라지는 것</h3><ul class="clean">${rt.map(l=>`<li><span class="${l.v>0?'pos':'neg'}">${NAME[l.k]} 매주 ${sgn(l.v)}</span> — ${esc(l.why)}</li>`).join('')}</ul>`;
+  const hvTxt=KEYS.filter(k=>res.hv[k]).map(k=>NAME[k]+' +'+res.hv[k]);
+  html+=`<h3>한 주가 지나며</h3><p class="small">매주 쓰는 양과 만드는 양이 반영됐어요${hvTxt.length?' (수확: '+hvTxt.join(', ')+')':''}.</p>`;
+  if(res.ev){const e=EVENT_INFO[res.ev];
+    html+=`<div class="ev"><b>돌발 사건 · ${e.name}</b><br>${e.text}<ul class="clean">${res.evRes.why.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>
+    <span class="small">피해: ${KEYS.filter(k=>res.evRes.d[k]).map(k=>NAME[k]+' '+sgn(res.evRes.d[k])).join(', ')}</span></div>`;}
+  html+=`<div class="tbl"><table><tr><th></th>${KEYS.map(k=>`<th>${NAME[k]}</th>`).join('')}</tr>
+    <tr><td>이번 주 시작</td>${KEYS.map(k=>`<td>${snap.S[k]}</td>`).join('')}</tr>
+    <tr><td>이번 주 끝</td>${KEYS.map(k=>`<td style="color:${color(G.S[k])}">${Math.max(0,G.S[k])}</td>`).join('')}</tr></table></div>`;
+  const last=wi===4||G.dead;
+  html+=`<div class="row"><button class="btn" id="nx">${G.dead?'결과 보기':last?'엔딩 판정 보기':(W.n+1)+'주차로'}</button></div></section>`;
+  main.innerHTML=html;window.scrollTo(0,0);
+  $('#nx').onclick=()=>{if(last){ending();}else{wi++;beginWeek();}};
+}
+
+const E3T={A:['멈춰가는 숨','산소 공급과 공기 처리 능력이 입주 인원을 감당하지 못했어요.'],W:['마지막 물탱크','비축수는 충분해 보였지만, 회수와 보충이 소비를 따라가지 못했어요.'],F:['첫 수확 전의 겨울','재배 시설은 준비됐지만, 첫 수확까지 버틸 비축 식량이 부족했어요.'],E:['꺼져가는 기지','설비를 늘린 만큼 전력 수요도 늘었고, 공급이 따라가지 못했어요.']};
+const E1T={A:['숨이 멎은 기지','공기를 유지할 여유가 바닥났어요.'],W:['말라버린 탱크','쓸 수 있는 물이 바닥났어요.'],F:['빈 식량 창고','먹을 것이 바닥났어요.'],E:['꺼진 불빛','전력이 바닥나 생명유지 장치가 멈췄어요.']};
+const ENDNAME={E1:'생존 실패',E2:'수용 준비 미달',E3:'시한부 정착',E4:'취약한 정착',E5:'안정적 이주'};
+
+function strategy(f){
+  const t=[];
+  if(f.recover||f.regen)t.push('물을 되살려 쓰는 회수 중심');
+  if(f.zones||f.airZones||f.backup===2||f.tanks===2||f.isolate)t.push('구역을 나눠 피해를 막는 분산 중심');
+  if(f.reactor)t.push('일정한 원자로 전력');
+  if(t.length===0)t.push('단순하고 가벼운 설비 중심');
+  return t.join(', ');
+}
+
+function ending(){
+  const j=judge(G);
+  $('#gbar').hidden=true;
+  let title,line;
+  if(j.code==='E1'){[title,line]=E1T[j.cause];line=G.dead.week+'주차에 '+line;}
+  else if(j.code==='E2'){title='여유 없는 기지';line=SUBJ[j.cause]+' '+G.S[j.cause]+'점으로 너무 낮아, 연구원은 버텼지만 이주민을 받을 여유가 없어요.';}
+  else if(j.code==='E3'){[title,line]=E3T[j.cause];line+=' 입주 후 '+j.H.week+'주째에 '+SUBJ[j.cause]+' 바닥나요.';}
+  else if(j.code==='E4'){title=j.weakBy==='test'?'멈추면 함께 멈추는 기지':'빠듯한 일상';
+    line=j.weakBy==='test'?'평소에는 운영되지만, "'+j.B.worst.name+'" 때 '+SUBJ[j.B.worst.low]+' '+j.B.worst.min+'점까지 떨어져요.':'고장에는 대비했지만, '+SUBJ[j.cause]+' '+G.S[j.cause]+'점이라 여유가 적어요.';}
+  else {title='새 행성의 첫 마을';line='계획한 인원과 기간을 버티고, 대표적인 고장에도 대비된 기지예요. 전략: '+strategy(G.f)+'.';}
+  if(G.f.crop==='staple'&&j.code!=='E1')line+=' 밭에는 감자와 밀이 자라고 있어요. 다음 계절에는 기지가 스스로 먹고살 수 있을 거예요.';
+
+  const pickNames=allNames;
+
+  let html=`<section class="panel"><div class="end-code">${j.code} · ${ENDNAME[j.code]}</div><div class="end-title">「${title}」</div><p>${esc(line)}</p>
+  <div class="verdict">
+    <div class="vbox"><div class="k">최저점 M (60 이상이면 여유)</div><div class="v" style="color:${color(j.M??0)}">${j.M??'—'}</div></div>
+    <div class="vbox"><div class="k">입주 후 4주 운영 검증</div><div class="v" style="color:${j.H?(j.H.ok?'var(--good)':'var(--bad)'):'var(--muted)'}">${j.H?(j.H.ok?'통과':'실패'):'—'}</div></div>
+    <div class="vbox"><div class="k">고장 시뮬레이션 최저점 B (30 이상)</div><div class="v" style="color:${color(j.B?j.B.B:0)}">${j.B?j.B.B:'—'}</div></div>
+  </div>`;
+  html+=`<h3>최종 게이지</h3><div class="tbl"><table><tr>${KEYS.map(k=>`<th>${NAME[k]}</th>`).join('')}</tr><tr>${KEYS.map(k=>`<td style="color:${color(G.S[k])}">${Math.max(0,G.S[k])}</td>`).join('')}</tr></table></div>`;
+  if(j.H){html+=`<h3 style="margin-top:16px">입주 후 4주 예측</h3><div class="tbl"><table><tr><th>시점</th>${KEYS.map(k=>`<th>${NAME[k]}</th>`).join('')}</tr>
+    ${j.H.trace.map((s,i)=>`<tr><td>${i===0?'입주 직전':'입주 '+i+'주째'}</td>${KEYS.map(k=>`<td style="color:${color(s[k])}">${Math.max(0,s[k])}</td>`).join('')}</tr>`).join('')}</table></div>`;}
+  if(j.B){html+=`<h3 style="margin-top:16px">고장 시뮬레이션</h3><ul class="clean">${j.B.res.map(r=>`<li>${esc(r.name)}: 가장 낮아지는 것은 ${NAME[r.low]} <b style="color:${color(r.min)}">${r.min}점</b></li>`).join('')}</ul>`;}
+  if(G.eventLog.length){html+=`<h3 style="margin-top:16px">겪은 돌발 사건</h3><ul class="clean">${G.eventLog.map(e=>`<li>${e.week}주차 ${EVENT_INFO[e.type].name} — ${esc(e.res.why[0]||'')}</li>`).join('')}</ul>`;}
+  html+=`<h3 style="margin-top:16px">이 결과를 만든 선택</h3><div class="tbl"><table><tr><th>주차</th><th style="text-align:left">선택</th><th style="text-align:left">한 줄 요약</th></tr>
+    ${pickNames.map(p=>`<tr><td>${p.w}주</td><td style="text-align:left">${esc(p.name)}</td><td style="text-align:left;white-space:normal">${esc(p.why)}</td></tr>`).join('')}</table></div>
+  <div class="row"><button class="btn" id="again">다시 하기</button><button class="btn ghost" id="copy">결과 복사</button><span class="small" id="copied"></span></div></section>`;
+  main.innerHTML=html;window.scrollTo(0,0);
+  $('#again').onclick=()=>{G=null;$('#gbar').hidden=true;start();};
+  $('#copy').onclick=()=>{
+    const txt=`[${j.code} ${ENDNAME[j.code]}] ${title}\n최종: ${KEYS.map(k=>NAME[k]+' '+G.S[k]).join(' / ')}\nM ${j.M??'-'} · 검증 ${j.H?(j.H.ok?'통과':'실패'):'-'} · B ${j.B?j.B.B:'-'}\n선택: ${pickNames.map(p=>p.name).join(' → ')}\n사건: ${G.eventLog.map(e=>e.week+'주 '+EVENT_INFO[e.type].name).join(', ')||'없음'}`;
+    navigator.clipboard.writeText(txt).then(()=>{$('#copied').textContent='복사했어요. 팀 채팅에 붙여 넣으세요.';}).catch(()=>{$('#copied').textContent='복사가 막혀 있어요. 위 표를 직접 선택해 복사해 주세요.';});
+  };
+}
+
+start();
+</script>
+
+</body></html>
