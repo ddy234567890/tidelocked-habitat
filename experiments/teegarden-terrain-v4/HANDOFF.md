@@ -52,6 +52,10 @@ GitHub 수정만으로 위 Sites 배포가 자동 갱신되지는 않습니다.
   - 말투: 해요체로 차분하게. 비유(텐트·이불·동네)를 빼고 무엇을·왜를 먼저 적는다. 단계 질문은 '~골라 주세요'로 끝낸다.
   - tests/choices.test.js 가 길이(이름 12자·한 줄 36자·얻는 것/감수 28자)와 해요체를 검사한다.
 - 글꼴(Terrarum Sans Bitmap, SIL OFL 1.1)과 ORI 로봇 이미지는 src/assets 에 있고 ASSETS.md 에 적었다. 로봇 이미지의 작가·라이선스는 올린 팀원이 확인해 적어야 한다.
+- 왼쪽 아래 대원 칸은 표면(피부) 보기 얼굴만 실시간으로 보이고, 누르면 가운데 팝업에 세부 상태가 뜬다(얼굴이 팝업 안으로 옮겨 가고, X·Esc·바깥 클릭으로 닫으면 제자리로 돌아간다). 홀로그램 보기는 facePanel 의 setStyle('hologram') 로 켤 수 있다. 얼굴 엔진은 src/face (팀 「얼굴 반응 테스트」 페이지에서 가져옴), 화면 연결은 src/crew.js 다.
+  - 얼굴이 받는 환경은 선택한 지대의 기온(hud.json 범위의 가운데 값)뿐이다. 산소·기압·습도는 자료가 없어 지구 해수면 값이고, hud.json 의 oxygen 을 채우면 그 값을 따른다. 게임 스탯이 정해지면 src/face/envInput.js 의 fromGameStats 와 crew.js 의 currentEnv 만 고치면 된다.
+  - 수치는 게임용 근사값이다(의학 시뮬레이션 아님). 얼굴 모델은 2on 의 "Face"(CC BY 4.0)라 출처 표기를 지우면 안 된다. tests/face.test.js 가 신체 모델을 확인한다.
+  - 개발용: 콘솔에서 `window.crew.setEnv({ o2Pct: 10 })` 처럼 환경을 바꿔 표정을 볼 수 있다.
 - `node scripts/deliver.mjs` 로 만드는 독립 HTML 은 글꼴·로봇 이미지를 담지 못해 시스템 글꼴로 나온다 (상대 경로 파일이라서).
 
 ## 주차 이어가기 (2026-11-04)

@@ -8,6 +8,7 @@ import { buildSurroundings, joinPoints } from './surroundings.js';
 import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor } from './choices.js';
 import hud from './hud.json' with { type: 'json' };
 import { openBriefing } from './intro.js';
+import { setCrewSite } from './crew.js';
 import { buildModule, buildOverlay, tintLayer, TINT } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
@@ -220,6 +221,7 @@ try {
   const choiceLabel = stepId => availableChoices(stepId, selection).find(c => c.id === selection[stepId])?.label;
   // 왼쪽 상태 칸: 기온(행성 전체 또는 고른 지대의 시나리오 범위) · 산소 · 결정 기록. 값이 없으면 '측정 중'이다
   function updateHud(local) {
+    setCrewSite(local ? currentSite : null);
     const range = local ? hud.sites[currentSite]?.temperature : null;
     $('#hud-temp').textContent = range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°';
     $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위 (시나리오)' : '밤 최저 / 낮 최고';

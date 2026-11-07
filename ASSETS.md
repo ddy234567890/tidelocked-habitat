@@ -182,5 +182,7 @@
 |---|---|---|---|---|---|
 | fonts/terrarum-sans-bitmap.woff | Terrarum Sans Bitmap | https://github.com/curioustorvald/Terrarum-sans-bitmap | CuriousTorvald | SIL OFL 1.1 (전문: fonts/LICENSE-terrarum-sans-bitmap.md) | 화면 글자 (비트맵 글꼴) |
 | ori-robot.png | ORI 로봇 | 팀 디자인 캔버스 「1주차 화면 3종」 (https://claude.ai/artifact/7auowppcVKb3j5rwsvK2PQ) | 팀 제작 (올린 팀원이 작가와 라이선스를 확인해 적어 주세요) | 확인 필요 | 브리핑 화면의 탐사 로봇 |
+| face/face.glb | Face | https://sketchfab.com/3d-models/face-ffde29cb64584cf1a939ac2b58d0a931 | 2on (https://sketchfab.com/2on) | CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/) | 왼쪽 아래 대원 얼굴 (표정은 코드로 만들어 넣음). 출처 표기가 필요해서 대원 상태 팝업과 자료 설명에 적어 뒀어요 |
+| face/face.landmarks.json, face/face.credit.json | (팀 작성) | 팀 「얼굴 반응 테스트」 페이지 (https://claude.ai/artifact/7t8SLnr1DFk428FNWxZRpi) | 팀 | - | 얼굴 기준점과 출처 정보 |
 
 - 글꼴은 OFL이라 그대로 쓰고 나눠 줄 수 있어요. 다만 글꼴 파일을 바꿔 다시 배포할 때는 예약 이름 「TERRARUM」을 쓰면 안 되고, 라이선스 전문을 함께 두어야 해요.
