@@ -42,6 +42,10 @@ for (const week of WEEKS.slice(1)) for (const step of week.steps) {
   picked = choose(picked, 'storage', 'S1');
   assert.deepEqual(resolve(picked).overlays, ['big_machine', 'solar_field', 'battery_main']);
   assert.equal(resolve(picked).module, resolve({ location: 'B', module: 'B2' }).module);
+  // 레이어마다 생긴 주차: 지난 주차 것은 면으로 그린다 (main.js showPast)
+  const { weeks } = resolve(picked);
+  assert.equal(weeks.module, 1); assert.equal(weeks.big_machine, 1);
+  assert.ok(weeks.solar_field > 1 && weeks.battery_main >= weeks.solar_field, '뒤 주차 선지는 뒤 주차 번호');
   assert.equal(picked.oxygen, 'O1');
   assert.equal(choose(picked, 'power', 'P2').storage, undefined, '앞 단계를 바꾸면 뒤 단계 선택은 지운다');
   const panel = ALL_STEPS.find(step => step.id === 'power').choices.find(choice => choice.id === 'P1');
@@ -80,7 +84,7 @@ assert.ok(hud.oxygen === null || typeof hud.oxygen === 'number');
 let selection = choose({}, 'location', 'C');
 selection = choose(selection, 'module', 'C2');
 selection = choose(selection, 'oxygen', 'O3');
-assert.deepEqual(resolve(selection), { module: 'scattered', overlays: ['small_units'] });
+assert.deepEqual(resolve(selection), { module: 'scattered', overlays: ['small_units'], weeks: { module: 1, small_units: 1 } });
 assert.deepEqual(choose(selection, 'location', 'A'), { location: 'A' }, '지대를 바꾸면 거주·산소 선택을 지운다');
 assert.deepEqual(choose(selection, 'module', 'C1'), { location: 'C', module: 'C1' });
 

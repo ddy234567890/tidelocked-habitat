@@ -9,7 +9,7 @@ import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_S
 import hud from './hud.json' with { type: 'json' };
 import { openBriefing } from './intro.js';
 import { setCrewSite } from './crew.js';
-import { buildModule, buildOverlay, tintLayer, TINT } from './placement.js';
+import { buildModule, buildOverlay, tintLayer, TINT, faceColors } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
 import { orange } from './palette.js';
@@ -77,6 +77,9 @@ try {
       '#include <fog_vertex>\nfloat lineSize = uLineBase * clamp(-mvPosition.z / uLineNear, uLineMin, 1.0);\n'
       + 'gl_PointSize *= mix(1.0, lineSize, lineWeight);\nvColor.rgb *= mix(1.0, uLineBase * uLineMin / lineSize, lineWeight);');
   };
+  // 지난 주차 건물만 점·선 대신 면(로우 폴리)으로 그린다. 면 머티리얼도 이것 하나만 쓴다 (팀 결정 2026-11-07, CLAUDE.md 예외).
+  // 불투명이라 깊이를 남겨, 뒤에 있는 점은 가리고 앞에 있는 지형 점은 그대로 보인다. 색은 faceColors(주황 밝기 단계)
+  const faceMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
   const color = new THREE.Color();
   function geometryFrom(data, lineWeight = 0) {
     const geometry = new THREE.BufferGeometry();
@@ -126,7 +129,26 @@ try {
   const assetGroup = new THREE.Group(); localGroup.add(assetGroup);
   let selection = {}, decided = {}, week = 1, moduleLayer = null, assetToken = 0, focusTween = null;
   const overlayLayers = new Map(), reveals = [];
-  function dropLayer(layer) { if (!layer) return; assetGroup.remove(layer.points); layer.points.geometry.dispose(); }
+  function dropLayer(layer) {
+    if (!layer) return;
+    assetGroup.remove(layer.points); layer.points.geometry.dispose();
+    if (layer.mesh) { assetGroup.remove(layer.mesh); layer.mesh.geometry.dispose(); }
+  }
+  // 지난 주차 레이어는 면으로 바꾸고 선 점은 숨긴다. 면이 없는 레이어(동굴 봉쇄막·벽 조류 점)는 주황 점 그대로 둔다
+  function showPast(layer, past) {
+    if (!layer) return;
+    const faces = past && layer.data.faces?.length ? layer.data.faces : null;
+    if (faces && !layer.mesh) {
+      const geometry = new THREE.BufferGeometry(), srgb = faceColors(faces), linear = new Float32Array(srgb.length);
+      for (let i = 0; i < srgb.length; i += 3) { color.setRGB(srgb[i], srgb[i + 1], srgb[i + 2], THREE.SRGBColorSpace); color.toArray(linear, i); }
+      geometry.setAttribute('position', new THREE.BufferAttribute(faces, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(linear, 3));
+      layer.mesh = new THREE.Mesh(geometry, faceMaterial);
+      assetGroup.add(layer.mesh);
+    }
+    if (layer.mesh) layer.mesh.visible = Boolean(faces);
+    layer.points.visible = !faces;
+  }
   function clearAssets() {
     assetToken++; selection = {}; decided = {}; week = 1; focusTween = null;
     dropLayer(moduleLayer); moduleLayer = null;
@@ -164,7 +186,7 @@ try {
       if (layers.module) {
         const data = await buildModule(site, layers.module, view);
         if (token !== assetToken) return;
-        moduleLayer = { key: moduleKey, data, points: addLayer(data) }; added = true;
+        moduleLayer = { key: moduleKey, week: layers.weeks.module, data, points: addLayer(data) }; added = true;
       }
     }
     for (const [id, layer] of overlayLayers) if (!layers.overlays.includes(id)) { dropLayer(layer); overlayLayers.delete(id); }
@@ -172,7 +194,7 @@ try {
       if (overlayLayers.has(id)) continue;
       const data = await buildOverlay(site, id, moduleLayer?.data, [...overlayLayers.values()].map(layer => layer.data));
       if (token !== assetToken) return;
-      if (data.positions.length) { overlayLayers.set(id, { data, points: addLayer(data) }); added = true; }
+      if (data.positions.length) { overlayLayers.set(id, { week: layers.weeks[id], data, points: addLayer(data) }); added = true; }
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spots ?? data.spot };
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlayRadius = { ...window.terrainDiagnostics.overlayRadius, [id]: data.footprint?.r };
     }
@@ -180,8 +202,12 @@ try {
     const newest = [...overlayLayers.values()].at(-1);
     paintLayer(moduleLayer, newest ? 'old' : 'new');
     overlayLayers.forEach(layer => paintLayer(layer, layer === newest ? 'new' : 'old'));
+    // 주차가 끝난 선지(앞 주차에 생긴 레이어)는 면으로 그린다
+    const all = [moduleLayer, ...overlayLayers.values()].filter(Boolean);
+    all.forEach(layer => showPast(layer, layer.week < week));
     $('#legend').hidden = !moduleLayer;
-    $('#legend-old').hidden = !overlayLayers.size;
+    $('#legend-old').hidden = !all.some(layer => layer.points.visible && layer.role === 'old');
+    $('#legend-past').hidden = !all.some(layer => layer.mesh?.visible);
     if (added) focusAssets();
   }
   // 단계별 선지: 1단계 위치(아래 A·B·C 카드) → 2단계 짓는 방식 → 3단계 숨 쉴 공기
@@ -325,7 +351,7 @@ try {
     openBriefing(shown, textsFor(shown.situation, selection), week, showBrief);
   };
   document.querySelectorAll('#hud .tab').forEach((tab, i) => tab.addEventListener('click', () => showBrief(i + 1)));
-  $('#next-week').addEventListener('click', () => { week++; renderSteps(true); showBrief(week); });
+  $('#next-week').addEventListener('click', () => { week++; renderSteps(true); syncAssets(); showBrief(week); });
 
   // A와 B는 사용자 표시 위치, C는 기존 위치다. 실제 경위도 자료는 아니다.
   const sun = new THREE.Vector3(PLANET_SUN.x, PLANET_SUN.y, PLANET_SUN.z).normalize();

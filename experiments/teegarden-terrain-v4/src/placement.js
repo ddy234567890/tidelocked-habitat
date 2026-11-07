@@ -151,6 +151,36 @@ function thin(positions, colors, spacing) {
   return out;
 }
 
+// 지난 주차 건물은 선 대신 면(로우 폴리)으로 그린다: 모델 삼각형을 지역 좌표로 옮겨 그대로 모은다
+const fa = new THREE.Vector3();
+function collectFaces(root, matrix) {
+  const out = [];
+  root.traverse(mesh => {
+    if (!mesh.isMesh || !mesh.geometry.getAttribute('position')) return;
+    const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry, position = geometry.getAttribute('position');
+    for (let i = 0; i < position.count; i++) {
+      fa.fromBufferAttribute(position, i).applyMatrix4(mesh.matrixWorld).applyMatrix4(matrix);
+      out.push(fa.x, fa.y, fa.z);
+    }
+    if (geometry !== mesh.geometry) geometry.dispose();
+  });
+  return out;
+}
+const FACE_LIGHT = new THREE.Vector3(0.45, 1, 0.3).normalize(); // 면 밝기를 정하는 고정 빛 방향 (지역 좌표)
+export const FACE_RANGE = [0.16, 0.3]; // 지난 건물 면의 [가장 어두운 밝기, 밝기 폭]. 지금 주차의 흰 선이 늘 더 밝다
+/** 삼각형 목록(faces)의 면마다 하나의 주황 밝기를 준다. 면이 빛을 향할수록 밝아 각진 로우 폴리로 보인다 */
+export function faceColors(faces) {
+  const out = new Float32Array(faces.length), a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  const [low, span] = FACE_RANGE;
+  for (let i = 0; i < faces.length; i += 9) {
+    a.fromArray(faces, i); b.fromArray(faces, i + 3); c.fromArray(faces, i + 6);
+    const normal = c.sub(b).cross(a.sub(b)).normalize();
+    const color = orange(low + span * Math.abs(normal.dot(FACE_LIGHT)));
+    for (let k = 0; k < 9; k += 3) out.set(color, i + k);
+  }
+  return out;
+}
+
 // 와이어프레임은 속이 비어 있어서, 장치 자리를 찾을 때 쓰는 '차지한 자리'는 점 대신 모델 상자로 만든다:
 // 상자 바닥 넓이를 칸(0.2)마다 덮는 기둥의 아래·위 두 점
 function blockOf(root, matrix) {
@@ -177,12 +207,13 @@ const placement = (site, part, spot) => new THREE.Matrix4().compose(
 
 /** 모델 여러 개를 각자 자리에 놓고 모서리 선을 점으로 그린다. 색은 프로젝트 규칙으로 바꾼 뒤 kind 에 맞게 밝기를 맞춘다 */
 async function sampleParts(site, parts, kind, spot, seed, { spacing = EDGE_SPACING, gain = GAIN[kind] } = {}) {
-  const random = mulberry32(seed), chunks = [], blocks = [];
+  const random = mulberry32(seed), chunks = [], blocks = [], faces = [];
   for (const part of parts) {
     const root = await partModel(part), matrix = placement(site, part, spot);
     root.updateWorldMatrix(true, true);
     chunks.push(sampleEdges(root, matrix, spacing, random));
     blocks.push(...blockOf(root, matrix));
+    for (const v of collectFaces(root, matrix)) faces.push(v);
   }
   const total = chunks.reduce((sum, c) => sum + c.positions.length, 0);
   const positions = new Float32Array(total), colors = new Float32Array(total);
@@ -203,6 +234,7 @@ async function sampleParts(site, parts, kind, spot, seed, { spacing = EDGE_SPACI
   }
   out.colors.set(tintLayer(out.levels, 'new'));
   out.blocks = Float32Array.from(blocks);
+  out.faces = Float32Array.from(faces);
   return out;
 }
 
@@ -283,6 +315,8 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
   const n = chunks.reduce((sum, c) => sum + c.shake.length, 0), out = empty(n);
   let offset = 0;
   out.levels = new Float32Array(n);
+  out.faces = new Float32Array(chunks.reduce((sum, c) => sum + c.faces.length, 0));
+  chunks.reduce((at, c) => (out.faces.set(c.faces, at), at + c.faces.length), 0);
   for (const c of chunks) { out.positions.set(c.positions, offset * 3); out.colors.set(c.colors, offset * 3); out.levels.set(c.levels, offset); offset += c.shake.length; }
   out.spot = spots[0]; out.spots = spots; out.footprint = footprint;
   return out;
