@@ -2,12 +2,12 @@
    style.css 위에 겉모습만 덮어쓴다. 글·칸·배치는 style.css·index.html 그대로다.
    대원 얼굴 패널(.crew-face, .crew-modal)의 안쪽은 건드리지 않는다 */
 :root{
-  --ink:#000;--c:#E8DFC8;--o:#F2B84B;
+  --ink:#0A1434;--bg:#02040C;--c:#8FC1FF;--t:#DCE6FF;--o:#E8DFC8;--sel:#0E1B48;
   --ticks:repeating-linear-gradient(90deg,var(--c) 0 1px,transparent 1px 8px);
-  --frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23E8DFC8' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%23E8DFC8' stroke-opacity='.45' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%23E8DFC8' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
-  --frame-o:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23F2B84B' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%23F2B84B' stroke-opacity='.6' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%23F2B84B' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
-  --rings:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='none' stroke='%23E8DFC8'%3E%3Ccircle cx='400' cy='400' r='392' stroke-opacity='.5'/%3E%3Ccircle cx='400' cy='400' r='380' stroke-opacity='.8' stroke-width='10' stroke-dasharray='1 18.9'/%3E%3Ccircle cx='400' cy='400' r='372' stroke-opacity='.3'/%3E%3Ccircle cx='400' cy='400' r='300' stroke-opacity='.18' stroke-dasharray='4 8'/%3E%3Cpath stroke-opacity='.3' d='M0 400H130M670 400H800M400 0V130M400 670V800'/%3E%3C/svg%3E")}
-body{background-color:var(--ink);background-image:linear-gradient(rgba(232,223,200,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(232,223,200,.11) 1px,transparent 1px),linear-gradient(rgba(232,223,200,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(232,223,200,.045) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px;color:var(--c)}
+  --frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%232B47C4' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%231A2B72' stroke-opacity='1' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%238FC1FF' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
+  --frame-o:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23E8DFC8' d='M12.5 .5H47.5V35.5L35.5 47.5H.5V12.5Z'/%3E%3Cpath stroke='%23E8DFC8' stroke-opacity='.6' d='M14 3.5H44.5V34L34 44.5H3.5V14Z'/%3E%3Cpath fill='%23E8DFC8' d='M0 9L9 0H12L0 12ZM48 39L39 48H36L48 36Z'/%3E%3C/svg%3E");
+  --rings:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 800' fill='none' stroke='%238FC1FF'%3E%3Ccircle cx='400' cy='400' r='392' stroke-opacity='.5'/%3E%3Ccircle cx='400' cy='400' r='380' stroke-opacity='.8' stroke-width='10' stroke-dasharray='1 18.9'/%3E%3Ccircle cx='400' cy='400' r='372' stroke-opacity='.3'/%3E%3Ccircle cx='400' cy='400' r='300' stroke-opacity='.18' stroke-dasharray='4 8'/%3E%3Cpath stroke-opacity='.3' d='M0 400H130M670 400H800M400 0V130M400 670V800'/%3E%3C/svg%3E")}
+body{background-color:var(--ink);background-image:linear-gradient(rgba(143,193,255,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(143,193,255,.11) 1px,transparent 1px),linear-gradient(rgba(143,193,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(143,193,255,.045) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px;color:var(--c)}
 a{color:var(--c)}a:hover{color:var(--o)}
 .scanlines{background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px)}
 kbd{border:1px solid var(--c)}
@@ -26,19 +26,19 @@ kbd{border:1px solid var(--c)}
 /* 상태 */
 .chip{color:var(--o);background:none;border:1px solid var(--o);padding:0 8px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
 .stat strong{color:var(--c);text-shadow:1px 0 currentColor}.stat small{color:var(--c)}
-.gauge{height:14px;border:1px solid var(--c);padding:0;background:repeating-linear-gradient(90deg,rgba(232,223,200,.55) 0 1px,transparent 1px 7px)}
+.gauge{height:14px;border:1px solid var(--c);padding:0;background:repeating-linear-gradient(90deg,rgba(143,193,255,.55) 0 1px,transparent 1px 7px)}
 .gauge>span{background:var(--c)}
 .log{border-top:1px dashed var(--c);color:var(--c)}
 .meta b.on{background:none;color:var(--o);border:1px solid var(--o)}
 .globe{width:164px;height:164px;border:0;position:relative;background:var(--rings) center/contain no-repeat}
 .globe div{width:112px;height:112px;background:none;box-shadow:none;border:1px solid var(--c)}
-.facts{color:var(--c)}.facts i{border-bottom:1px dotted var(--c)}.facts b{color:var(--c)}.facts li{border-bottom:1px solid rgba(232,223,200,.16);padding-bottom:3px}
+.facts{color:var(--c)}.facts i{border-bottom:1px dotted var(--c)}.facts b{color:var(--c)}.facts li{border-bottom:1px solid rgba(143,193,255,.16);padding-bottom:3px}
 .scenario{color:var(--c);border-left:2px solid var(--o);padding-left:8px}
 
 /* 지형 창: 행성 둘레에 눈금 고리 */
 .window-body{background-color:var(--ink)}
 .compass{color:var(--c);border-bottom:1px solid var(--c);background:var(--ticks) bottom/100% 8px no-repeat}
-.cross{border-color:rgba(232,223,200,.3)}
+.cross{border-color:rgba(143,193,255,.3)}
 .heading{background:var(--ink);border-left:2px solid var(--o);left:0;padding:10px 26px 12px 16px;clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%)}
 .eyebrow,#description{color:var(--c)}.heading h1{color:var(--c);text-shadow:1px 0 currentColor}.heading h1 em{color:var(--o);font-style:normal}
 .pin{color:var(--c)}.pin b{border:1px solid var(--c);background:var(--ink);box-shadow:0 0 0 3px var(--ink),0 0 0 4px var(--c);color:var(--c)}
@@ -177,15 +177,15 @@ canvas.robot{filter:none;image-rendering:pixelated}
 .data-meta span:nth-child(2){text-shadow:1px 0 currentColor}
 .data-body section{display:flex;flex-direction:column;gap:14px}
 .data-body h2{margin:0;font-size:16px;font-weight:400;color:var(--o);letter-spacing:.08em;display:flex;align-items:center;gap:12px}
-.data-body h2::after{content:"";flex:1;border-top:1px solid rgba(232,223,200,.4)}
+.data-body h2::after{content:"";flex:1;border-top:1px solid rgba(143,193,255,.4)}
 .data-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
-.data-stat{display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;border:1px solid rgba(232,223,200,.45)}
+.data-stat{display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;border:1px solid rgba(143,193,255,.45)}
 .data-stat span{letter-spacing:.04em}
 .data-stat b{font-weight:400;font-size:32px;line-height:38px;color:var(--c);text-shadow:1px 0 currentColor}
 .data-stat p{margin:0;line-height:24px}
 .data-points{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;max-width:64ch}
 .data-points li{display:flex;gap:10px}.data-points li::before{content:"▶";color:var(--o);flex-shrink:0}
-.data-notes{border:1px solid rgba(232,223,200,.45)}
+.data-notes{border:1px solid rgba(143,193,255,.45)}
 .data-notes summary{cursor:pointer;padding:10px 16px;list-style:none;display:flex;justify-content:space-between}
 .data-notes summary::-webkit-details-marker{display:none}
 .data-notes summary::after{content:"＋";color:var(--o)}.data-notes[open] summary::after{content:"−"}
@@ -227,7 +227,7 @@ canvas.robot{filter:none;image-rendering:pixelated}
 .chips small{color:var(--c);font-size:16px}.chips b{color:var(--c)}
 .crew-rows,.crew-bars{font-size:16px}
 .crew-rows li{border-bottom:1px dotted var(--c)}.crew-rows b{color:var(--c)}
-.crew-bars .bar{background:repeating-linear-gradient(90deg,rgba(232,223,200,.35) 0 5px,transparent 5px 8px)}
+.crew-bars .bar{background:repeating-linear-gradient(90deg,rgba(143,193,255,.35) 0 5px,transparent 5px 8px)}
 .crew-bars .bar i{background:var(--c)}
 .crew-bars .bar[data-lv="1"] i,.crew-bars .bar[data-lv="2"] i{background:var(--o)}
 .crew-bars em,.crew-note{color:var(--c);font-size:16px}
@@ -247,3 +247,17 @@ canvas.robot{filter:none;image-rendering:pixelated}
 /* 지난 주차 건물 정보창 (PR #38) */
 .past-tip{max-width:280px;padding:8px 12px;background:var(--ink);border:1px solid var(--c);color:var(--c);font-size:16px;line-height:22px;word-break:keep-all}
 .past-tip small{color:var(--o);font-size:16px}.past-tip b{font-size:16px;color:var(--c);text-shadow:1px 0 currentColor}.past-tip span{color:var(--c)}
+
+/* CREW_LINK 제목줄: 상태 글이 길어도 한 줄로, 넘치면 말줄임 */
+.p-crew .titlebar>span:first-child{flex:0 0 auto}
+.p-crew .crew-state{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.p-crew .titlebar .wbtns{flex:0 0 auto}
+.p-crew .titlebar{gap:6px;letter-spacing:0}.p-crew .titlebar>span:first-child{padding-right:4px}.p-crew .crew-state{padding:0}
+
+/* 파랑 테마 (팀 화면 토큰): 바탕은 짙은 남색, 선·제목은 하이라이트 파랑, 긴 글은 본문색 */
+body{background-color:var(--bg);color:var(--t)}
+.intro{background:var(--bg)}
+.site .line,.effects,.facts,.meta,.log,.stat small,.report,.bubble p,.data-stat p,.data-points,.data-meta,.past-tip span,.scenario,#description{color:var(--t)}
+.site.active{background:var(--sel);background-clip:padding-box}
+.window{background:#000;background-clip:padding-box}
+.window-body{background-color:#000}

@@ -343,19 +343,15 @@ try {
       if (nav.childElementCount) nav.append(decideButton(stepId));
     }
     // 2주차부터: 지금 주차에서 아직 결정하지 않은 첫 단계를 연다. 앞 주차 선택은 selection 에 그대로 남아 있다
-    const { steps, situation, goal } = WEEKS[week - 1], open = local && week > 1 ? steps.find(step => !decided[step.id]) : null;
+    const { steps } = WEEKS[week - 1], open = local && week > 1 ? steps.find(step => !decided[step.id]) : null;
     renderStep(open?.id, $('#step-week'), Boolean(open));
     if (open) {
       $('#step-week .step-title b').textContent = steps.indexOf(open) + 1;
       $('#step-week .step-title span').textContent = open.label;
-      $('#week-situation').textContent = [goal, ...textsFor(situation, selection)].join(' ');
       $('#step-week nav').append(decideButton(open.id));
     }
     $('#next-week').hidden = !(local && WEEKS[week] && steps.every(step => decided[step.id]));
     $('#back').hidden = week > 1; // 결정은 되돌릴 수 없다. 2주차부터는 행성으로 돌아가 처음부터 고르지 않는다
-    const summary = $('#decided');
-    summary.hidden = !(local && decided.location);
-    if (!summary.hidden) summary.textContent = '결정 · ' + [COPY[currentSite].title, ...ALL_STEPS.slice(1).filter(step => decided[step.id]).map(step => choiceLabel(step.id))].join(' / ');
     updateHud(local);
   }
   // 짓는 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.

@@ -1,7 +1,7 @@
 // 화면의 1비트 망점 그림: 이동 화면 풍경·로켓, 브리핑 풍경·ORI, 오른쪽 칸 행성. 별은 고정, 씨앗 고정(Math.random 없음).
 // 글과 진행 표시는 intro.js 가 그대로 움직이고, 여기서는 그림만 바꾼다. 3D 점(공통 점 셰이더)과는 상관없다.
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
-const CREAM = [232, 223, 200];
+const CREAM = [220, 230, 255]; // 망점 밝은 쪽 색: 본문색 #DCE6FF (이름은 예전 그대로)
 const threshold = (x, y) => BAYER[(y & 3) * 4 + (x & 3)];
 function seeded(seed) {
   return () => {
