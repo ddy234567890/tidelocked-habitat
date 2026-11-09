@@ -1,0 +1,56 @@
+/* 홀로그램 화면 등장 + 배경 격자판 흐름.
+   · 로딩/브리핑 → 메인으로 넘어갈 때 창들이 하나씩 "투사"되듯 나타난다 (가는 선 → 펼침 → 깜빡임 → 안정).
+   · 선택 화면 배경 격자판이 천천히 흐르고, 옅은 빛띠가 가로지른다.
+   색은 기존 토큰(--edge, --hi 등)만 쓴다. 움직임 줄이기 설정이면 전부 끈다. */
+
+/* ── 배경 격자판 흐름: 큰 칸 120px 한 칸만큼 움직이면 처음과 같아서 끊김 없이 이어진다 ── */
+body{background-image:none}
+body::before{content:"";position:fixed;inset:-120px;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(143,193,255,.11) 1px,transparent 1px),linear-gradient(90deg,rgba(143,193,255,.11) 1px,transparent 1px),linear-gradient(rgba(143,193,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(143,193,255,.045) 1px,transparent 1px);
+  background-size:120px 120px,120px 120px,24px 24px,24px 24px;
+  animation:grid-drift 18s linear infinite}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(143,193,255,.13) 50%,transparent 62%) 0 0/260% 100% no-repeat;
+  animation:grid-glow 11s ease-in-out infinite}
+@keyframes grid-drift{to{transform:translate(120px,120px)}}
+@keyframes grid-glow{from{background-position:100% 0}to{background-position:0 0}}
+
+/* ── 로딩 화면이 사라지는 동안 메인 창들이 투사된다 ── */
+.intro.leaving{pointer-events:none;animation:intro-out .7s ease-in forwards}
+@keyframes intro-out{0%{opacity:1}35%{opacity:.85}55%{opacity:.9}100%{opacity:0}}
+
+@keyframes holo-in{
+  0%{opacity:0;clip-path:inset(50% 0 50% 0);filter:brightness(2.4)}
+  14%{opacity:1;clip-path:inset(49.6% 0 49.6% 0);filter:brightness(2.4)}   /* 가는 빛줄기 */
+  46%{opacity:.9;clip-path:inset(0 0 0 0);filter:brightness(1.7)}           /* 위아래로 펼쳐짐 */
+  56%{opacity:.35}62%{opacity:.95}70%{opacity:.5}78%{opacity:1}              /* 홀로그램 깜빡임 */
+  100%{opacity:1;clip-path:inset(0 0 0 0);filter:none}}
+@keyframes holo-fill{0%{opacity:0}55%{opacity:0}62%{opacity:.7}70%{opacity:.25}80%{opacity:1}100%{opacity:1}}
+@keyframes holo-beam{0%{transform:translateY(-4vh);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateY(104vh);opacity:0}}
+
+.hud.booting>.panel,.hud.booting>.window,.hud.booting>.p-decision,.hud.booting>.p-foot{animation:holo-in .85s cubic-bezier(.2,.7,.2,1) backwards}
+.hud.booting>.p-stage{animation-delay:.05s}
+.hud.booting>.p-left{animation-delay:.2s}
+.hud.booting>.p-right{animation-delay:.32s}
+.hud.booting>.p-crew{animation-delay:.46s}
+.hud.booting>.p-decision{animation-delay:.6s}
+.hud.booting>.p-foot{animation-delay:.8s}
+/* 창 안쪽 내용은 틀이 다 펼쳐진 뒤에 채워진다 */
+.hud.booting .panel-body,.hud.booting .window-body,.hud.booting .step-title,.hud.booting .sites>*{animation:holo-fill .7s steps(1,end) backwards}
+.hud.booting .panel-body,.hud.booting .window-body{animation-delay:.55s}
+.hud.booting .step-title{animation-delay:.95s}
+.hud.booting .sites>:nth-child(1){animation-delay:1.05s}.hud.booting .sites>:nth-child(2){animation-delay:1.18s}.hud.booting .sites>:nth-child(3){animation-delay:1.31s}
+/* 화면 전체를 위에서 아래로 쓸고 가는 투사 빛줄기 */
+.hud.booting::after{content:"";position:fixed;left:0;right:0;top:0;height:3px;z-index:55;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--hi) 20%,var(--hi) 80%,transparent);box-shadow:0 0 18px 4px rgba(143,193,255,.55);
+  animation:holo-beam 1.1s ease-in-out .05s both}
+
+/* 브리핑 화면: 로딩이 끝나고 브리핑 창이 투사되어 나타난다 */
+#intro-brief:not([hidden]) .brief-view{animation:holo-in .8s cubic-bezier(.2,.7,.2,1) backwards}
+#intro-brief:not([hidden]) .brief-box{animation:holo-in .8s cubic-bezier(.2,.7,.2,1) .25s backwards}
+#intro-brief:not([hidden]) .foot-keys{animation:holo-fill .6s steps(1,end) .8s backwards}
+#intro-brief:not([hidden]) .bubble,#intro-brief:not([hidden]) .robot{animation:holo-fill .7s steps(1,end) .6s backwards}
+
+@media (prefers-reduced-motion:reduce){
+  body::before,body::after,.hud.booting *,.hud.booting::after,#intro-brief *{animation:none!important}
+  .intro.leaving{animation:none}}
