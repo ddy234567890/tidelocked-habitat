@@ -322,6 +322,12 @@ try {
   }
   const choiceLabel = stepId => availableChoices(stepId, selection).find(c => c.id === selection[stepId])?.label;
   // 왼쪽 상태 칸: 기온(행성 전체 또는 고른 지대의 시나리오 범위) · 산소 · 결정 기록. 값이 없으면 '측정 중'이다
+  // 값이 실제로 바뀔 때만 글자를 바꾸고 짧게 번쩍인다 (holo-boot.css .holo-flash). 글자만 슬쩍 바뀌어서 모르고 지나가는 일을 막는다
+  function setText(element, text) {
+    if (element.textContent === text) return;
+    element.textContent = text;
+    element.classList.remove('holo-flash'); void element.offsetWidth; element.classList.add('holo-flash');
+  }
   function updateHud(local) {
     setCrewSite(local ? currentSite : null);
     // 대원 얼굴: 산소 방식을 결정하기 전에는 바깥 공기(숨 쉴 산소 없음)다.
@@ -336,21 +342,22 @@ try {
       setCrewStats(total);
     } else setCrewStats(null);
     const range = local ? hud.sites[currentSite]?.temperature : null;
-    $('#hud-temp').textContent = range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°';
-    $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위' : '밤 최저 / 낮 최고';
+    setText($('#hud-temp'), range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°');
+    setText($('#hud-temp-note'), range ? COPY[currentSite].title + ' 기온 범위' : '밤 최저 / 낮 최고');
     $('#hud-o2').textContent = hud.oxygen == null ? '측정 중' : hud.oxygen + '%';
     $('#hud-o2-bar').style.width = (hud.oxygen ?? 0) + '%';
     const shownWeek = logWeek ?? week; // 왼쪽 주차 탭으로 고른 주 (없으면 지금 주)
     const entries = WEEKS[shownWeek - 1].steps.map(step => step.id === 'location'
       ? (local && decided.location ? siteLetter(currentSite) + ' ' + COPY[currentSite].title : '—')
       : decided[step.id] ? choiceLabel(step.id) : '—');
-    entries.forEach((text, i) => { $('#hud-log-' + (i + 1)).textContent = '▶ LOG 0' + (i + 1) + ' ........ ' + text; });
+    entries.forEach((text, i) => { setText($('#hud-log-' + (i + 1)), '▶ LOG 0' + (i + 1) + ' ........ ' + text); });
     document.querySelectorAll('#hud .tab').forEach((tab, i) => {
       tab.hidden = i >= week; // 아직 오지 않은 주차는 탭을 보이지 않는다
       tab.classList.toggle('on', i === shownWeek - 1); tab.setAttribute('aria-selected', String(i === shownWeek - 1));
     });
   }
   // 1단계 지대 카드는 누르면 그 지역으로 날아가 둘러볼 수 있고, '지대 결정'을 눌러야 다음 단계가 열린다
+  let lastStepKey, stepTimer;
   function renderSteps(local) {
     logWeek = null; // 무언가 고르거나 결정하면 LOG 는 지금 주로 돌아온다
     if (local) selection.location = siteLetter(currentSite);
@@ -374,6 +381,14 @@ try {
     }
     $('#next-week').hidden = !(local && WEEKS[week] && steps.every(step => decided[step.id]));
     $('#back').hidden = week > 1; // 결정은 되돌릴 수 없다. 2주차부터는 행성으로 돌아가 처음부터 고르지 않는다
+    // 단계가 바뀌었으면(위치 → 방식 → 공기 → 주차 선지) 선택 영역이 홀로그램처럼 새로 투사된다
+    const stepKey = [!sites.hidden && 'loc', !$('#step-module').hidden && 'module', !$('#step-oxygen').hidden && 'oxygen', open && week + ':' + open.id].filter(Boolean).join('/');
+    if (lastStepKey !== undefined && stepKey !== lastStepKey && $('#intro').hidden) {
+      const area = $('.p-decision');
+      area.classList.remove('step-changing'); void area.offsetWidth; area.classList.add('step-changing');
+      clearTimeout(stepTimer); stepTimer = setTimeout(() => area.classList.remove('step-changing'), 1500);
+    }
+    lastStepKey = stepKey;
     updateHud(local);
   }
   // 짓는 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.
