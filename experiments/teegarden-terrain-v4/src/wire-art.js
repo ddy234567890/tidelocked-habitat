@@ -34,24 +34,37 @@ function plot(canvas, width, height, shade) {
 }
 
 /** 조석 고정 행성: 빛이 옆에서 들어 어두운 쪽이 깊게 잠긴다 */
-function planetShade(cx, cy, radius, noise, light = [0.74, -0.34, 0.58]) {
+function planetShade(cx, cy, radius, noise, light = [0.74, -0.34, 0.58], night = 0) {
   return (x, y) => {
     const nx = (x - cx) / radius, ny = (y - cy) / radius, d = nx * nx + ny * ny;
     if (d > 1) return null;
     const nz = Math.sqrt(1 - d), lambert = Math.max(0, nx * light[0] + ny * light[1] + nz * light[2]);
     const surface = noise(nx * 2.4 / (nz + 0.5) + 5, ny * 5 / (nz + 0.5) + 2);
     const streak = surface > 0.53 ? 1.5 : 0.5 + surface * 0.5;
-    return lambert ** 1.5 * 1.3 * streak;
+    return lambert ** 1.5 * 1.3 * streak + night * streak * nz; // night: 밤 쪽에도 윤곽이 보이게 남기는 희미한 빛
   };
 }
 
 const TRAVEL_FLARES = [[0.09, 0.32, 16], [0.42, 0.16, 12], [0.61, 0.5, 18], [0.33, 0.56, 10], [0.92, 0.6, 12]];
-function drawScene(canvas, cssWidth, cssHeight, { planetAt = [0.79, 0.27, 0.2], horizon = 0.8, flares = TRAVEL_FLARES, seed = 77 } = {}) {
+/** 사각형 [x0, y0, x1, y1] 안은 0, 밖으로 feather 만큼 가며 1 이 되는 값 (별을 부드럽게 치울 때) */
+function clearMask(rects) {
+  // floor: 가운데에도 남기는 별 비율 (0 이면 다 치운다). 가장자리는 smoothstep 으로 천천히 돌아온다
+  return (x, y) => rects.reduce((keep, [x0, y0, x1, y1, feather, floor = 0]) => {
+    const dx = Math.max(x0 - x, 0, x - x1), dy = Math.max(y0 - y, 0, y - y1);
+    const t = Math.min(1, Math.hypot(dx, dy) / feather), ease = t * t * (3 - 2 * t);
+    return Math.min(keep, floor + (1 - floor) * ease);
+  }, 1);
+}
+// frame: 행성 둘레 네모 칸(강의 표시 배경)의 여백, 반지름 배수 [왼, 위, 오른, 아래]. 칸 안과 clear 사각형(화면 비율) 안의 별을 치운다
+function drawScene(canvas, cssWidth, cssHeight, { planetAt = [0.79, 0.27, 0.2], horizon = 0.8, flares = TRAVEL_FLARES, seed = 77, light, night = 0, clear = [], frame } = {}) {
   const width = Math.ceil(cssWidth / 2), height = Math.ceil(cssHeight / 2), random = seeded(seed), speck = noiseField(31), rock = noiseField(53), clouds = noiseField(7);
   const lit = new Uint8Array(width * height);
+  const pr = Math.min(width, height) * planetAt[2], pcx = width * planetAt[0], pcy = height * planetAt[1];
+  const box = frame && [Math.max(2, pcx - frame[0] * pr), Math.max(2, pcy - frame[1] * pr), Math.min(width - 2, pcx + frame[2] * pr), Math.min(height - 2, pcy + frame[3] * pr)].map(Math.round);
+  const keep = clearMask([...clear.map(([x0, y0, x1, y1, f, floor]) => [x0 * width, y0 * height, x1 * width, y1 * height, f * width, floor]), ...(box ? [[...box, 3]] : [])]);
   // 잔별: 조밀한 모래 같은 점
   for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
-    const density = 0.012 + 0.05 * Math.max(0, speck(x / 60, y / 60) - 0.42);
+    const density = (0.012 + 0.05 * Math.max(0, speck(x / 60, y / 60) - 0.42)) * keep(x, y);
     if (random() < density) lit[y * width + x] = 1;
   }
   // 큰 별: 십자 빛줄기
@@ -62,9 +75,15 @@ function drawScene(canvas, cssWidth, cssHeight, { planetAt = [0.79, 0.27, 0.2], 
     }
     for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) lit[(cy + dy) * width + cx + dx] = 1;
   };
-  flares.forEach(([u, v, reach]) => flare(Math.round(u * width), Math.round(v * height), reach));
+  // 큰 별은 빛줄기 끝까지 치운 자리(글·행성 칸) 밖에 있을 때만 그린다
+  flares.forEach(([u, v, reach]) => {
+    const x = u * width, y = v * height;
+    if ([[x, y], [x - reach, y], [x + reach, y], [x, y - reach], [x, y + reach]].every(([px, py]) => keep(px, py) > 0.9)) flare(Math.round(x), Math.round(y), reach);
+  });
 
-  const planet = planetShade(width * planetAt[0], height * planetAt[1], Math.min(width, height) * planetAt[2], clouds);
+  const planet = planetShade(width * planetAt[0], height * planetAt[1], Math.min(width, height) * planetAt[2], clouds, light, night);
+  canvas.dataset.planet = [pcx, pcy, pr].join(','); // 강의 그림 표시(planet-brief.js)가 읽는다
+  if (box) canvas.dataset.frame = box.join(',');
   // 앞쪽 위성 표면: 화면 아래에 걸린 큰 호
   const R = width * 1.15, gx = width * 0.42, gy = height * horizon + R;
   const craters = [];
@@ -173,7 +192,14 @@ document.querySelector('.brief-view').prepend(briefScene);
 const paintAll = () => {
   if (innerWidth < 100 || innerHeight < 100) return; // 창 크기가 아직 0이면 다음 크기 변경 때 그린다
   drawScene(scene, innerWidth, innerHeight);
-  drawScene(briefScene, innerWidth - 56, Math.max(320, innerHeight - 310), { planetAt: [0.86, 0.46, 0.2], horizon: 0.8, flares: [[0.62, 0.2, 14], [0.05, 0.42, 12], [0.7, 0.62, 10]], seed: 91 });
+  drawScene(briefScene, innerWidth - 56, Math.max(320, innerHeight - 310), {
+    planetAt: [0.78, 0.49, 0.24], horizon: 0.8, flares: [[0.47, 0.08, 12]], seed: 91, light: [-1, 0, 0], // 큰 별은 로봇·행성 칸과 겹쳐 앞에 나와 보이지 않게 위쪽 가운데 하나만
+    // ORI 말풍선 글 뒤 별을 티 나지 않게 듬성하게 (가운데도 35%는 남기고 가장자리로 천천히 돌아온다) (넓은 화면은 로봇 오른쪽, 좁은 화면은 아래쪽)
+    clear: innerWidth > 1100 ? [[0.31, 0.26, 0.5, 0.46, 0.14, 0.35]] : [[0.1, 0.62, 0.9, 0.74, 0.12, 0.35]],
+    frame: [1.75, 1.32, 1.9, 1.55],
+  });
+  // 브리핑 행성은 조석 고정: 별이 왼쪽에 있어 왼쪽 절반이 낮, 오른쪽 절반이 밤이다
+  briefScene.dispatchEvent(new Event('painted'));
 };
 paintAll();
 addEventListener('resize', paintAll);
