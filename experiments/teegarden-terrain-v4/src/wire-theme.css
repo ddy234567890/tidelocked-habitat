@@ -261,3 +261,64 @@ body{background-color:var(--bg);color:var(--t)}
 .site.active{background:var(--sel);background-clip:padding-box}
 .window{background:#000;background-clip:padding-box}
 .window-body{background-color:#000}
+
+/* 1주차 행성 강의 (src/intro.js, src/planet-brief.js)
+   로봇 옆 말풍선에 설명, 아래 칸에 요약이 쌓인다. 행성 위 표시는 얇은 선: 선 #8FC1FF, 글 #DCE6FF, 경계 크림, 별 쪽 주황 #FF993D */
+.intro svg.brief-art{filter:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;font-family:var(--font)}
+.mk-t{font-size:16px;fill:#DCE6FF;paint-order:stroke;stroke:#0A1434;stroke-width:5px;stroke-linejoin:round}
+.mk-cream{fill:#E8DFC8}.mk-orange{fill:#FF993D}
+.mk-mean{fill:#E8DFC8}
+.mk-l{fill:none;stroke:#8FC1FF;stroke-width:1}
+.mk-arrow{fill:#FF993D}
+.mk-sun{stroke:#FF993D;stroke-width:2}.mk-dot{fill:#FF993D}
+.mk-heat{stroke:#FF993D;stroke-width:2;stroke-dasharray:5 5;animation:mk-flow 1s linear infinite}
+@keyframes mk-flow{to{stroke-dashoffset:-10}}
+.mk-in .mk-sun,.mk-in .mk-heat{opacity:0;animation:mk-fade .6s ease-out forwards,mk-flow 1s linear infinite}
+.mk-rim{fill:none;stroke:#8FC1FF;stroke-width:1;stroke-dasharray:2 4;opacity:.7}
+.mk-in .mk-rim{opacity:0;animation:mk-fade .8s ease-out forwards}
+.mk-edge{stroke:#E8DFC8;stroke-width:1.5;stroke-dasharray:5 4}
+.mk-in .mk-l{stroke-dasharray:1;stroke-dashoffset:1;animation:mk-draw .7s ease-out forwards}
+.mk-in .mk-edge{transform-box:fill-box;transform-origin:center top;transform:scaleY(0);animation:mk-grow .8s ease-out forwards}
+.mk-in .mk-t,.mk-in .mk-arrow{opacity:0;animation:mk-fade .5s ease-out .55s forwards}
+@keyframes mk-draw{to{stroke-dashoffset:0}}
+@keyframes mk-grow{to{transform:scaleY(1)}}
+@keyframes mk-fade{to{opacity:1}}
+#brief-bubble{color:var(--o);text-shadow:1px 0 currentColor;min-height:22px}
+.bubble{gap:8px}
+.bubble-lines{display:flex;flex-direction:column;gap:6px}
+.bubble-lines:empty{display:none}
+.bubble-lines p{margin:0;font-size:16px;line-height:22px;color:var(--t)}
+.badge-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.brief-badge{border:1px solid var(--o);color:var(--o);font-size:14px;line-height:20px;padding:0 8px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
+.rise{opacity:0;animation:rise .45s ease-out forwards}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.report{gap:6px}
+.report .note{position:relative;padding-left:18px;color:var(--c)}
+.report .note::before{content:"▶";position:absolute;left:0;font-size:12px}
+.report .note.now{color:var(--t)}
+.report .print{clip-path:inset(0 100% 0 0);animation:print .9s steps(24,end) forwards}
+@keyframes print{to{clip-path:inset(0 0 0 0)}}
+.brief-page{flex-shrink:0;color:var(--c);font-size:16px}
+.next.start{width:auto;padding:0 18px;white-space:nowrap}
+@media(min-width:1101px){.bubble{width:min(560px,calc(66% - 300px))}}
+/* 2026-11-11 사용자 요청: 말풍선은 상자 없이 글만 (뒤 별은 wire-art.js 가 치운다), 행성 뒤에 네모 칸 */
+.intro .bubble{background:none;border:0;box-shadow:none;padding:0}
+.intro .bubble p,.intro .who{text-shadow:0 0 2px var(--bg),0 0 4px var(--bg),0 0 10px var(--bg),0 0 16px var(--bg)} /* 남은 별 위에서도 글이 읽히게 */
+#brief-bubble{font-size:20px;line-height:28px}
+.bubble-lines p{font-size:16px;line-height:24px}
+.say-line.wait{opacity:0}
+.brief-panel{position:absolute;background:#0E1B48;mix-blend-mode:lighten;border:1px solid #2B47C4;pointer-events:none}
+.brief-panel::before,.brief-panel::after{content:"";position:absolute;width:14px;height:14px;border:0 solid #8FC1FF}
+.brief-panel::before{left:-1px;top:-1px;border-left-width:2px;border-top-width:2px}
+.brief-panel::after{right:-1px;bottom:-1px;border-right-width:2px;border-bottom-width:2px}
+.report .note.typing span::after{content:"";display:inline-block;width:9px;height:17px;margin-left:2px;vertical-align:-3px;background:var(--o);animation:caret .9s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+@media(max-width:640px){
+ .brief{grid-template-rows:560px max-content 28px;overflow-y:auto}
+ .intro svg.brief-art{display:none} /* 좁은 화면은 행성이 화면 끝에 걸려 표시가 잘린다. 글로만 본다 */
+ .brief-body{padding:12px;flex-wrap:wrap}.brief-body .avatar{display:none}.brief-body .report{flex-basis:100%}
+ .brief-page{margin-left:auto}
+}
+
+/* 겹침 순서: 행성 칸 < 행성 표시 < 화면 글(카메라 표시·ORI 글) */
+.brief-panel{z-index:1}.intro svg.brief-art{z-index:2}.brief-view .cam-l,.brief-view .cam-r,.brief-view .bubble,.brief-view .robot{z-index:3}
