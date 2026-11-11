@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#02030a"><title>TEEGARDEN b / 행성 탐사</title><link rel="stylesheet" href="/src/style.css"><link rel="stylesheet" href="/src/wire-theme.css"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#02030a"><title>TEEGARDEN b / 행성 탐사</title><link rel="stylesheet" href="/src/style.css"><link rel="stylesheet" href="/src/wire-theme.css"><link rel="stylesheet" href="/src/holo-boot.css"><link rel="stylesheet" href="/src/hex-board.css"></head>
 <body>
 <!-- 화면 디자인: 팀 디자인 캔버스 「1주차 화면 3종」(이동 중 → 브리핑 → 결정). 레이아웃·색·글꼴을 그대로 따른다 -->
 <div id="intro" class="intro" role="dialog" aria-modal="true" aria-label="탐사 시작">
@@ -98,6 +98,7 @@
  </aside>
 
  <section class="p-decision" aria-label="선지">
+  <div id="hex-board" hidden></div>
   <p class="step-title" id="step-location-title"><b>1</b><span id="step-location-text">기지를 세울 위치를 골라 주세요</span></p>
   <nav class="sites cards" aria-label="탐사 지점 목록">
    <button data-site="plain" class="site"><b>A</b><span class="name">현무암 평원</span><em class="line"></em><ul class="effects"></ul></button>

@@ -23,9 +23,16 @@ let pages = null, page = 0, phase = 'talk'; // 강의 중이면 pages 가 있다
 let timers = [], settle = null; // 진행 중인 움직임과, 바로 끝낼 때 부르는 함수
 
 function finish() {
-  intro.hidden = true;
   document.removeEventListener('keydown', onKey);
-  $('#hud').querySelector('.site')?.focus({ preventScroll: true });
+  const hud = $('#hud');
+  if (reduced) intro.hidden = true;
+  else {
+    // 로딩 화면은 서서히 사라지고, 그 뒤에서 메인 창들이 홀로그램처럼 투사된다 (holo-boot.css)
+    intro.classList.add('leaving'); hud.classList.add('booting');
+    setTimeout(() => { intro.hidden = true; intro.classList.remove('leaving'); }, 700);
+    setTimeout(() => hud.classList.remove('booting'), 2300);
+  }
+  hud.querySelector('.site')?.focus({ preventScroll: true });
 }
 function later(ms, run) { timers.push(setTimeout(run, ms)); }
 function stopMotion() { timers.forEach(clearTimeout); timers = []; const done = settle; settle = null; done?.(); }
