@@ -80,6 +80,8 @@ const GAIN = { module: 0.95, overlay: 1 }; // 선은 가늘어서 면보다 밝�
 // weight 는 main.js lineWeight: 작을수록 선이 굵고 밝다. 방금 더한 선지는 또렷하게, 그 전 선지는 가늘고 연하게 둔다
 export const TINT = { new: { color: cream, range: [0.3, 0.25], weight: 0.75 }, old: { color: orange, range: [0.22, 0.1], weight: 0.9 } };
 export const LAYER_POINTS = { seal: 9000, coat: 1800 };
+const DEVICE_GAP = 0.9, MIN_DEVICE_H = 0.6;
+const SHRINK = [1, 0.85, 0.7, 0.55, 0.45, 0.35]; // 자리가 없을 때 장치를 줄여 보는 배율 차례
 
 /** 점마다의 밝기(levels)를 role('new' 방금 더한 선지, 'old' 그 전 선지) 색으로 칠한다 */
 export function tintLayer(levels, role) {
@@ -200,9 +202,11 @@ function partSpot(site, part, spot) {
   const [dx, dz] = part.offset ?? [0, 0];
   return [spot[0] + dx, spot[1] + (part.lift ?? 0), spot[2] + dz];
 }
+// rotation 은 세로축으로 도는 각, tilt 는 모델 앞(+z)이 위로 들리도록 옆축(x)으로 세우는 각 (도)
 const placement = (site, part, spot) => new THREE.Matrix4().compose(
   new THREE.Vector3(...partSpot(site, part, spot)),
-  new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), THREE.MathUtils.degToRad(part.rotation ?? 0)),
+  new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), THREE.MathUtils.degToRad(part.rotation ?? 0))
+    .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), THREE.MathUtils.degToRad(part.tilt ?? 0))),
   new THREE.Vector3().setScalar(realScale(part)));
 
 /** 모델 여러 개를 각자 자리에 놓고 모서리 선을 점으로 그린다. 색은 프로젝트 규칙으로 바꾼 뒤 kind 에 맞게 밝기를 맞춘다 */
@@ -210,6 +214,12 @@ async function sampleParts(site, parts, kind, spot, seed, { spacing = EDGE_SPACI
   const random = mulberry32(seed), chunks = [], blocks = [], faces = [];
   for (const part of parts) {
     const root = await partModel(part), matrix = placement(site, part, spot);
+    if (part.tilt) {
+      // 세운 모델이 땅에 파묻히지 않게, 가장 낮은 곳이 자리 높이에 닿도록 올린다
+      root.updateWorldMatrix(true, true);
+      const low = new THREE.Box3().setFromObject(root).applyMatrix4(matrix).min.y, floor = partSpot(site, part, spot)[1];
+      if (low < floor) matrix.premultiply(new THREE.Matrix4().makeTranslation(0, floor - low, 0));
+    }
     root.updateWorldMatrix(true, true);
     chunks.push(sampleEdges(root, matrix, spacing, random));
     blocks.push(...blockOf(root, matrix));
@@ -255,6 +265,7 @@ export async function buildModule(site, id, view) {
 
 // 장치(부품 묶음)의 바닥 반지름·높이: 부품마다 실제 크기 상자를 offset 자리에 놓고 합친다
 async function footprintOf(parts) {
+  if (!parts.length) return { r: 0, h: 0.3 }; // 모델 없이 점으로만 그리는 장치 (평원 물웅덩이)
   const all = new THREE.Box3();
   for (const part of parts) {
     const box = new THREE.Box3().setFromObject(await partModel(part)), s = realScale(part), [dx, dz] = part.offset ?? [0, 0];
@@ -282,17 +293,46 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
     return out;
   }
   // scaleAt: 지대마다 장치 묶음 크기 배율 (좁은 동굴에서는 작게 둬야 바닥에 들어간다)
-  const k0 = def.scaleAt?.[siteLetter(site)] ?? 1;
-  const parts = (def.partsAt?.[siteLetter(site)] ?? def.parts ?? [def]).map(p => ({ ...p, scale: (p.scale ?? 1) * k0, offset: (p.offset ?? [0, 0]).map(v => v * k0) }));
-  const footprint = await footprintOf(parts), cells = occupancy(blocks ?? modulePoints);
-  // 장치 자리는 바닥 원 전체를 막는다 (큰 장치도 틈으로 다른 장치가 들어오지 않게)
-  const reserve = (spot, { r, h }) => {
-    const disc = [];
-    for (let x = -r; x <= r; x += 0.2) for (let z = -r; z <= r; z += 0.2)
-      if (Math.hypot(x, z) <= r) disc.push(spot[0] + x, spot[1], spot[2] + z, spot[0] + x, spot[1] + h, spot[2] + z);
-    for (const [key, range] of occupancy(Float32Array.from(disc))) cells.set(key, range);
+  const k0 = def.scaleAt?.[siteLetter(site)] ?? 1, letter = siteLetter(site);
+  const water = def.water?.type ? def.water : def.water?.[letter];
+  // faceStar: 장치 묶음 전체를 항성 방위로 돌린다 (태양광 패널 앞면이 별을 향하게). 모델 앞면(+z)이 별 쪽으로 가고,
+  // 옆으로 늘어선 줄(offset)도 함께 돌아 패널끼리 가리지 않는다
+  const turn = def.faceStar ? definitions[site].star.azimuth : 0, c = Math.cos(turn * Math.PI / 180), s = Math.sin(turn * Math.PI / 180);
+  // 장치 묶음을 f 배로 줄여 만든다. 빈자리가 없으면(좁은 동굴) 조금씩 줄여 겹치지 않는 자리를 찾는다 (SHRINK)
+  const shaped = async f => {
+    const k = k0 * f;
+    const parts = (def.partsAt?.[letter] ?? def.parts ?? [def]).map(p => {
+      const [dx, dz] = (p.offset ?? [0, 0]).map(v => v * k);
+      // faceTilt: 모델 앞면이 원래 하늘로 들린 각. 별 높이만큼만 남도록 세워 앞면이 별을 똑바로 마주 보게 한다
+      const tilt = def.faceStar && p.faceTilt != null ? p.faceTilt - definitions[site].star.elevation : p.tilt;
+      return { ...p, scale: (p.scale ?? 1) * k, offset: [dx * c + dz * s, -dx * s + dz * c], rotation: (p.rotation ?? 0) + turn, tilt };
+    });
+    const footprint = await footprintOf(parts);
+    // reserve·물웅덩이: 모델 없이 점으로 그리는 부분까지 자리를 비워 둔다
+    footprint.r = Math.max(footprint.r, (def.reserve ?? 0) * k, water?.type === 'pool' ? water.r * k : 0);
+    // 납작한 장치(물웅덩이 등)도 옆 장치와 높이가 겹치는 것으로 쳐서, 같은 바닥에 포개지지 않게 한다
+    footprint.h = Math.max(footprint.h, MIN_DEVICE_H);
+    return { parts, footprint, f };
   };
-  for (const layer of placed) for (const spot of layer.spots ?? []) reserve(spot, layer.footprint);
+  const cells = occupancy(blocks ?? modulePoints);
+  // 장치 자리는 바닥 원 전체를 막는다 (큰 장치도 틈으로 다른 장치가 들어오지 않게)
+  // DEVICE_GAP: 장치끼리 이만큼 더 떨어뜨린다 (붙어 보이지 않게, 2026-11-11 사용자 요청). 좁은 지대는 장치 배율만큼 줄인다
+  // tight 은 간격 없이 장치 자리만 막은 칸이다. 간격까지 두고는 자리가 없을 때(꽉 찬 동굴) 겹치지만 않게 쓴다
+  const tight = new Map(cells);
+  const reserve = (spot, { r: r0, h }) => {
+    for (const [into, r] of [[cells, r0 + DEVICE_GAP * k0], [tight, r0]]) {
+      const disc = [];
+      for (let x = -r; x <= r; x += 0.2) for (let z = -r; z <= r; z += 0.2)
+        if (Math.hypot(x, z) <= r) disc.push(spot[0] + x, spot[1], spot[2] + z, spot[0] + x, spot[1] + h, spot[2] + z);
+      for (const [key, range] of occupancy(Float32Array.from(disc))) into.set(key, range);
+    }
+  };
+  for (const layer of placed) for (const [i, spot] of (layer.spots ?? []).entries()) reserve(spot, layer.footprints?.[i] ?? layer.footprint);
+  // hold: 그 장치를 위해 처음부터 비워 두는 자리 (동굴 안쪽 방은 큰 물웅덩이 자리). 다른 장치는 그곳을 피한다
+  for (const [other, od] of Object.entries(choiceData.layers.overlay)) {
+    const hold = od.hold?.[letter];
+    if (hold && other !== id) reserve(placeAt(site, hold.at), { r: hold.r, h: MIN_DEVICE_H });
+  }
   // 집마다 하나씩: 집 자리에서 가장 가까운 빈자리. 앞서 놓은 장치 자리도 막아서 서로 겹치지 않게 한다.
   // 집 벽에서 ROOF_REACH 안에 평평한 빈자리가 없으면(동굴 비탈 등) 그 집 지붕 위에 올린다
   // 한 대만 두는 장치는 집들의 한가운데에서 가장 가까운 빈자리를 찾는다 (집이 없으면 지대 기본 자리)
@@ -300,15 +340,36 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
   const wanted = def.perHome && homes.length ? homes : [{ at: middle || overlaySpot(site, id) }];
   // outside: 그 지대에서는 집 근처 대신 정해진 땅 위 자리에 둔다 (태양광은 동굴 안에 둘 수 없다)
   const outside = def.outside?.[siteLetter(site)];
-  const spots = [], chunks = [];
+  // away: 집 근처 대신 이 자리에서 가장 가까운 빈자리 (멀리 있는 수원처럼). 다른 장치 자리는 피한다
+  const away = def.away?.[siteLetter(site)];
+  const spots = [], chunks = [], footprints = [];
+  let shrink = 1;
   for (const [k, home] of wanted.entries()) {
-    let spot = outside ? surfaceSpot(site, outside) : findSpot(site, home.at, footprint, cells);
-    if (home.top != null && Math.hypot(spot[0] - home.at[0], spot[2] - home.at[2]) > home.r + ROOF_REACH) {
-      // 지붕에 앞서 올린 장치가 있으면 옆으로 비켜 놓는다
-      const onRoof = placed.flatMap(layer => layer.spots ?? []).filter(s => Math.abs(s[1] - home.top) < 0.01 && Math.hypot(s[0] - home.at[0], s[2] - home.at[2]) < home.r).length;
-      spot = [home.at[0] + onRoof * Math.min(0.5, home.r * 0.6), home.top, home.at[2]];
+    const wish = away ? placeAt(site, away) : home.at;
+    let fit = null;
+    // 간격을 둔 자리 → 줄여서라도 간격을 둔 자리 → 간격 없이 겹치지만 않는 자리 순으로 찾는다
+    if (!outside) for (const grid of [cells, tight]) {
+      for (const f of SHRINK) {
+        const shape = await shaped(f), at = findSpot(site, wish, shape.footprint, grid, true);
+        if (at) { fit = { ...shape, spot: at }; break; }
+      }
+      if (fit) break;
     }
-    spots.push(spot);
+    const found = Boolean(fit);
+    if (!fit) { const shape = await shaped(1); fit = { ...shape, spot: outside ? surfaceSpot(site, outside) : findSpot(site, wish, shape.footprint, cells) }; }
+    const { parts, footprint } = fit;
+    let spot = fit.spot;
+    if (k === 0) shrink = fit.f;
+    // 집 근처에 빈자리가 없으면(못 찾았거나 너무 멀면) 그 집 지붕 위에 올린다
+    if (!away && !outside && home.top != null && (!found || Math.hypot(spot[0] - home.at[0], spot[2] - home.at[2]) > home.r + ROOF_REACH)) {
+      // 지붕에 앞서 올린 장치가 있으면 옆으로 비켜 놓는다
+      // 지붕 위 앞 장치들의 반지름만큼 차례로 비켜서 포개지지 않게 한다
+      const roof = placed.flatMap(layer => (layer.spots ?? []).map((s, i) => [s, (layer.footprints?.[i] ?? layer.footprint).r]))
+        .filter(([s]) => Math.abs(s[1] - home.top) < 0.01 && Math.hypot(s[0] - home.at[0], s[2] - home.at[2]) < home.r);
+      const edge = roof.length ? Math.max(...roof.map(([s, r]) => s[0] - home.at[0] + r)) + footprint.r + 0.1 : 0;
+      spot = [home.at[0] + edge, home.top, home.at[2]];
+    }
+    spots.push(spot); footprints.push(footprint);
     reserve(spot, footprint);
     chunks.push(await sampleParts(site, parts, 'overlay', spot, 7002 + k, def));
   }
@@ -318,6 +379,7 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
   out.faces = new Float32Array(chunks.reduce((sum, c) => sum + c.faces.length, 0));
   chunks.reduce((at, c) => (out.faces.set(c.faces, at), at + c.faces.length), 0);
   for (const c of chunks) { out.positions.set(c.positions, offset * 3); out.colors.set(c.colors, offset * 3); out.levels.set(c.levels, offset); offset += c.shake.length; }
-  out.spot = spots[0]; out.spots = spots; out.footprint = footprint;
+  out.spot = spots[0]; out.spots = spots; out.footprints = footprints; out.shrink = shrink;
+  out.footprint = footprints.reduce((a, b) => (b.r > a.r ? b : a), footprints[0] ?? { r: 0, h: 0 });
   return out;
 }

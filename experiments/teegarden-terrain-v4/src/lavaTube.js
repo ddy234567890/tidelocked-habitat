@@ -161,6 +161,7 @@ export const tubeBackWall = (x, theta, def) => scaled(wallPoint(x / SCALE, theta
 // 암벽 밝기를 색으로: 대부분 파랑 단계, 가장 밝은 모서리만 크림
 const rockColor = k => (k > 1.18 ? cream(clamp(0.5 + (k - 1.18) * 0.5, 0, 0.95)) : blue(clamp(0.12 + k * 0.72)));
 
+const FRONT_SURFACE = 0.4, FRONT_CLEAR = 5; // 앞쪽 땅 표면 비율, 동굴 앞에서 비워 두는 너비 (시안 단위)
 export function buildLavaTube(count, def) {
   const random = mulberry32(def.seed), out = output(count);
   const interior = def.view === 'interior', relief = reliefOf(def), lines = caveLines(relief);
@@ -184,11 +185,15 @@ export function buildLavaTube(count, def) {
   const pillarTotal = Math.floor(count * CAVE_PARTS.pillars);
   const boulderEnd = count - pillarTotal, branchEnd = boulderEnd - boulderTotal, wallEnd = branchEnd - branchTotal;
 
-  // 1. 지표: 동굴이 지표를 뚫고 나온 곳(입구)은 비운다
+  // 1. 지표: 동굴이 지표를 뚫고 나온 곳(입구)은 비운다.
+  // 전체·단면 보기에서도 절개면 앞쪽(z > 0) 땅 표면은 그린다 (앞 반이 통째로 비어 보이지 않게, 2026-11-11 사용자 요청).
+  // 동굴 속은 그대로 절개면으로 들여다보인다. 앞쪽은 FRONT_SURFACE 비율만큼만 둔다
   for (let i = 0; i < surfaceEnd; i++) {
     let x, z;
-    do { [x, z] = sampleGround(random, true); }
-    while (x / SCALE > PX0 - 0.6 && x / SCALE < PX1 && ceilAt(x / SCALE, z / SCALE) > ground(x / SCALE, z / SCALE) - 0.02);
+    do { [x, z] = sampleGround(random, true); if (!interior && random() < FRONT_SURFACE) z = -z; }
+    // 동굴 바로 앞 땅(FRONT_CLEAR 안)은 비워 절개면을 들여다보는 시야를 가리지 않게 한다
+    while ((z > 0 && x / SCALE > PX0 - 1 && z < FRONT_CLEAR)
+      || (x / SCALE > PX0 - 0.6 && x / SCALE < PX1 && ceilAt(x / SCALE, z / SCALE) > ground(x / SCALE, z / SCALE) - 0.02));
     put(out, i, x, grid.ground(x, z), z, groundColor(def, grid.light(x, z)));
   }
 

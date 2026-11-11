@@ -5,6 +5,12 @@ const ORANGE = [1, 0x99 / 255, 0x3d / 255];
 const clamp = v => Math.max(0, Math.min(1, v));
 const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * clamp(t));
 export const blue = (brightness = 1) => BLUE.map(v => v * brightness);
+// 파랑 단계 (CLAUDE.md): 0 #121F5C → #2E4DBD → #73A8FF → 1 #D1E6FF. 1 쪽은 흰빛에 가까운 옅은 파랑 (전기 흐름)
+const BLUE_STEPS = [[0x12, 0x1f, 0x5c], [0x2e, 0x4d, 0xbd], [0x73, 0xa8, 0xff], [0xd1, 0xe6, 0xff]].map(c => c.map(v => v / 255));
+export function blueStep(t) {
+  const x = clamp(t) * 3, i = Math.min(2, Math.floor(x));
+  return mix(BLUE_STEPS[i], BLUE_STEPS[i + 1], x - i);
+}
 export const cream = (brightness = 1) => CREAM.map(v => v * brightness);
 export const orange = (brightness = 1) => ORANGE.map(v => v * brightness);
 // 무채색: 지난 주차 건물 면에만 쓴다 (존재감 없이 뒤로 물러나 보이게)
