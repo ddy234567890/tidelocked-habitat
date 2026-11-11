@@ -9,6 +9,7 @@ import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_S
 import { buildFlowPoints, pairSpots, outSpots, waterSources } from './flows.js';
 import hud from './hud.json' with { type: 'json' };
 import { openBriefing } from './intro.js';
+import { createHexBoard, shortName } from './hexBoard.js';
 import { setCrewSite, setCrewStats } from './crew.js';
 import { buildModule, buildOverlay, tintLayer, TINT, faceColors } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
@@ -131,6 +132,21 @@ try {
   const assetGroup = new THREE.Group(); localGroup.add(assetGroup);
   let logWeek = null;
   let selection = {}, decided = {}, week = 1, moduleLayer = null, assetToken = 0, focusTween = null;
+  // 육각 토큰 선지판 (src/hexBoard.js). 기존 글 카드·결정 버튼은 숨긴 채 그대로 돌고, 판은 그 상태를 보여 주며 같은 함수를 부른다.
+  // 주소에 ?cards=1 을 붙이면 예전 글 카드 화면으로 본다 (비교용)
+  const hexMode = !new URLSearchParams(location.search).has('cards');
+  $('.p-decision').classList.toggle('hex-mode', hexMode);
+  $('#hex-board').hidden = !hexMode;
+  const board = hexMode ? createHexBoard($('#hex-board'), {
+    onPick(stepId, choiceId) {
+      if (stepId === 'location') return selectSite(ALL_STEPS[0].choices.find(c => c.id === choiceId).site);
+      pickChoice(stepId, choiceId);
+    },
+    onDecide() {
+      const open = boardSteps(mode === 'local' && !transition).find(step => step.status === 'open');
+      if (open) decideStep(open.id); else if (!$('#next-week').hidden) $('#next-week').click();
+    }
+  }) : null;
   const overlayLayers = new Map(), reveals = [], pastFades = new Set();
   const REVEAL_MS = 1600; // 새 건물 점이 아래에서 위로 채워지는 시간
   const PAST_FADE_MS = 1400; // 지난 주차 건물 선이 사라지며 회색 면으로 바뀌는 시간
@@ -363,12 +379,44 @@ try {
       const name = document.createElement('span'), line = document.createElement('em'), effects = document.createElement('ul');
       name.className = 'name'; line.className = 'line'; effects.className = 'effects';
       button.append(letter, name, line, effects); fillCard(button, choice, selection);
-      button.addEventListener('click', () => {
-        if (transition || selection[stepId] === choice.id) return;
-        selection = choose(selection, stepId, choice.id); renderSteps(true); syncAssets();
-      });
+      button.addEventListener('click', () => pickChoice(stepId, choice.id));
       return button;
     }));
+  }
+  // 선지 고르기 (글 카드와 육각 토큰이 같이 쓴다): 앞 단계를 바꾸면 뒤 단계 선택은 지운다
+  function pickChoice(stepId, choiceId) {
+    if (transition || selection[stepId] === choiceId) return;
+    selection = choose(selection, stepId, choiceId); renderSteps(true); syncAssets();
+  }
+  const DECIDE_SHORT = { location: '위치', module: '건설 방식', oxygen: '산소 방식' };
+  function decideStep(stepId) {
+    if (transition || !selection[stepId]) return;
+    decided[stepId] = true; renderSteps(true);
+    if (stepId !== 'location') focusAssets(true); // 결정하면 지금까지 지은 기지 전체가 화면에 알맞게 들어오게 물러선다
+  }
+  // 토큰판에 넘길 이번 주 단계들: 결정한 단계 'done', 지금 고를 단계 'open' (앞 단계를 결정해야 열린다), 그 뒤는 'locked'("?" 자리)
+  function boardSteps(local) {
+    const { steps } = WEEKS[week - 1];
+    let opened = false;
+    return steps.map((step, k) => {
+      const done = Boolean(local && decided[step.id]);
+      let status = done ? 'done' : 'locked';
+      if (!done && !opened && (k === 0 || (local && decided[steps[k - 1].id]))) { status = 'open'; opened = true; }
+      const isLocation = step.id === 'location';
+      const choices = isLocation ? step.choices : status === 'locked' ? [] : availableChoices(step.id, selection);
+      const selected = isLocation ? (local ? selection.location : null) : selection[step.id] ?? null;
+      return { id: step.id, label: step.label, short: shortName(step), status, selected, choices };
+    });
+  }
+  function updateBoard(local) {
+    if (!board) return;
+    const steps = boardSteps(local), open = steps.find(step => step.status === 'open');
+    const nextWeek = !$('#next-week').hidden;
+    board.update({
+      steps, busy: Boolean(transition),
+      decide: open ? { label: '▶ ' + (DECIDE_SHORT[open.id] ?? open.short) + ' 결정', disabled: !open.selected || (open.id === 'location' && !local) }
+        : nextWeek ? { label: '▶ 다음 주로' } : { hidden: true }
+    });
   }
   // 결정 버튼: 결정한 단계의 카드 줄은 접고 다음 단계를 연다. 화면이 복잡해지지 않게 결정한 항목은 한 줄 요약으로만 남긴다
   function decideButton(stepId) {
@@ -376,15 +424,17 @@ try {
     button.className = 'decide'; button.disabled = !selection[stepId];
     const short = { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[stepId] ?? ALL_STEPS.find(step => step.id === stepId).short;
     button.textContent = '▶ ' + short + ' 결정';
-    button.addEventListener('click', () => {
-      if (transition || !selection[stepId]) return;
-      decided[stepId] = true; renderSteps(true);
-      if (stepId !== 'location') focusAssets(true); // 결정하면 지금까지 지은 기지 전체가 화면에 알맞게 들어오게 물러선다
-    });
+    button.addEventListener('click', () => decideStep(stepId));
     return button;
   }
   const choiceLabel = stepId => availableChoices(stepId, selection).find(c => c.id === selection[stepId])?.label;
   // 왼쪽 상태 칸: 기온(행성 전체 또는 고른 지대의 시나리오 범위) · 산소 · 결정 기록. 값이 없으면 '측정 중'이다
+  // 값이 실제로 바뀔 때만 글자를 바꾸고 짧게 번쩍인다 (holo-boot.css .holo-flash). 글자만 슬쩍 바뀌어서 모르고 지나가는 일을 막는다
+  function setText(element, text) {
+    if (element.textContent === text) return;
+    element.textContent = text;
+    element.classList.remove('holo-flash'); void element.offsetWidth; element.classList.add('holo-flash');
+  }
   function updateHud(local) {
     setCrewSite(local ? currentSite : null);
     // 대원 얼굴: 산소 방식을 결정하기 전에는 바깥 공기(숨 쉴 산소 없음)다.
@@ -399,21 +449,22 @@ try {
       setCrewStats(total);
     } else setCrewStats(null);
     const range = local ? hud.sites[currentSite]?.temperature : null;
-    $('#hud-temp').textContent = range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°';
-    $('#hud-temp-note').textContent = range ? COPY[currentSite].title + ' 기온 범위' : '밤 최저 / 낮 최고';
+    setText($('#hud-temp'), range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°');
+    setText($('#hud-temp-note'), range ? COPY[currentSite].title + ' 기온 범위' : '밤 최저 / 낮 최고');
     $('#hud-o2').textContent = hud.oxygen == null ? '측정 중' : hud.oxygen + '%';
     $('#hud-o2-bar').style.width = (hud.oxygen ?? 0) + '%';
     const shownWeek = logWeek ?? week; // 왼쪽 주차 탭으로 고른 주 (없으면 지금 주)
     const entries = WEEKS[shownWeek - 1].steps.map(step => step.id === 'location'
       ? (local && decided.location ? siteLetter(currentSite) + ' ' + COPY[currentSite].title : '—')
       : decided[step.id] ? choiceLabel(step.id) : '—');
-    entries.forEach((text, i) => { $('#hud-log-' + (i + 1)).textContent = '▶ LOG 0' + (i + 1) + ' ........ ' + text; });
+    entries.forEach((text, i) => { setText($('#hud-log-' + (i + 1)), '▶ LOG 0' + (i + 1) + ' ........ ' + text); });
     document.querySelectorAll('#hud .tab').forEach((tab, i) => {
       tab.hidden = i >= week; // 아직 오지 않은 주차는 탭을 보이지 않는다
       tab.classList.toggle('on', i === shownWeek - 1); tab.setAttribute('aria-selected', String(i === shownWeek - 1));
     });
   }
   // 1단계 지대 카드는 누르면 그 지역으로 날아가 둘러볼 수 있고, '지대 결정'을 눌러야 다음 단계가 열린다
+  let lastStepKey, stepTimer;
   function renderSteps(local) {
     logWeek = null; // 무언가 고르거나 결정하면 LOG 는 지금 주로 돌아온다
     if (local) selection.location = siteLetter(currentSite);
@@ -437,6 +488,15 @@ try {
     }
     $('#next-week').hidden = !(local && WEEKS[week] && steps.every(step => decided[step.id]));
     $('#back').hidden = week > 1; // 결정은 되돌릴 수 없다. 2주차부터는 행성으로 돌아가 처음부터 고르지 않는다
+    // 단계가 바뀌었으면(위치 → 방식 → 공기 → 주차 선지) 선택 영역이 홀로그램처럼 새로 투사된다
+    const stepKey = [!sites.hidden && 'loc', !$('#step-module').hidden && 'module', !$('#step-oxygen').hidden && 'oxygen', open && week + ':' + open.id].filter(Boolean).join('/');
+    if (lastStepKey !== undefined && stepKey !== lastStepKey && $('#intro').hidden) {
+      const area = $('.p-decision');
+      area.classList.remove('step-changing'); void area.offsetWidth; area.classList.add('step-changing');
+      clearTimeout(stepTimer); stepTimer = setTimeout(() => area.classList.remove('step-changing'), 1500);
+    }
+    lastStepKey = stepKey;
+    updateBoard(local);
     updateHud(local);
   }
   // 짓는 방식 선지를 누르는 순간부터 고른 에셋이 놓인 곳으로 다가가 천천히 오른쪽으로 돈다.
@@ -683,12 +743,16 @@ try {
     if (blocked || transition || event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.target.closest?.('input, textarea, select')) return;
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-      const cards = [...document.querySelectorAll('#hud .cards .site')].filter(visibleNow);
+      // 육각 토큰판이면 지금 고를 수 있는 토큰, 아니면 보이는 글 카드 사이를 옮겨 다닌다
+      const tokens = [...document.querySelectorAll('#hex-board .hb-node.can')];
+      const cards = tokens.length ? tokens : [...document.querySelectorAll('#hud .cards .site')].filter(visibleNow);
       if (!cards.length) return;
       event.preventDefault();
-      const now = cards.findIndex(card => card.classList.contains('active'));
+      const now = cards.findIndex(card => card.classList.contains('active') || card.classList.contains('s-chosen'));
       const next = now < 0 ? (event.key === 'ArrowRight' ? 0 : cards.length - 1) : (now + (event.key === 'ArrowRight' ? 1 : -1) + cards.length) % cards.length;
-      cards[next].focus({ preventScroll: true }); cards[next].click();
+      const id = cards[next].dataset.id;
+      cards[next].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      (id ? document.querySelector(`#hex-board .hb-node[data-id="${CSS.escape(id)}"]`) : cards[next])?.focus({ preventScroll: true });
     } else if (event.key === 'Enter') {
       const button = [...document.querySelectorAll('#hud .decide')].find(visibleNow);
       if (!button) return;

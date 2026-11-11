@@ -2,8 +2,9 @@
    비트맵 글꼴 + 파랑 계열 + 이중 테두리 창 + 주사선. 색은 아래 토큰으로만 쓴다 */
 @font-face{font-family:"Terrarum Sans Bitmap";src:url("./assets/fonts/terrarum-sans-bitmap.woff") format("woff");font-display:swap}
 :root{color-scheme:dark;
-  --bg0:#02030A;--bg1:#06102E;--panel:#040A26;--head:#0E1F66;--soft:#08143F;
-  --line:#1B3496;--deep:#3D6BFF;--edge:#6E92FF;--text:#7FA0FF;--mid:#9DB6FF;--hi:#DCE6FF;--hover:#C9D6FF;
+  /* 팀 화면 토큰 (저장소 CLAUDE.md '색') 으로 맞춤 — 2026-11-11 */
+  --bg0:#02040C;--bg1:#0A1434;--panel:#0A1434;--head:#1B2A9C;--soft:#0E1B48;
+  --line:#1A2B72;--deep:#2B47C4;--edge:#8FC1FF;--text:#8C9DD0;--mid:#8C9DD0;--hi:#DCE6FF;--hover:#8FC1FF;
   --cream:#E8DFC8;--orange:#F2B84B;
   --font:"Terrarum Sans Bitmap","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 *{box-sizing:border-box}

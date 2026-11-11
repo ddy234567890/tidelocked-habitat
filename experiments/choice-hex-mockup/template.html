@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>육각 토큰 계획판</title>
+<!-- 선지 화면 시안 (2026-11-10). 글 카드 대신 육각 토큰을 노드처럼 이어 고르고, 한 주 계획을 '실행'한다.
+     데이터: experiments/teegarden-terrain-v4/src/weeks/week1~5.json 을 build.mjs 가 그대로 넣는다.
+     색: CLAUDE.md 의 파랑 단계·크림·주황과 UI 토큰만 쓴다 (빨강·초록·보라 없음). -->
+<style>
+@font-face{font-family:"Terrarum";src:url("../teegarden-terrain-v4/src/assets/fonts/terrarum-sans-bitmap.woff") format("woff");font-display:swap}
+:root{
+  --bg:#02040C;--screen:#000000;--card:#0A1434;--sel:#0E1B48;--btn-line:#2B47C4;--card-line:#1A2B72;--btn:#1B2A9C;
+  --hi:#8FC1FF;--cream:#E8DFC8;--text:#DCE6FF;--sub:#8C9DD0;--go:#F2B84B;--orange:#FF993D;
+  --b0:#121F5C;--b1:#2E4DBD;--b2:#73A8FF;--b3:#D1E6FF;--lamp:#F2EBDB;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background-color:var(--bg);color:var(--text);font:14px/1.5 "Terrarum",ui-monospace,"Malgun Gothic",monospace;
+  background-image:linear-gradient(rgba(143,193,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(143,193,255,.07) 1px,transparent 1px);
+  background-size:24px 24px;min-height:100vh}
+button{font:inherit;color:inherit}
+.app{max-width:1320px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.frame{background:var(--card);border:1px solid var(--card-line);outline:1px solid var(--btn-line);outline-offset:3px;
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.titlebar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 12px;border-bottom:1px solid var(--hi);color:var(--hi);letter-spacing:.06em;font-size:13px}
+.titlebar b{font-weight:normal;text-shadow:1px 0 currentColor}
+.tag{color:var(--cream);border:1px solid var(--cream);padding:0 8px;font-size:12px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
+
+/* 주차 사슬 */
+.chain{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:12px}
+.wk{flex:1 0 170px;display:grid;gap:6px;padding:8px 10px;border:1px solid var(--card-line);background:var(--bg);cursor:pointer;text-align:left;position:relative}
+.wk:disabled{cursor:default}
+.wk .wh{display:flex;gap:8px;align-items:baseline;font-size:12px;color:var(--sub)}
+.wk .wh strong{color:var(--hi);font-weight:normal}
+.wk .toks{display:flex;gap:4px}
+.wk .toks svg{width:31px;height:36px}
+.wk.done{border-color:var(--btn-line)}
+.wk.current{border-color:var(--hi);background:var(--sel)}
+.wk.current .wh::after{content:"진행 중";margin-left:auto;color:var(--go)}
+.wk.done .wh::after{content:"실행 완료";margin-left:auto;color:var(--b2)}
+.wk.future{opacity:.45}
+.wk.viewing{outline:1px solid var(--cream);outline-offset:2px}
+.link{flex:0 0 22px;align-self:center;height:2px;background:repeating-linear-gradient(90deg,var(--card-line) 0 4px,transparent 4px 7px)}
+.link.on{background:var(--hi)}
+.tok-pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1) backwards}
+@keyframes pop{from{transform:scale(.2);opacity:0}}
+
+/* 본문 */
+.board{position:relative;background:var(--screen);overflow:hidden}
+.board svg.map{display:block;width:100%;height:auto;max-height:72vh}
+.board .scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(143,193,255,.045) 0 1px,transparent 1px 3px)}
+.prompt{display:flex;align-items:center;gap:10px;padding:10px 14px 0;color:var(--text);font-size:14px}
+.prompt .num{display:inline-grid;place-items:center;min-width:22px;height:22px;border:1px solid var(--hi);color:var(--hi);font-size:12px}
+.board svg.map{max-height:none}
+.tip{position:absolute;z-index:3;width:270px;padding:10px 12px;display:grid;gap:7px;background:rgba(10,20,52,.97);border:1px solid var(--hi);color:var(--text);font-size:13px;pointer-events:none;
+  opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.tip.on{opacity:1;transform:none}
+.tip p{margin:0}
+.tip .tstep{font-size:12px;color:var(--sub)}.tip .tstep b{color:var(--b2);font-weight:normal}
+.tip .tname{font-size:16px;color:var(--cream)}
+.tip .thint{font-size:12px;color:var(--go)}
+.banner{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .25s}
+.banner.on{opacity:1}
+.banner div{background:rgba(2,4,12,.86);border:1px solid var(--go);color:var(--go);padding:14px 28px;font-size:18px;letter-spacing:.12em;text-align:center}
+.banner small{display:block;color:var(--cream);font-size:12px;letter-spacing:.04em}
+
+/* 육각 토큰 */
+.lattice polygon{fill:none;stroke:rgba(143,193,255,.07);stroke-width:1}
+.stephead{font-size:14px;fill:var(--btn-line)}
+.stephead.now{fill:var(--cream)}
+.stephead.ok{fill:var(--b2)}
+.stephead.wait{fill:var(--btn-line)}
+.ghost .outer{fill:none;stroke:var(--btn-line);stroke-width:1.5;stroke-dasharray:6 5;opacity:.7}
+.ghost .lock{fill:none;stroke:var(--btn-line);stroke-width:1.6}
+.ghost text{fill:var(--btn-line);font-size:13px;text-anchor:middle}
+.boot .ghost .body{animation:fadeIn .6s .3s backwards}
+.reveal .body{animation:bootIn .5s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(.75s + var(--j, 0) * 90ms)}
+.edge.live{stroke-dasharray:1;stroke-dashoffset:0}
+.edge.grow{animation:drawIn .4s ease-out .45s backwards}
+@keyframes drawIn{from{stroke-dashoffset:1}}
+.edge{fill:none;stroke:var(--card-line);stroke-width:1.5;stroke-dasharray:3 4}
+.edge.live{stroke:var(--btn-line);stroke-dasharray:none}
+.edge.dead{opacity:.25}
+.edge.path{stroke:none}
+/* 고른 길: 양 끝이 부풀고 가운데가 잘록한 빛줄기. 두께가 흘러가며 출렁인다 (beam 루프가 매 프레임 모양을 다시 그림) */
+.beam .b0{fill:var(--b2);opacity:.7;filter:url(#beamGlow)}
+.beam .b1{fill:var(--hi);opacity:.85}
+.beam .b2{fill:var(--lamp)}
+.run{fill:none;stroke:var(--lamp);stroke-width:5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .32s ease-in;filter:drop-shadow(0 0 6px var(--lamp))}
+.run.go{stroke-dashoffset:0}
+
+.node{outline:none}
+.node .body{transform-box:fill-box;transform-origin:center;transition:transform .15s}
+.node .glow{fill:none;stroke-width:6;opacity:0}
+.node .outer{stroke-width:2}
+.node .inner{fill:none;stroke-width:1}
+.node .icon{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.node text{font-family:"Terrarum",monospace;font-size:11px;text-anchor:middle;letter-spacing:-.02em;text-rendering:optimizeSpeed;-webkit-font-smoothing:none}
+/* 고를 수 있음 */
+.s-open{cursor:pointer}
+.s-open .outer,.s-other .outer{fill:var(--card);stroke:var(--btn-line)}
+.s-open .inner,.s-other .inner{stroke:var(--card-line)}
+.s-open .icon,.s-other .icon{stroke:var(--hi)}
+.s-open text,.s-other text{fill:var(--text)}
+.s-open .glow{stroke:var(--b2);animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.4}}
+.s-open:hover .body,.s-open:focus-visible .body,.s-other:hover .body,.s-other:focus-visible .body{transform:scale(1.07)}
+.s-open:hover .outer,.s-open:focus-visible .outer,.s-other:hover .outer,.s-other:focus-visible .outer{stroke:var(--hi)}
+/* 같은 단계의 다른 것을 골랐음 (다시 바꿀 수 있음) */
+.s-other{cursor:pointer;opacity:.5}
+.s-other:hover,.s-other:focus-visible{opacity:.85}
+/* 고름 */
+.s-chosen{cursor:pointer}
+.s-chosen .outer{fill:url(#chosenFill);stroke:var(--b3);stroke-width:2.5}
+.s-chosen .inner{stroke:var(--b2)}
+.s-chosen .icon{stroke:var(--lamp)}
+.s-chosen text{fill:var(--lamp)}
+.s-chosen .glow{stroke:var(--lamp);opacity:.35}
+/* 앞 단계를 먼저 골라야 함 */
+.s-locked{cursor:not-allowed}
+.s-locked .outer{fill:#050A1E;stroke:var(--card-line);stroke-dasharray:4 3}
+.s-locked .inner{stroke:none}
+.s-locked .icon{stroke:var(--card-line)}
+.s-locked text{fill:var(--sub);opacity:.55}
+.s-locked .lock{fill:none;stroke:var(--sub);stroke-width:1.3}
+/* 앞에서 다른 갈래를 골라 닫힘 */
+.s-excluded{opacity:.16;pointer-events:none}
+.s-excluded .outer{fill:#050A1E;stroke:var(--card-line)}
+.s-excluded .icon{stroke:var(--card-line)}
+.s-excluded text{fill:var(--sub)}
+.past .node{cursor:default}
+.past .s-other{opacity:.3}
+.fire .glow{animation:fire .6s ease-out}
+@keyframes fire{0%{opacity:1;stroke-width:16}100%{opacity:.35;stroke-width:6}}
+.boot .node .body{animation:bootIn .55s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(var(--i) * 45ms + 120ms)}
+@keyframes bootIn{0%{transform:scale(.4);opacity:0}40%{opacity:.3}55%{opacity:1}65%{opacity:.4}}
+.boot .edge,.boot .beam{animation:fadeIn .6s .5s backwards}
+@keyframes fadeIn{from{opacity:0}}
+svg.map.out{transition:opacity .4s,transform .4s;opacity:0;transform:scale(.97)}
+
+/* 오른쪽 정보 */
+.info{display:flex;flex-direction:column}
+.info .body{padding:14px;display:grid;gap:12px;align-content:start}
+.info .big{display:flex;gap:12px;align-items:center}
+.info .big svg{width:76px;height:68px;flex:none}
+.info h2{margin:0;font-size:18px;font-weight:normal;color:var(--cream)}
+.info .step{font-size:12px;color:var(--sub)}
+.info p{margin:0}
+.row{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:start;font-size:13px}
+.row span:first-child{border:1px solid var(--btn-line);text-align:center;font-size:12px;color:var(--hi)}
+.row.cost span:first-child{border-color:var(--orange);color:var(--orange)}
+.hint{font-size:12px;color:var(--go);border-left:2px solid var(--go);padding-left:8px}
+.legend{margin-top:auto;padding:10px 14px;border-top:1px solid var(--card-line);display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:12px;color:var(--sub)}
+.legend i{display:inline-block;width:12px;height:11px;margin-right:6px;vertical-align:-1px;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+
+/* 아래 실행줄 */
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 14px}
+.pips{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--sub)}
+.pip{padding:2px 10px;border:1px dashed var(--card-line);color:var(--sub)}
+.pip.on{border:1px solid var(--b2);color:var(--b3);background:var(--sel)}
+.exec{margin-left:auto;border:0;background:var(--go);color:var(--bg);padding:10px 22px;font-size:15px;letter-spacing:.06em;cursor:pointer;
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.exec:hover{filter:brightness(1.1)}
+.exec:disabled{background:transparent;color:var(--sub);outline:1px dashed var(--btn-line);outline-offset:-1px;cursor:not-allowed;filter:none}
+.ghostbtn{border:1px solid var(--btn-line);background:var(--btn);padding:8px 14px;cursor:pointer;color:var(--text)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="frame">
+    <div class="titlebar"><b>OPS://WEEKLY_PLAN</b><span class="tag">시안 · 육각 토큰 계획판</span></div>
+    <div class="chain" id="chain"></div>
+  </section>
+
+  <section class="frame board" id="board">
+    <div class="titlebar"><b id="boardTitle">WEEK 1</b><span id="boardSub"></span></div>
+    <div class="prompt" id="prompt"></div>
+    <svg class="map" id="map" role="group" aria-label="이번 주 선지 토큰"></svg>
+    <div class="scan"></div>
+    <div class="tip" id="tip" role="tooltip"></div>
+    <div class="banner" id="banner"><div id="bannerText"></div></div>
+  </section>
+
+  <section class="frame bar" id="bar"></section>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="beamGlow" x="-10%" y="-60%" width="120%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
+    <linearGradient id="chosenFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E4DBD"/><stop offset="1" stop-color="#121F5C"/></linearGradient>
+  </defs>
+  <g id="icons"></g>
+</svg>
+
+<script>
+const WEEKS = /*DATA*/;
+
+// 단계 이름 짧게 (기둥 머리말·사슬용)
+const SHORT = {location:'위치',module:'짓는 방식',oxygen:'산소',power:'발전',storage:'전기 저장',heat:'열 빼기',source:'물 구하기',reuse:'물 재사용',share:'물 나누기',farm:'농장',balance:'비축·확장',crop:'작물',fix:'보강',pool:'사고 대비',arrive:'입주'};
+const WEEK_TITLE = w => w.title ?? '기지 세우기';
+
+// 선 아이콘 (24×24, 직접 그림). 선지 id → 그림
+const ICONS = {
+  A:'<path d="M2 18h20"/><path d="M3 18l5-6 3 3 3-4 7 7"/><path d="M5 21h3M11 21h6"/>',
+  B:'<path d="M2 20h20"/><path d="M4 20c0-9 4-14 8-14s8 5 8 14"/><path d="M8.5 20c0-4.5 1.6-7 3.5-7s3.5 2.5 3.5 7"/>',
+  C:'<path d="M2 19l6-8 3 3 3-5 8 10"/><circle cx="18" cy="5.5" r="2.2"/><path d="M2 19h20"/>',
+  A1:'<path d="M4 19a8 8 0 0 1 16 0z"/><path d="M12 3v5M9.5 5.5 12 3l2.5 2.5"/><path d="M2 19h20"/>',
+  A2:'<path d="M5.5 19a6.5 6.5 0 0 1 13 0"/><path d="M2.5 19a9.5 9.5 0 0 1 19 0"/><path d="M2 19h20"/><path d="M10 19v-3h4v3"/>',
+  B1:'<path d="M2 20h20"/><path d="M3 20c0-9 4-14 9-14s9 5 9 14"/><rect x="4.5" y="15" width="5" height="5"/>',
+  B2:'<path d="M2 20h20"/><path d="M3 20c0-9 4-14 9-14s9 5 9 14"/><rect x="9.5" y="14" width="5" height="6"/><path d="M6.5 11.5l2 .8M17.5 11.5l-2 .8"/>',
+  C1:'<rect x="5.5" y="9" width="6.5" height="10"/><rect x="12" y="5" width="6.5" height="14"/><path d="M3 19h18"/><path d="M8 12h1.5M14.5 8h1.5M14.5 11.5h1.5"/>',
+  C2:'<rect x="2.5" y="14" width="4" height="4"/><rect x="10" y="6" width="4" height="4"/><rect x="17.5" y="14" width="4" height="4"/><path d="M6 14l4.5-4M13.5 10l4.5 4M6.5 16h11"/>',
+  O1:'<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  O2:'<path d="M12 6s-3 3.6-3 5.8a3 3 0 0 0 6 0C15 9.6 12 6 12 6z"/><path d="M20 12a8 8 0 0 1-13.7 5.6M4 12a8 8 0 0 1 13.7-5.6"/><path d="M18 3v3.6h-3.6M6 21v-3.6h3.6"/>',
+  O3:'<circle cx="6" cy="16.5" r="3"/><circle cx="18" cy="16.5" r="3"/><circle cx="12" cy="6.5" r="3"/><path d="M7.5 14l3-5M16.5 14l-3-5M9 16.5h6"/>',
+  P1:'<path d="M4 15 7 6h13l-3 9z"/><path d="M5.5 10.5h13M10.7 6 9.3 15M15.7 6 14.3 15"/><path d="M12 15v5M8 20h8"/>',
+  P2:'<circle cx="12" cy="12" r="1.6"/><ellipse cx="12" cy="12" rx="9.5" ry="3.6"/><ellipse cx="12" cy="12" rx="9.5" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9.5" ry="3.6" transform="rotate(120 12 12)"/>',
+  S1:'<rect x="6" y="5" width="12" height="16" rx="1"/><path d="M10 5V3h4v2"/><path d="M13 8.5l-3 4.5h4l-3 4.5"/>',
+  S2:'<rect x="3" y="8" width="7" height="12" rx="1"/><rect x="14" y="8" width="7" height="12" rx="1"/><path d="M5.5 8V6h2v2M16.5 8V6h2v2M6.5 12v4M17.5 12v4"/>',
+  T1:'<path d="M5 9v12M9 9v12M13 9v12M17 9v12M3 21h18"/><path d="M6 2c1 1.5-1 2.5 0 4M11 2c1 1.5-1 2.5 0 4M16 2c1 1.5-1 2.5 0 4"/>',
+  T2:'<path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7"/><path d="M9.5 4 12 6l2.5-2M9.5 20l2.5-2 2.5 2"/>',
+  W1:'<path d="M12 2v8M9 7l3 3 3-3"/><path d="M2 12h20"/><path d="M12 14.5s-3 3.5-3 5.5a3 3 0 0 0 6 0c0-2-3-5.5-3-5.5z"/>',
+  W2:'<path d="M2 9h20M2 14h20M2 19h20" stroke-dasharray="2 2.5"/><path d="M12 2s-2.5 3-2.5 4.4a2.5 2.5 0 0 0 5 0C14.5 5 12 2 12 2z"/><path d="M12 11v6"/>',
+  R1:'<path d="M3 4h18l-7 8v6l-4 2v-8z"/>',
+  R2:'<path d="M12 8s-2 2.4-2 3.8a2 2 0 0 0 4 0C14 10.4 12 8 12 8z"/><path d="M19.5 12a7.5 7.5 0 0 1-12.8 5.3M4.5 12A7.5 7.5 0 0 1 17.3 6.7"/><path d="M17.5 3.2v3.6H14M6.5 20.8v-3.6H10"/>',
+  D1:'<rect x="6" y="4" width="12" height="12" rx="2"/><path d="M8 16l-2 5M16 16l2 5M6 10h12"/>',
+  D2:'<rect x="2.5" y="6" width="8" height="8" rx="1.5"/><rect x="13.5" y="6" width="8" height="8" rx="1.5"/><path d="M4 14l-1 5M9 14l1 5M15 14l-1 5M20 14l1 5"/>',
+  G1:'<path d="M12 21v-8"/><path d="M12 16c-4 0-6-2.5-6-6 4 0 6 2.5 6 6zM12 14c0-3.5 2-6 6-6 0 3.5-2 6-6 6z"/><path d="M3 3h18M7 3v2M12 3v2M17 3v2"/>',
+  G2:'<path d="M3 20V10l9-6 9 6v10z"/><path d="M12 4v16M3 14h18M7.5 7v13M16.5 7v13"/>',
+  K1:'<rect x="3" y="7" width="18" height="13"/><path d="M3 7l3-4h12l3 4M3 7l18 13M21 7 3 20"/>',
+  K2:'<path d="M9 21v-7"/><path d="M9 16c-3.5 0-5-2-5-5 3.5 0 5 2 5 5zM9 14c0-3 1.5-5 5-5 0 3-1.5 5-5 5z"/><path d="M19 20V4M16 7l3-3 3 3"/>',
+  C_leaf:'<path d="M5 19C5 10 10 4 20 4c0 10-6 15-15 15z"/><path d="M5 19l9-9"/>',
+  C_staple:'<path d="M12 22V6"/><path d="M12 8c-2-1-3-3-3-5 2 1 3 3 3 5zM12 8c2-1 3-3 3-5-2 1-3 3-3 5zM12 13c-2-1-3.5-3-3.5-5 2 1 3.5 3 3.5 5zM12 13c2-1 3.5-3 3.5-5-2 1-3.5 3-3.5 5zM12 18c-2-1-3.5-3-3.5-5 2 1 3.5 3 3.5 5zM12 18c2-1 3.5-3 3.5-5-2 1-3.5 3-3.5 5z"/>',
+  C_algae:'<circle cx="8" cy="9" r="4"/><circle cx="16.5" cy="14.5" r="4.5"/><circle cx="6.5" cy="18.5" r="2.2"/><circle cx="17" cy="4.5" r="1.6"/><circle cx="8" cy="9" r="1"/><circle cx="16.5" cy="14.5" r="1.2"/>',
+  U1:'<rect x="2.5" y="7" width="17" height="10"/><path d="M19.5 10h2v4h-2"/><path d="M5 9.5v5M8 9.5v5"/><path d="M12 12h5M14.5 9.5v5"/>',
+  U2:'<path d="M3 5h18v14H3zM3 9.7h18M3 14.3h18M9 5v4.7M15 5v4.7M6 9.7v4.6M12 9.7v4.6M18 9.7v4.6M9 14.3V19M15 14.3V19"/>',
+  X1:'<circle cx="12" cy="12" r="3"/><circle cx="4.5" cy="5" r="2"/><circle cx="19.5" cy="5" r="2"/><circle cx="4.5" cy="19" r="2"/><circle cx="19.5" cy="19" r="2"/><path d="M6 6.4l3.8 3.4M18 6.4l-3.8 3.4M6 17.6l3.8-3.4M18 17.6l-3.8-3.4"/>',
+  X2:'<rect x="3" y="3" width="18" height="18" stroke-dasharray="3 2"/><circle cx="12" cy="10" r="2.5"/><path d="M7.5 17.5c.8-2.5 2.5-3.8 4.5-3.8s3.7 1.3 4.5 3.8"/>',
+  M1:'<circle cx="12" cy="7" r="2.6"/><circle cx="5.5" cy="9" r="2.1"/><circle cx="18.5" cy="9" r="2.1"/><path d="M7 20c0-3.5 2.2-6 5-6s5 2.5 5 6M1.5 19c0-3 1.7-5 4-5 .9 0 1.7.3 2.3.8M22.5 19c0-3-1.7-5-4-5-.9 0-1.7.3-2.3.8"/>',
+  M2:'<circle cx="6" cy="8" r="2.4"/><path d="M2 18c0-3.2 1.8-5.5 4-5.5s4 2.3 4 5.5"/><path d="M12 3v18" stroke-dasharray="2 2"/><circle cx="18" cy="8" r="2.4"/><path d="M14 18c0-3.2 1.8-5.5 4-5.5s4 2.3 4 5.5"/>',
+  _:'<circle cx="12" cy="12" r="7"/><path d="M12 8v4l3 2"/>'
+};
+document.getElementById('icons').innerHTML = Object.entries(ICONS)
+  .map(([id, d]) => `<symbol id="ic-${id}" viewBox="0 0 24 24">${d}</symbol>`).join('');
+const icon = id => ICONS[id] ? id : '_';
+
+// ---- 상태 ----
+const ALL_STEPS = WEEKS.flatMap(w => w.steps);
+let sel = {};          // { 단계id: 선지id } — 게임의 선택 상태와 같은 모양
+let week = 0;          // 지금 계획 중인 주차 (0부터). WEEKS.length 면 다 끝남
+let view = 0;          // 판에 보이는 주차
+let running = false;
+let popWeek = -1;      // 사슬에 막 들어간 주차 (톡 튀는 효과)
+
+const findChoice = id => { for (const s of ALL_STEPS) { const c = s.choices.find(c => c.id === id); if (c) return { step: s, choice: c }; } };
+const visible = step => step.choices.filter(c => !c.hidden);
+
+function reqState(c) {
+  let st = 'ok';
+  for (const [s, ids] of Object.entries(c.requires ?? {})) {
+    if (sel[s] === undefined) st = 'pending';
+    else if (!ids.includes(sel[s])) return 'excluded';
+  }
+  return st;
+}
+function nodeState(w, k, c) {
+  const steps = WEEKS[w].steps, step = steps[k];
+  if (sel[step.id] === c.id) return 'chosen';
+  const rs = reqState(c);
+  if (rs === 'excluded') return 'excluded';
+  if (w < week) return 'other';
+  if ((k > 0 && !sel[steps[k - 1].id]) || rs === 'pending') return 'locked';
+  return sel[step.id] ? 'other' : 'open';
+}
+// 앞 단계를 고르기 전에는 그 단계의 토큰을 보여 주지 않는다 ("?" 자리만)
+const stepShown = (w, k) => k === 0 || Boolean(sel[WEEKS[w].steps[k - 1].id]);
+const currentStep = w => WEEKS[w].steps.findIndex(s => !sel[s.id]);
+// 앞 단계를 바꾸면 그 뒤 단계 선택은 지운다 (choices.js 의 choose 와 같은 규칙)
+function choose(stepId, choiceId) {
+  sel[stepId] = choiceId;
+  const ids = ALL_STEPS.map(s => s.id);
+  for (const id of ids.slice(ids.indexOf(stepId) + 1)) delete sel[id];
+}
+
+// ---- 판 배치: 뾰족한 육각을 벌집처럼 붙인다. 단계마다 한 묶음, 한 줄에 2개, 아랫줄은 반 칸 밀림 ----
+const R = 56, SQ = Math.sqrt(3), HW = SQ / 2 * R, PAD = 4;   // HW: 육각 가로 반폭
+const CW = 2 * HW + PAD, RH = 1.5 * R + PAD * SQ / 2;         // 칸 간격 (가로, 세로)
+const PER_ROW = 2, GROUP_GAP = 64, TOP = 56, SIDE = 20;
+const GW = CW * (PER_ROW - 1) + CW / 2 + 2 * HW;               // 한 묶음 너비
+const hex = r => Array.from({ length: 6 }, (_, i) => { const a = Math.PI / 3 * i - Math.PI / 2; return `${(r * Math.cos(a)).toFixed(1)},${(r * Math.sin(a)).toFixed(1)}`; }).join(' ');
+const rowsFor = n => Math.ceil(n / PER_ROW);
+const spots = n => Array.from({ length: n }, (_, i) => { const r = Math.floor(i / PER_ROW), c = i % PER_ROW; return { dx: c * CW + (r % 2) * CW / 2, dy: r * RH }; });
+
+// 그 단계에서 한 번에 열릴 수 있는 가장 많은 토큰 수 (앞 단계 갈래별로 묶어 센다) → 판 높이를 주차 안에서 고정
+function maxOpen(steps, k) {
+  const list = visible(steps[k]), prev = steps[k - 1];
+  if (!prev) return list.length;
+  const groups = {};
+  for (const c of list) for (const key of c.requires?.[prev.id] ?? ['*']) groups[key] = (groups[key] ?? 0) + 1;
+  const all = groups['*'] ?? 0; delete groups['*'];
+  return all + Math.max(0, ...Object.values(groups));
+}
+
+function wrap(label) {
+  if (label.length <= 9) return [label];   // 9자까지는 한 줄
+  const words = label.split(' ');
+  if (words.length > 1) {
+    let best = null;
+    for (let i = 1; i < words.length; i++) {
+      const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+      const m = Math.max(a.length, b.length);
+      if (!best || m < best.m) best = { m, lines: [a, b] };
+    }
+    return best.lines;
+  }
+  const p = label.indexOf('(');
+  if (p > 0) return [label.slice(0, p), label.slice(p)];
+  const h = Math.ceil(label.length / 2);
+  return [label.slice(0, h), label.slice(h)];
+}
+
+function layout(w) {
+  const steps = WEEKS[w].steps;
+  const rows = Math.max(...steps.map((s, k) => rowsFor(maxOpen(steps, k))));
+  const height = TOP + 2 * R + (rows - 1) * RH + 16;
+  const pos = {}, ghosts = [], heads = [];
+  steps.forEach((step, k) => {
+    const x0 = SIDE + k * (GW + GROUP_GAP);
+    heads.push(x0);
+    const shown = stepShown(w, k) ? visible(step).filter(c => nodeState(w, k, c) !== 'excluded') : null;
+    const n = shown ? shown.length : 2, nr = rowsFor(n);
+    const y0 = TOP + R + (rows - nr) * RH / 2;
+    const xs = nr === 1 && n < PER_ROW ? CW / 2 : 0;           // 하나뿐이면 가운데로
+    spots(n).forEach((s, i) => {
+      const p = { x: x0 + HW + xs + s.dx, y: y0 + s.dy, k };
+      if (shown) pos[shown[i].id] = p; else ghosts.push(p);
+    });
+  });
+  const width = SIDE * 2 + steps.length * GW + (steps.length - 1) * GROUP_GAP;
+  return { pos, ghosts, heads, width, height, rows };
+}
+
+function nodeSvg(c, state, p, i) {
+  const lines = wrap(c.label);
+  const ty = lines.length === 1 ? 24 : 20;
+  const label = lines.map((l, j) => `<text y="${ty + j * 12}">${l}</text>`).join('');
+  return `<g class="node s-${state}" data-id="${c.id}" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})" style="--i:${i}"
+    tabindex="0" role="button" aria-label="${c.label}${state === 'chosen' ? ' (고름)' : ''}">
+    <g class="body">
+      <polygon class="glow" points="${hex(R + 5)}"/>
+      <polygon class="outer" points="${hex(R)}"/>
+      <polygon class="inner" points="${hex(R - 6)}"/>
+      <use href="#ic-${icon(c.id)}" class="icon" x="-17" y="${lines.length === 1 ? -26 : -30}" width="34" height="34"/>
+      ${label}
+    </g></g>`;
+}
+const ghostSvg = (p, i) => `<g class="ghost" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})" style="--i:${i}" aria-hidden="true"><g class="body">
+  <polygon class="outer" points="${hex(R)}"/>
+  <g class="lock" transform="translate(-8 -16)"><rect x="0" y="6" width="16" height="12"/><path d="M4 6V4a4 4 0 0 1 8 0v2"/></g>
+  <text y="24">?</text></g></g>`;
+
+// 두 토큰을 잇는 3차 곡선의 점 [x1,y1, mx,y1, mx,y2, x2,y2]
+const bez = (a, b) => { const x1 = a.x + HW - 6, x2 = b.x - HW + 6, m = (x1 + x2) / 2; return [x1, a.y, m, a.y, m, b.y, x2, b.y]; };
+const beamSvg = (a, b, key = '') => `<g class="beam" data-k="${key}" data-p="${bez(a, b).map(v => v.toFixed(1)).join(',')}"><path class="b0"/><path class="b1"/><path class="b2"/></g>`;
+const curve = (a, b) => { const x1 = a.x + HW, x2 = b.x - HW, m = (x1 + x2) / 2; return `M${x1.toFixed(1)} ${a.y.toFixed(1)}C${m.toFixed(1)} ${a.y.toFixed(1)} ${m.toFixed(1)} ${b.y.toFixed(1)} ${x2.toFixed(1)} ${b.y.toFixed(1)}`; };
+
+function renderBoard({ boot = false } = {}) {
+  const svg = document.getElementById('map');
+  svg.classList.remove('out');
+  hideTip();
+  if (week >= WEEKS.length && view >= WEEKS.length) return renderSummary(svg, boot);
+  const w = Math.min(view, WEEKS.length - 1), data = WEEKS[w], steps = data.steps;
+  const { pos, ghosts, heads, width, height } = layout(w);
+  svg.setAttribute('viewBox', `0 0 ${width.toFixed(0)} ${height.toFixed(0)}`);
+  svg.classList.toggle('boot', boot);
+  svg.classList.toggle('past', w < week);
+
+  // 배경 벌집 격자
+  let lattice = '';
+  for (let r = -1; TOP + R + (r - 1) * RH < height; r++)
+    for (let c = -1; c * CW < width + CW; c++) lattice += `<polygon points="${hex(R + PAD / 2)}" transform="translate(${(SIDE + HW + c * CW + (r % 2 ? CW / 2 : 0)).toFixed(1)} ${(TOP + R + r * RH).toFixed(1)})"/>`;
+
+  // 연결선: 앞 단계에서 고른 토큰 → 지금 열린 토큰들
+  let edges = '', flows = '';
+  steps.forEach((step, k) => {
+    const from = k && pos[sel[steps[k - 1].id]];
+    if (!from) return;
+    for (const c of visible(step)) {
+      if (!pos[c.id]) continue;
+      const chosen = sel[step.id] === c.id, d = curve(from, pos[c.id]);
+      edges += `<path class="edge ${chosen ? 'path' : 'live'}" pathLength="1" d="${d}" data-from="${sel[steps[k - 1].id]}" data-to="${c.id}"/>`;
+      if (chosen) flows += beamSvg(from, pos[c.id], `${sel[steps[k - 1].id]}>${c.id}`);
+    }
+  });
+
+  // 단계 머리말: ▶ 지금 고를 단계 / ● 고른 단계 / 아직
+  const cur = w < week ? -1 : currentStep(w);
+  const headSvg = steps.map((step, k) => {
+    const cls = sel[step.id] ? 'ok' : k === cur ? 'now' : 'wait';
+    const mark = sel[step.id] ? '●' : k === cur ? '▶' : '';
+    return `<text class="stephead ${cls}" x="${heads[k] + 4}" y="30">${mark} ${k + 1} ${SHORT[step.id] ?? step.id}</text>`;
+  }).join('');
+
+  let i = 0;
+  const nodes = steps.map((step, k) => visible(step).filter(c => pos[c.id]).map(c => nodeSvg(c, nodeState(w, k, c), pos[c.id], i++)).join('')).join('');
+  svg.innerHTML = `<g class="lattice">${lattice}</g>${headSvg}<g>${edges}</g><g>${flows}</g><g id="runs"></g>${ghosts.map(g => ghostSvg(g, i++)).join('')}${nodes}`;
+
+  const n = steps.filter(s => sel[s.id]).length;
+  document.getElementById('boardTitle').textContent = `WEEK ${w + 1} · ${w < week ? '지난 계획' : '이번 주 계획'}`;
+  document.getElementById('boardSub').textContent = `${n} / ${steps.length} 결정`;
+  document.getElementById('prompt').innerHTML = w < week
+    ? `<span class="num">✓</span>${WEEK_TITLE(data)} · 실행 완료 (보기만)`
+    : cur >= 0 ? `<span class="num">${cur + 1}</span>${steps[cur].label}`
+    : `<span class="num">✓</span>계획이 다 섰어요. 아래 주황 버튼으로 실행해 주세요`;
+}
+
+function renderSummary(svg, boot) {
+  // 다섯 주가 모두 끝나면: 주차마다 고른 토큰을 한 줄씩 이어 보여 준다
+  const cols = Math.max(...WEEKS.map(w => w.steps.length));
+  const colW = 2 * HW + 56, rowH = 2 * R + 10, left = 190;
+  const width = left + (cols - 1) * colW + 2 * HW + 30, H = 30 + WEEKS.length * rowH;
+  svg.setAttribute('viewBox', `0 0 ${width.toFixed(0)} ${H.toFixed(0)}`);
+  svg.classList.toggle('boot', boot);
+  svg.classList.add('past');
+  let out = '', i = 0;
+  WEEKS.forEach((w, r) => {
+    const y = 20 + R + r * rowH;
+    out += `<text class="stephead ok" x="20" y="${y - 4}">W${r + 1}</text><text class="stephead wait" x="20" y="${y + 16}">${WEEK_TITLE(w)}</text>`;
+    const pts = w.steps.map((s, k) => ({ x: left + HW + k * colW, y }));
+    pts.slice(1).forEach((p, k) => { out += beamSvg(pts[k], p, `sum${r}-${k}`); });
+    w.steps.forEach((s, k) => { const c = s.choices.find(c => c.id === sel[s.id]); if (c) out += nodeSvg(c, 'chosen', pts[k], i++); });
+  });
+  svg.innerHTML = out;
+  document.getElementById('boardTitle').textContent = '전체 계획';
+  document.getElementById('boardSub').textContent = '다섯 주 실행 완료';
+  document.getElementById('prompt').innerHTML = `<span class="num">✓</span>이주민 맞을 준비 끝. 위 사슬에서 주차를 누르면 그 주를 다시 볼 수 있어요`;
+}
+
+function tokenMini(c, state) {
+  const cls = state === 'chosen' ? 's-chosen' : 's-locked';
+  return `<svg viewBox="-52 -60 104 120" class="node ${cls}"><polygon class="outer" points="${hex(R)}"/>${c ? `<use href="#ic-${icon(c.id)}" class="icon" x="-26" y="-26" width="52" height="52" style="stroke-width:2.2"/>` : ''}</svg>`;
+}
+
+function renderChain() {
+  const el = document.getElementById('chain');
+  el.innerHTML = WEEKS.map((w, i) => {
+    const status = i < week ? 'done' : i === week ? 'current' : 'future';
+    const toks = w.steps.map(s => { const c = s.choices.find(c => c.id === sel[s.id]); return tokenMini(c, c ? 'chosen' : 'empty'); }).join('');
+    return `${i ? `<div class="link ${i <= week ? 'on' : ''}"></div>` : ''}
+      <button class="wk ${status} ${i === view ? 'viewing' : ''}" data-week="${i}" ${status === 'future' || running ? 'disabled' : ''}>
+        <div class="wh"><strong>W${i + 1}</strong>${WEEK_TITLE(w)}</div>
+        <div class="toks ${i === popWeek ? 'tok-pop' : ''}">${toks}</div>
+      </button>`;
+  }).join('');
+  popWeek = -1;
+}
+
+// ---- 마우스를 올리면 뜨는 설명 팝업 ----
+const board = document.getElementById('board'), tip = document.getElementById('tip');
+function showTip(node) {
+  if (running || !node) return;
+  const { step, choice: c } = findChoice(node.dataset.id);
+  const w = Math.min(view, WEEKS.length - 1), k = WEEKS[w]?.steps.indexOf(step) ?? -1;
+  const st = k >= 0 && view < WEEKS.length ? nodeState(w, k, c) : 'chosen';
+  const hint = st === 'other' && w === week ? '누르면 이걸로 바꿔요. 뒤 단계 선택은 지워져요.'
+    : st === 'open' ? '누르면 이걸로 골라요.' : '';
+  tip.innerHTML = `<div class="tstep">STEP ${k + 1} · ${SHORT[step.id] ?? step.id}${st === 'chosen' ? ' · <b>고름</b>' : ''}</div>
+    <div class="tname">${c.label}</div>
+    ${c.line ? `<p>${c.line}</p>` : ''}
+    ${c.gain ? `<div class="row"><span>얻는 것</span><span>${c.gain}</span></div>` : ''}
+    ${c.cost ? `<div class="row cost"><span>감수</span><span>${c.cost}</span></div>` : ''}
+    ${hint ? `<div class="thint">${hint}</div>` : ''}`;
+  tip.classList.add('on');
+  const b = board.getBoundingClientRect(), r = node.getBoundingClientRect();
+  let left = r.right - b.left + 8;
+  if (left + tip.offsetWidth > b.width - 8) left = r.left - b.left - tip.offsetWidth - 8;
+  if (left < 8) left = Math.max(8, (b.width - tip.offsetWidth) / 2);
+  const top = Math.min(Math.max(8, r.top - b.top), b.height - tip.offsetHeight - 8);
+  tip.style.left = `${left}px`; tip.style.top = `${top}px`;
+}
+function hideTip() { tip.classList.remove('on'); }
+
+function renderBar() {
+  const el = document.getElementById('bar');
+  if (week >= WEEKS.length) {
+    el.innerHTML = `<div class="pips">다섯 주 계획을 모두 실행했어요.</div><button class="exec" id="restart">처음부터 다시</button>`;
+    return;
+  }
+  if (view !== week) {
+    el.innerHTML = `<div class="pips">${view + 1}주차 계획을 보고 있어요 (이미 실행됨).</div><button class="ghostbtn" id="back">${week + 1}주차로 돌아가기</button>`;
+    return;
+  }
+  const steps = WEEKS[week].steps, n = steps.filter(s => sel[s.id]).length;
+  el.innerHTML = `<div class="pips">이번 주 계획 ${steps.map(s => {
+      const c = sel[s.id] && findChoice(sel[s.id]).choice;
+      return `<span class="pip ${c ? 'on' : ''}">${SHORT[s.id]}: ${c ? c.label : '—'}</span>`; }).join('')}</div>
+    <button class="exec" id="exec" ${n < steps.length || running ? 'disabled' : ''}>▶ ${week + 1}주차 계획 실행</button>`;
+}
+
+function render(opts) { renderChain(); renderBoard(opts); renderBar(); }
+
+const wait = ms => new Promise(r => setTimeout(r, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : ms));
+
+async function execute() {
+  running = true; hideTip(); renderBar(); renderChain();
+  const svg = document.getElementById('map'), steps = WEEKS[week].steps;
+  for (let k = 0; k < steps.length; k++) {
+    svg.querySelector(`.node[data-id="${sel[steps[k].id]}"]`)?.classList.add('fire');
+    await wait(360);
+    if (k < steps.length - 1) {
+      const e = svg.querySelector(`.edge[data-from="${sel[steps[k].id]}"][data-to="${sel[steps[k + 1].id]}"]`);
+      if (e) {
+        const run = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        run.setAttribute('d', e.getAttribute('d')); run.setAttribute('class', 'run'); run.setAttribute('pathLength', '1');
+        svg.querySelector('#runs').appendChild(run);
+        requestAnimationFrame(() => requestAnimationFrame(() => run.classList.add('go')));
+        await wait(340);
+      }
+    }
+  }
+  const banner = document.getElementById('banner');
+  document.getElementById('bannerText').innerHTML = `${week + 1}주차 계획 실행<small>${steps.map(s => findChoice(sel[s.id]).choice.label).join('  →  ')}</small>`;
+  banner.classList.add('on');
+  await wait(1300);
+  svg.classList.add('out');
+  await wait(420);
+  banner.classList.remove('on');
+  popWeek = week;
+  week++; view = week; running = false;
+  render({ boot: true });
+}
+
+// ---- 입력 ----
+const map = document.getElementById('map');
+function pick(id) {
+  if (running || view !== week || week >= WEEKS.length) return;
+  const f = findChoice(id), k = WEEKS[week].steps.indexOf(f.step);
+  const st = nodeState(week, k, f.choice);
+  if (st === 'locked' || st === 'excluded') return;
+  const opened = !sel[f.step.id];
+  choose(f.step.id, id);
+  render();
+  // 새 단계가 열리면 그 묶음만 켜지는 효과
+  if (opened) {
+    let j = 0;
+    map.querySelectorAll(`.node`).forEach(n => { if (findChoice(n.dataset.id).step === WEEKS[week].steps[k + 1]) { n.classList.add('reveal'); n.style.setProperty('--j', j++); } });
+    map.querySelectorAll(`.edge.live[data-from="${id}"]`).forEach(e => e.classList.add('grow'));
+  }
+  // 누른 뒤에는 팝업을 닫는다 (막 열린 다음 단계 토큰을 가리지 않게). 다른 토큰에 올리면 다시 뜬다
+  map.querySelector(`.node[data-id="${id}"]`)?.focus({ preventScroll: true });
+  hideTip();
+}
+map.addEventListener('click', e => { const n = e.target.closest('.node'); if (n) pick(n.dataset.id); });
+map.addEventListener('keydown', e => { const n = e.target.closest('.node'); if (n && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pick(n.dataset.id); } });
+map.addEventListener('pointerover', e => { const n = e.target.closest('.node'); if (n) showTip(n); });
+map.addEventListener('pointerout', e => { const n = e.target.closest('.node'); if (n && !n.contains(e.relatedTarget)) hideTip(); });
+map.addEventListener('focusin', e => { const n = e.target.closest('.node'); if (n && e.target.matches(':focus-visible')) showTip(n); });
+map.addEventListener('focusout', () => hideTip());
+document.getElementById('bar').addEventListener('click', e => {
+  if (e.target.id === 'exec') execute();
+  if (e.target.id === 'back') { view = week; render({ boot: true }); }
+  if (e.target.id === 'restart') { sel = {}; week = 0; view = 0; render({ boot: true }); }
+});
+document.getElementById('chain').addEventListener('click', e => {
+  const b = e.target.closest('.wk'); if (!b || b.disabled) return;
+  const i = +b.dataset.week;
+  view = (i === week || (week >= WEEKS.length && i === view)) ? (week >= WEEKS.length ? WEEKS.length : week) : i;
+  render({ boot: true });
+});
+
+render({ boot: true });
+
+// ---- 빛줄기 모양: 곡선을 따라 점을 찍고, 점마다 두께를 정해 리본(채운 면)으로 만든다 ----
+// 두께 = 가는 줄기 + 토큰과 맞닿는 양 끝만 부풂(천천히 숨 쉼). 가운데는 거의 고정
+const still = matchMedia('(prefers-reduced-motion: reduce)');
+function ribbon(p, t0, scale, prog = 1) {
+  const N = 48, L = [], Rt = [];
+  for (let i = 0; i <= N; i++) {
+    const t = prog * i / N, u = 1 - t;
+    const x = u*u*u*p[0] + 3*u*u*t*p[2] + 3*u*t*t*p[4] + t*t*t*p[6];
+    const y = u*u*u*p[1] + 3*u*u*t*p[3] + 3*u*t*t*p[5] + t*t*t*p[7];
+    let dx = 3*u*u*(p[2]-p[0]) + 6*u*t*(p[4]-p[2]) + 3*t*t*(p[6]-p[4]);
+    let dy = 3*u*u*(p[3]-p[1]) + 6*u*t*(p[5]-p[3]) + 3*t*t*(p[7]-p[5]);
+    const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+    const end = Math.pow(Math.abs(2 * t - 1), 10);                      // 0(가운데) → 1(양 끝). 토큰 바로 앞에서만 부푼다
+    const breathe = 0.85 + 0.15 * Math.sin(t0 * 2.4);                    // 끝 부분이 천천히 숨 쉬듯
+    const wave = Math.sin((t * 1.4 - t0 * 0.45) * Math.PI * 2);         // 가운데는 아주 느리고 얕은 물결 하나
+    const taper = Math.sin(Math.PI / 2 * Math.min(1, Math.min(t, prog - t) * 12));   // 맨 끝은 둥글게 닫기
+    const head = prog < 1 ? 3.2 * Math.exp(-(((prog - t) * 9) ** 2)) : 0;       // 뻗어 가는 머리는 밝고 둥글게
+    const w = (1.1 + 4.6 * (prog < 1 && t > 0.5 ? 0 : end) * breathe + head + 0.2 * wave * (1 - end)) * scale * Math.max(.15, taper);
+    L.push(`${(x - dy * w).toFixed(1)} ${(y + dx * w).toFixed(1)}`);
+    Rt.push(`${(x + dy * w).toFixed(1)} ${(y - dx * w).toFixed(1)}`);
+  }
+  return `M${L.join('L')}L${Rt.reverse().join('L')}Z`;
+}
+// 새로 이어진 연결은 앞 토큰에서 뻗어 나가 다음 토큰에 닿는다 (GROW ms). 닿는 순간 그 토큰이 번쩍
+const GROW = 450, born = new Map();
+function drawBeams(time) {
+  const t0 = still.matches ? 0 : time / 1000, seen = new Set();
+  document.querySelectorAll('#map .beam').forEach((g, i) => {
+    const p = g._p ??= g.dataset.p.split(',').map(Number);
+    const key = g.dataset.k; seen.add(key);
+    if (!born.has(key)) born.set(key, still.matches ? -GROW : time + i * 120);
+    const x = Math.min(1, Math.max(0, (time - born.get(key)) / GROW)), prog = 1 - (1 - x) ** 3;
+    const [b0, b1, b2] = g.children, t = t0 + i * 0.37;
+    g.style.visibility = prog > 0.01 ? '' : 'hidden';
+    if (prog <= 0.01) return;
+    b0.setAttribute('d', ribbon(p, t, 2.3, prog));
+    b1.setAttribute('d', ribbon(p, t, 1.1, prog));
+    b2.setAttribute('d', ribbon(p, t, 0.5, prog));
+    if (x >= 1 && !g._hit) {
+      g._hit = true;
+      const to = key.split('>')[1];
+      if (to && time - born.get(key) < GROW + 200) map.querySelector(`.node[data-id="${to}"]`)?.classList.add('fire');
+    }
+  });
+  for (const key of born.keys()) if (!seen.has(key)) born.delete(key);   // 끊긴 연결은 잊는다 → 다시 이으면 또 뻗어 나감
+  requestAnimationFrame(drawBeams);
+}
+requestAnimationFrame(drawBeams);
+</script>
+</body>
+</html>
