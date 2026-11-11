@@ -19,13 +19,13 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .intro.leaving{pointer-events:none;animation:intro-out .7s ease-in forwards}
 @keyframes intro-out{0%{opacity:1}35%{opacity:.85}55%{opacity:.9}100%{opacity:0}}
 
+/* 2026-11-11 사용자 요청: 처음 켤 때 깜빡임 제거. 가는 선 → 위아래로 펼쳐짐만 남기고, 밝기 번쩍임·투명도 깜빡임은 뺐다 */
 @keyframes holo-in{
-  0%{opacity:0;clip-path:inset(50% 0 50% 0);filter:brightness(2.4)}
-  14%{opacity:1;clip-path:inset(49.6% 0 49.6% 0);filter:brightness(2.4)}   /* 가는 빛줄기 */
-  46%{opacity:.9;clip-path:inset(0 0 0 0);filter:brightness(1.7)}           /* 위아래로 펼쳐짐 */
-  56%{opacity:.35}62%{opacity:.95}70%{opacity:.5}78%{opacity:1}              /* 홀로그램 깜빡임 */
-  100%{opacity:1;clip-path:inset(0 0 0 0);filter:none}}
-@keyframes holo-fill{0%{opacity:0}55%{opacity:0}62%{opacity:.7}70%{opacity:.25}80%{opacity:1}100%{opacity:1}}
+  0%{opacity:0;clip-path:inset(50% 0 50% 0)}
+  14%{opacity:1;clip-path:inset(49.6% 0 49.6% 0)}   /* 가는 빛줄기 */
+  60%{opacity:1;clip-path:inset(0 0 0 0)}            /* 위아래로 펼쳐짐 */
+  100%{opacity:1;clip-path:inset(0 0 0 0)}}
+@keyframes holo-fill{0%{opacity:0}55%{opacity:0}100%{opacity:1}} /* 깜빡임 없이 서서히 */
 @keyframes holo-beam{0%{transform:translateY(-4vh);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateY(104vh);opacity:0}}
 
 .hud.booting>.panel,.hud.booting>.window,.hud.booting>.p-decision,.hud.booting>.p-foot{animation:holo-in .85s cubic-bezier(.2,.7,.2,1) backwards}
@@ -36,7 +36,7 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .hud.booting>.p-decision{animation-delay:.6s}
 .hud.booting>.p-foot{animation-delay:.8s}
 /* 창 안쪽 내용은 틀이 다 펼쳐진 뒤에 채워진다 */
-.hud.booting .panel-body,.hud.booting .window-body,.hud.booting .step-title,.hud.booting .sites>*{animation:holo-fill .7s steps(1,end) backwards}
+.hud.booting .panel-body,.hud.booting .window-body,.hud.booting .step-title,.hud.booting .sites>*{animation:holo-fill .7s ease-out backwards}
 .hud.booting .panel-body,.hud.booting .window-body{animation-delay:.55s}
 .hud.booting .step-title{animation-delay:.95s}
 .hud.booting .sites>:nth-child(1){animation-delay:1.05s}.hud.booting .sites>:nth-child(2){animation-delay:1.18s}.hud.booting .sites>:nth-child(3){animation-delay:1.31s}
@@ -48,8 +48,8 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 /* 브리핑 화면: 로딩이 끝나고 브리핑 창이 투사되어 나타난다 */
 #intro-brief:not([hidden]) .brief-view{animation:holo-in .8s cubic-bezier(.2,.7,.2,1) backwards}
 #intro-brief:not([hidden]) .brief-box{animation:holo-in .8s cubic-bezier(.2,.7,.2,1) .25s backwards}
-#intro-brief:not([hidden]) .foot-keys{animation:holo-fill .6s steps(1,end) .8s backwards}
-#intro-brief:not([hidden]) .bubble,#intro-brief:not([hidden]) .robot{animation:holo-fill .7s steps(1,end) .6s backwards}
+#intro-brief:not([hidden]) .foot-keys{animation:holo-fill .6s ease-out .8s backwards}
+#intro-brief:not([hidden]) .bubble,#intro-brief:not([hidden]) .robot{animation:holo-fill .7s ease-out .6s backwards}
 
 @media (prefers-reduced-motion:reduce){
   body::before,body::after,.hud.booting *,.hud.booting::after,#intro-brief *{animation:none!important}
@@ -63,7 +63,7 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 .p-decision.step-changing::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;z-index:5;pointer-events:none;
   background:linear-gradient(90deg,transparent,var(--hi) 15%,var(--hi) 85%,transparent);box-shadow:0 0 14px 3px rgba(143,193,255,.5);animation:holo-beam-h .75s ease-in-out both}
 .p-decision.step-changing .step:not([hidden]),.p-decision.step-changing nav.sites:not([hidden]){animation:holo-in .65s cubic-bezier(.2,.7,.2,1) backwards}
-.p-decision.step-changing .step-title{animation:holo-fill .6s steps(1,end) .2s backwards}
-.p-decision.step-changing .cards>*{animation:holo-fill .6s steps(1,end) backwards}
+.p-decision.step-changing .step-title{animation:holo-fill .6s ease-out .2s backwards}
+.p-decision.step-changing .cards>*{animation:holo-fill .6s ease-out backwards}
 .p-decision.step-changing .cards>:nth-child(1){animation-delay:.3s}.p-decision.step-changing .cards>:nth-child(2){animation-delay:.42s}.p-decision.step-changing .cards>:nth-child(3){animation-delay:.54s}.p-decision.step-changing .cards>:nth-child(4){animation-delay:.66s}
 @media (prefers-reduced-motion:reduce){.holo-flash,.p-decision.step-changing *,.p-decision.step-changing::after{animation:none!important}}
