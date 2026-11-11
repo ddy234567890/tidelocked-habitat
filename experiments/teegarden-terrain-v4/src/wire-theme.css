@@ -322,3 +322,122 @@ body{background-color:var(--bg);color:var(--t)}
 
 /* 겹침 순서: 행성 칸 < 행성 표시 < 화면 글(카메라 표시·ORI 글) */
 .brief-panel{z-index:1}.intro svg.brief-art{z-index:2}.brief-view .cam-l,.brief-view .cam-r,.brief-view .bubble,.brief-view .robot{z-index:3}
+
+/* ── 2026-11-11 다듬기 (unslop 점검, 사용자 요청) ──
+   겉모습만: 글자 크기 단계, 4px 간격, 글자 간격·두께 정리, 창 틀을 한 줄로. 글·칸·배치 순서는 그대로.
+   대원 얼굴 패널(.crew-face, .crew-modal) 안쪽은 건드리지 않는다 */
+:root{
+  --fs-s:16px;--lh-s:22px;   /* 창 제목·작은 표시·영어 보조 글 */
+  --fs-m:20px;--lh-m:28px;   /* 본문·카드 설명·목록 */
+  --fs-l:24px;--lh-l:32px;   /* 카드 이름·브리핑 글 */
+  --side:clamp(300px,22vw,400px);
+  /* 창 틀: 한 줄 선 + 깎은 두 모서리에만 밝은 표시 */
+  --frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%232B47C4' d='M8.5 .5H47.5V39.5L39.5 47.5H.5V8.5Z'/%3E%3Cpath stroke='%238FC1FF' stroke-width='2' d='M1 8.5L8.5 1M39.5 47L47 39.5'/%3E%3C/svg%3E");
+  --frame-o:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48' fill='none'%3E%3Cpath stroke='%23E8DFC8' d='M8.5 .5H47.5V39.5L39.5 47.5H.5V8.5Z'/%3E%3Cpath stroke='%23E8DFC8' stroke-width='2' d='M1 8.5L8.5 1M39.5 47L47 39.5'/%3E%3C/svg%3E")}
+@media(min-width:1700px) and (min-height:1000px){
+ :root{--fs-s:20px;--lh-s:28px;--fs-m:24px;--lh-m:32px;--fs-l:28px;--lh-l:36px}
+}
+@media(max-height:960px) and (min-width:1101px){
+ :root{--fs-m:18px;--lh-m:26px;--fs-l:20px;--lh-l:28px}
+}
+@media(max-width:1100px){
+ :root{--fs-m:18px;--lh-m:26px;--fs-l:20px;--lh-l:28px}
+}
+
+/* 바탕 격자는 조용하게 */
+body{background-image:linear-gradient(rgba(143,193,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(143,193,255,.06) 1px,transparent 1px);background-size:120px 120px,120px 120px;font-size:var(--fs-m);line-height:var(--lh-m)}
+
+/* 틀: 4px 단위 간격, 옆 칸은 화면 너비에 맞춰 넓어진다 */
+.hud{padding:24px 24px 16px;gap:16px;grid-template-columns:var(--side) minmax(0,1fr) var(--side);grid-template-rows:minmax(0,1fr) auto 32px}
+.panel,.window,.site,.decide,.brief-view,#notes,.data-card{border-width:4px;border-image-slice:12;border-image-width:12px;border-image-outset:0}
+.panel-body{padding:16px 20px;gap:16px}
+.panel>.titlebar,.window>.titlebar{height:32px;padding:0 8px;text-shadow:none}
+.panel>.titlebar>span:first-child,.window>.titlebar>span:first-child{padding-right:12px}
+
+/* 글자 크기 */
+.panel>.titlebar,.window>.titlebar,.tab,.chip,.wbtn,.meta,.pin small,.stage-bottom,.landmark small,.site>b,.effects i,.p-foot,.p-foot button,.foot-keys,.cam-l,.cam-r,.who,.brief-page,.past-tip small,kbd{font-size:var(--fs-s);line-height:var(--lh-s)}
+.log,.facts,.stat small,.scenario,.pin span,.landmark,.travel-status,.local-nav button,.step-title,.decided,.site .line,.effects,.past-tip,.bubble-lines p,#notes,.eyebrow,#description{font-size:var(--fs-m);line-height:var(--lh-m)}
+.site .name,.decide,.report,#brief-bubble,.past-tip b{font-size:var(--fs-l);line-height:var(--lh-l)}
+.stat strong{font-size:48px;line-height:56px}
+.p-right .facts li span{flex-shrink:0}
+
+/* 글자 간격: 창 제목(영어 표시)만 조금 벌리고 나머지는 0 */
+.tab,.chip,.site>b,.p-foot,.brand,.cam-l,.cam-r,.who,.pin small,.step-title,.decide,.travel-status,.eyebrow,.past-tip small,.data-stat span{letter-spacing:0}
+.panel>.titlebar,.window>.titlebar{letter-spacing:.08em}
+
+/* 두껍게 보이는 효과는 고른 카드 이름·결정 버튼·ORI 첫마디에만 */
+.stat strong,.heading h1,.travel h1,.data-meta span:nth-child(2),.data-stat b,.data-card .titlebar,.past-tip b,.site .name{text-shadow:none}
+.site.active .name{text-shadow:1px 0 currentColor}
+
+/* 왼쪽 상태 */
+.p-left .panel-body{gap:24px}.p-left .stat{gap:8px}.p-left .gauge{height:20px}
+.log{gap:8px;padding-top:12px}
+.facts{gap:8px}.facts li{padding-bottom:4px;gap:8px}
+.meta{gap:4px}
+
+/* 주차 탭 */
+.tabs{gap:4px;padding:4px 4px 0}
+.tab{height:28px;padding:0 12px}.tab.on{height:32px}
+
+/* 선지 카드 */
+.p-decision{gap:12px}
+.cards{gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.site{padding:12px 16px 16px;row-gap:8px;column-gap:12px}
+.site>b{min-width:28px;padding:0 8px}
+.effects{gap:4px;padding-top:8px;margin-top:0}
+.effects li{column-gap:8px}
+.effects i{min-width:72px;padding:0 8px}
+.decide{min-height:56px}
+.step-title{gap:12px}.step-title b{padding:0 8px}
+
+/* 하단 안내 */
+.p-foot{gap:16px;padding:4px 12px 0}
+
+/* 행성 창 위 글 */
+.pin{gap:8px;padding:4px}
+.pin span{padding:4px 12px}
+.stage-bottom{left:12px;right:12px;bottom:8px;gap:16px}.stage-bottom span{padding:4px 8px}
+.local-nav button{padding:4px 12px}
+
+/* 브리핑 */
+.brief{grid-template-rows:minmax(0,1fr) 248px 32px;gap:16px;padding:24px}
+.brief-body{gap:24px;padding:0 24px}
+.report{gap:8px}
+.report .note{padding-left:20px}
+.cam-l,.cam-r{gap:4px;top:20px}
+.bubble{gap:8px}.bubble-lines{gap:8px}
+.next{width:64px;height:48px}
+
+/* 좁은 화면: 인트로 글이 아래 달 표면 그림과 겹치지 않게 위쪽(로봇 옆)으로 */
+@media(max-width:1100px){
+ .hud{padding:16px;gap:16px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .brief{grid-template-rows:minmax(320px,1fr) max-content 32px;padding:16px}
+ .intro .bubble{left:196px;right:calc(44% + 16px);top:84px;bottom:auto;width:auto}
+ .brief-body{min-height:112px}
+}
+@media(max-width:640px){
+ .hud{grid-template-columns:minmax(0,1fr)}
+ .cards{grid-template-columns:minmax(0,1fr)}
+ .intro .bubble{left:20px;right:20px;top:284px}
+ .brief{grid-template-rows:600px max-content 32px}
+}
+.bubble,.report{word-break:keep-all;overflow-wrap:break-word}
+@media(max-width:640px){.cam-r{top:72px}}
+/* 노트북 화면 기준 (사용자 2026-11-11): 1366×768 ~ 1536×864 에서 칸이 넘치지 않게 촘촘히 */
+@media(max-height:960px) and (min-width:1101px){
+ .brief{grid-template-rows:minmax(0,1fr) 200px 28px;padding:16px 24px;gap:12px}
+}
+@media(max-height:820px) and (min-width:1101px){
+ .hud{padding:16px 20px 12px;gap:12px}
+ .panel-body,.p-left .panel-body{padding:12px 16px;gap:12px}
+ .p-left .stat{gap:4px}.p-left .gauge{height:16px}
+ .stat strong{font-size:36px;line-height:40px}
+ .log{gap:4px;padding-top:8px}
+ .facts{gap:4px}
+ .site{padding:8px 12px 12px;row-gap:4px}
+ .effects{gap:2px;padding-top:4px}
+}
+@media(max-height:820px) and (min-width:1101px){.p-right .globe{width:12vh;height:12vh}}
+/* 노트북: 육각 선지판과 결정 버튼이 칸 안에 들어가게 */
+.hb-map{min-width:0}
+@media(max-width:1500px) and (min-width:1101px){.hb-decide{flex:0 0 160px}}
