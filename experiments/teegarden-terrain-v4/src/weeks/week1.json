@@ -114,12 +114,17 @@
       "small_units": {
         "label": "분산형 산소 장치",
         "perHome": true,
+        "zone": true,
         "parts": [
           { "asset": "air-unit-small", "offset": [0, 0] }
         ]
       }
     }
   },
+  "flows": [
+    { "kind": "oxygen", "path": ["oxygen", "homes"] },
+    { "kind": "exhaled", "path": ["homes", "oxygen"], "requires": { "oxygen": ["O2"] } }
+  ],
   "steps": [
     {
       "id": "location",
@@ -146,9 +151,9 @@
       "id": "oxygen",
       "label": "산소를 공급하는 방식을 골라 주세요",
       "choices": [
-        { "id": "O1", "label": "중앙 산소 설비", "line": "큰 장치 한 대가 물을 전기분해해 산소를 만들어요.", "gain": "구성이 단순하고 저렴해요", "cost": "물 소비가 많고 고장 시 전체가 영향을 받아요", "overlays": ["big_machine"] },
+        { "id": "O1", "label": "중앙 산소 설비", "line": "큰 장치 한 대가 물을 전기분해해 산소를 만들어요.", "gain": "구성이 단순하고 저렴해요", "cost": "물 소비가 많고 고장 시 전체가 영향을 받아요", "overlays": ["big_machine"], "flowAmount": 1 },
         { "id": "O2", "label": "물 회수형 산소 설비", "line": "내쉰 이산화탄소에서 물을 되찾아 다시 써요.", "gain": "매주 물을 아낄 수 있어요", "cost": "설치·정비 전력이 커요", "overlays": ["recycler"] },
-        { "id": "O3", "label": "분산형 산소 장치", "line": "작은 장치를 구역마다 두어 하나가 멈춰도 공급이 이어져요.", "gain": "고장·정전 때 공기 피해 감소", "cost": "장비가 여러 대라 초기 전력이 커요", "overlays": ["small_units"] }
+        { "id": "O3", "label": "분산형 산소 장치", "line": "작은 장치를 구역마다 두어 하나가 멈춰도 공급이 이어져요.", "gain": "고장·정전 때 공기 피해 감소", "cost": "장비가 여러 대라 초기 전력이 커요", "overlays": ["small_units"], "flowAmount": 0.4 }
       ]
     }
   ]

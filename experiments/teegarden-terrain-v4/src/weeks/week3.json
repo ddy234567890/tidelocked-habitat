@@ -63,71 +63,18 @@
       "water_source": {
         "label": "한 수원 집중 채취",
         "partsAt": {
-          "A": [
-            {
-              "box": [
-                2.4,
-                0.04,
-                1.6
-              ],
-              "offset": [
-                -0.9,
-                0
-              ]
-            },
-            {
-              "asset": "space-truck",
-              "offset": [
-                1.2,
-                0
-              ],
-              "scale": 0.8,
-              "rotation": 90
-            }
-          ],
-          "B": [
-            {
-              "box": [
-                2.0,
-                0.04,
-                1.2
-              ],
-              "offset": [
-                -0.4,
-                0
-              ]
-            },
-            {
-              "asset": "pipe-straight",
-              "offset": [
-                1.1,
-                0
-              ],
-              "scale": 0.5,
-              "rotation": 90
-            }
-          ],
-          "C": [
-            {
-              "box": [
-                1.3,
-                0.5,
-                1.1
-              ],
-              "offset": [
-                -0.8,
-                0
-              ]
-            },
-            {
-              "asset": "drill",
-              "offset": [
-                0.7,
-                0
-              ],
-              "scale": 0.9
-            }
-          ]
+          "A": [],
+          "B": [{ "asset": "pipe-straight", "offset": [1.1, 0], "scale": 0.5, "rotation": 90 }],
+          "C": [{ "asset": "drill", "offset": [0.7, 0], "scale": 0.9 }]
+        },
+        "outside": { "C": [5.85, 0.6] },
+        "away": { "A": [-5.5, -0.5], "B": [10, -0.7] },
+        "hold": { "B": { "at": [10, -1.4], "r": 1.5 } },
+        "reserve": 1.4,
+        "water": {
+          "A": { "type": "pool", "r": 0.9 },
+          "B": { "type": "pool", "r": 2.4, "offset": [-1.6, 0] },
+          "C": { "type": "ice", "r": 1.3, "offset": [-1.5, 0] }
         },
         "scaleAt": {
           "B": 0.55,
@@ -136,6 +83,7 @@
       },
       "soil_heater": {
         "label": "토양 수분 추출",
+        "water": { "type": "seep", "r": 6, "patches": 8 },
         "scaleAt": {
           "C": 0.7
         },
@@ -229,6 +177,11 @@
       }
     }
   },
+  "flows": [
+    { "kind": "water", "path": ["source", "reuse", "share", "homes"] },
+    { "kind": "usedWater", "path": ["homes", "reuse"], "requires": { "reuse": ["R2"] } },
+    { "kind": "usedWater", "path": ["homes", "out"], "requires": { "reuse": ["R1"] } }
+  ],
   "steps": [
     {
       "id": "source",
@@ -240,6 +193,7 @@
           "label": "한 수원 집중 채취",
           "line": "한 곳에서 물을 많이 얻어요.",
           "gain": "물을 많이 얻어요",
+          "flowAmount": 1,
           "cost": "물을 한 곳에서만 얻으니, 그곳이 더러워지면 물이 크게 끊겨요",
           "extra": [
             {
@@ -277,6 +231,7 @@
           "label": "토양 수분 추출",
           "line": "기지 주변 흙에서 물을 조금씩 뽑아요.",
           "gain": "기지 주변 어디서든 할 수 있어서 물이 더러워질 걱정이 적어요",
+          "flowAmount": 0.45,
           "cost": "전기를 많이 쓰고 나오는 물은 적어요",
           "overlays": [
             "soil_heater"

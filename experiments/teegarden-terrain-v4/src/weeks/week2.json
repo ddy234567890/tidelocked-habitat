@@ -44,6 +44,7 @@
     "overlay": {
       "solar_field": {
         "label": "태양광 발전 단지",
+        "faceStar": true,
         "parts": [
           {
             "asset": "solar-panel",
@@ -125,6 +126,7 @@
       },
       "radiator": {
         "label": "대형 방열판",
+        "heatOut": 1.1,
         "scaleAt": {
           "B": 0.55,
           "C": 0.7
@@ -180,6 +182,17 @@
       }
     }
   },
+  "roomAir": [
+    { "requires": { "heat": ["T1", "T2"] }, "air": "cool" },
+    { "air": "hot" }
+  ],
+  "flows": [
+    { "kind": "power", "path": ["power", "storage", "homes"], "below": "storage" },
+    { "kind": "power", "path": ["power", "storage", "oxygen"], "below": "storage" },
+    { "kind": "power", "path": ["storage", "heat"], "requires": { "heat": ["T2"] } },
+    { "kind": "heat", "path": ["homes", "heat"], "requires": { "heat": ["T1", "T2"] } },
+    { "kind": "cool", "path": ["heat", "homes"], "requires": { "heat": ["T2"] } }
+  ],
   "steps": [
     {
       "id": "power",
@@ -189,6 +202,7 @@
         {
           "id": "P1",
           "label": "태양광 발전 단지",
+          "flowVary": 0.7,
           "line": "별빛으로 전기를 만들어요.",
           "gain": "넓게 깔기만 하면 돼서 설치가 쉬워요",
           "cost": "별 폭풍이 오면 전기가 확 줄어요",

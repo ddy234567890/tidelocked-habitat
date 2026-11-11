@@ -53,6 +53,40 @@ export function resolve(selection) {
   return layers;
 }
 
+/** 선택 상태 → 그릴 자원 흐름 (weekN.json 의 flows).
+ * path 는 단계 id 와 'homes'(집) · 'out'(기지 밖으로 버림)의 차례다. 아직 고르지 않은 단계는 건너뛰고 다음 칸으로 바로 잇는다.
+ * 첫 칸이 없으면 흐름도 없다. amount(흐르는 양)는 path 의 첫 선지 칸의 flowAmount (없으면 FLOW_AMOUNT),
+ * vary(양이 오르내리는 정도, 0~1)는 그 칸의 flowVary (없으면 0: 늘 같은 양).
+ * below 는 그 칸으로 들어가는 구간을 땅 밑으로 그린다 (남는 전기를 배터리에 저장하러 가는 길) */
+export const FLOW_AMOUNT = 0.75;
+export function flowsFor(selection) {
+  const out = [];
+  WEEKS.forEach(({ flows }, w) => {
+    for (const flow of flows ?? []) {
+      if (!meets(flow.requires, selection)) continue;
+      let amount = null, vary = null, started = false;
+      const nodes = flow.path.map(id => {
+        if (id === 'homes' || id === 'out') return { id };
+        const step = ALL_STEPS.find(s => s.id === id), choice = step?.choices.find(c => c.id === selection[id]);
+        if (!choice || !isAvailable(choice, selection) || !choice.overlays?.length) return null;
+        // 양·오르내림은 path 의 첫 선지(흐름을 내보내는 쪽)가 정한다
+        if (!started) { amount = choice.flowAmount ?? null; vary = choice.flowVary ?? null; started = true; }
+        return { id, overlay: choice.overlays[0] };
+      });
+      if (!nodes[0]) continue;
+      const kept = nodes.filter(Boolean);
+      if (kept.length > 1) out.push({ kind: flow.kind, week: w + 1, amount: amount ?? FLOW_AMOUNT, vary: vary ?? 0, below: flow.below ?? null, nodes: kept });
+    }
+  });
+  return out;
+}
+
+/** 지금 주차의 집 안 공기 (weekN.json 의 roomAir): requires 가 맞는 첫 항목의 air ('hot' | 'cool'), 없으면 null.
+ * 열을 빼는 방법을 고르기 전에는 덥고, 고르면 시원해지는 것을 그 주 동안만 보여 준다 */
+export function roomAirFor(selection, week) {
+  return (WEEKS[week - 1]?.roomAir ?? []).find(item => meets(item.requires, selection))?.air ?? null;
+}
+
 // 그 지대에서 (x, z) 자리의 바닥 높이. A·C 는 지표, B 는 동굴 바닥(절개면에서 잰 아랫선)
 const plain = plainSurface(definitions.plain);
 export function floorAt(site, x, z) {
@@ -77,7 +111,7 @@ export function placeAt(site, position, crest = false) {
 
 // 산소 장치 자리 찾기: 원하는 자리에서 가까운 순으로 살펴, 주거 모듈 점·지형과 겹치지 않는 첫 자리를 쓴다.
 // footprint 는 장치의 바닥 반지름 r 과 높이 h (지역 단위)
-const CELL = 0.25, CLEARANCE = 0.3, SEARCH = 8, STEP = 0.4, SLOPES = [0.3, 0.6, 1.0];
+const CELL = 0.25, CLEARANCE = 0.5, SEARCH = 8, CAVE_SEARCH = 16, STEP = 0.4, SLOPES = [0.3, 0.6, 1.0];
 /** 모듈 점들이 차지한 칸: (x, z) 칸마다 높이 범위 */
 export function occupancy(positions) {
   const cells = new Map();
@@ -117,13 +151,15 @@ export function fitsAt(site, x, z, footprint, cells, slope = SLOPES[0]) {
   } else if (Math.hypot(x / 14, z / 11) > 0.8) return false; // 촘촘한 지정 지형 안에 둔다
   return clearOf(cells, x, y, z, footprint);
 }
-/** 원하는 자리에서 가장 가까운 빈 자리 [x, y, z]. 못 찾으면 원하는 자리 */
-export function findSpot(site, preferred, footprint, cells = new Map()) {
-  const [px, , pz] = preferred, candidates = [];
-  for (let dx = -SEARCH; dx <= SEARCH; dx += STEP) for (let dz = -SEARCH; dz <= SEARCH; dz += STEP) candidates.push([px + dx, pz + dz]);
+/** 원하는 자리에서 가장 가까운 빈 자리 [x, y, z]. 못 찾으면 원하는 자리 (strict 면 null) */
+export function findSpot(site, preferred, footprint, cells = new Map(), strict = false) {
+  // 동굴은 바닥이 좁고 길어서 굴을 따라 안쪽 방까지 더 멀리 찾는다 (장치가 겹치지 않게)
+  const [px, , pz] = preferred, candidates = [], reach = site === 'lavaTube' ? CAVE_SEARCH : SEARCH;
+  for (let dx = -reach; dx <= reach; dx += STEP) for (let dz = -reach; dz <= reach; dz += STEP) candidates.push([px + dx, pz + dz]);
   candidates.sort((a, b) => Math.hypot(a[0] - px, a[1] - pz) - Math.hypot(b[0] - px, b[1] - pz));
   // 평평한 자리부터 찾고, 주차가 쌓여 자리가 모자라면 조금 비탈진 곳까지 넓힌다
   for (const slope of SLOPES) for (const [x, z] of candidates) if (fitsAt(site, x, z, footprint, cells, slope)) return [x, floorAt(site, x, z), z];
+  if (strict) return null;
   // 모듈과 겹치지 않는 자리가 없으면, 지형 조건만 맞는 자리 중 모듈 점에서 가장 먼 곳
   let best = null, far = -1;
   for (const [x, z] of candidates) {

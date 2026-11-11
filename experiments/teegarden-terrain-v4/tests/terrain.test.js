@@ -37,7 +37,8 @@ for (const [name, build] of Object.entries(builders)) {
       const [x, y, z] = data.positions.subarray(i * 3, i * 3 + 3);
       if (name === 'plain' && Math.hypot(x, z) < 1.65) assert.equal(y, 0, '주거지 높이');
       if (name === 'ridge' && Math.abs(ridgeFrame(x, z).u) <= 0.45) assert.equal(y, 0, '정상 띠 높이 (굽은 마루를 따라)');
-      if (name === 'lavaTube') assert.ok(z <= 0.00001, '반쪽 튜브 절단면');
+      // 동굴은 반쪽 모델 그대로다. 땅 표면(맨 앞 surface 몫)만 절개면 앞쪽에도 둔다 (2026-11-11)
+      if (name === 'lavaTube' && i >= Math.floor(30000 * CAVE_PARTS.surface)) assert.ok(z <= 0.00001, '반쪽 튜브 절단면');
     }
   }
   if (name === 'lavaTube') {
@@ -109,18 +110,19 @@ for (const x of [-8, 0, 6]) for (const theta of [0, 0.7, 1.9, Math.PI]) {
 const ridgeCross = Array.from({length:41}, (_, i) => ridgeSurface(2.8, i / 2 - 10, definitions.ridge));
 assert.ok(Math.max(...ridgeCross) - Math.min(...ridgeCross) > 0.5, '길이 방향으로 복제되지 않는 사면');
 for (const name of Object.keys(builders)) {
-  const half = name === 'lavaTube', around = buildSurroundings(name, definitions[name], half);
+  const around = buildSurroundings(name, definitions[name]);
   assert.equal(around.positions.length, SURROUND_COUNT * 3);
-  assert.deepEqual(around.positions, buildSurroundings(name, definitions[name], half).positions);
+  assert.deepEqual(around.positions, buildSurroundings(name, definitions[name]).positions);
   assert.ok(around.positions.every(Number.isFinite));
   assert.ok(around.colors.every(v => v >= 0 && v <= 1));
-  let outside = 0;
+  let outside = 0, front = 0;
   for (let i = 0; i < SURROUND_COUNT; i++) {
     const [x, , z] = around.positions.subarray(i * 3, i * 3 + 3);
-    if (half) assert.ok(z <= 0, '동굴 주변 지형도 절개면 앞쪽은 비운다');
+    if (z > 0) front++;
     if (Math.hypot(x / EXTENT.x, z / EXTENT.z) > 1) outside++;
   }
   assert.ok(outside / SURROUND_COUNT > 0.9, '주변 지형은 지정 지형 바깥에 놓인다');
+  assert.ok(front / SURROUND_COUNT > 0.3, '동굴도 주변 땅은 앞쪽까지 그린다 (2026-11-11)');
 }
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 assert.ok(!html.includes('type="range"'), '파라미터 슬라이더 제거');

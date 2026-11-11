@@ -5,7 +5,8 @@ import { buildPlain } from './plain.js';
 import { buildLavaTube } from './lavaTube.js';
 import { buildRidge } from './ridge.js';
 import { buildSurroundings, joinPoints } from './surroundings.js';
-import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor } from './choices.js';
+import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor, flowsFor, roomAirFor, floorAt, surfaceSpot } from './choices.js';
+import { buildFlowPoints, pairSpots, outSpots, waterSources } from './flows.js';
 import hud from './hud.json' with { type: 'json' };
 import { openBriefing } from './intro.js';
 import { createHexBoard, shortName } from './hexBoard.js';
@@ -239,7 +240,67 @@ try {
     setHover(found ?? null);
     if (hovered) placeTip();
   }
+  // 자원 흐름(물 등): 장치·집 사이를 잇는 관 위로 점이 흐른다. 선택이 바뀔 때마다 새로 만든다 (flows.js)
+  let flowLayer = null;
+  const FLOW_APPEAR_MS = 900;
+  function dropFlows() {
+    if (!flowLayer) return;
+    assetGroup.remove(flowLayer.points); flowLayer.points.geometry.dispose(); flowLayer = null;
+  }
+  function syncFlows() {
+    dropFlows();
+    const homesOf = () => {
+      const homes = moduleLayer?.data.homes;
+      if (homes?.length) return homes.map(home => home.at);
+      if (!moduleLayer) return [];
+      const box = new THREE.Box3().setFromBufferAttribute(moduleLayer.points.geometry.getAttribute('position'));
+      return [[(box.min.x + box.max.x) / 2, box.min.y, (box.min.z + box.max.z) / 2]];
+    };
+    // 물이 나는 곳(물웅덩이·얼음·흙 물기)과, 그 장치에서 흐름이 시작할 자리 (오버레이의 water)
+    const letter = siteLetter(currentSite), anchors = new Map(), sources = [];
+    for (const [id, layer] of overlayLayers) {
+      const def = choiceData.layers.overlay[id], water = waterSources(def, letter, layer.data.spots ?? [], moduleLayer?.data.homes ?? [], layer.data.shrink ?? 1);
+      anchors.set(id, water.anchors);
+      // 동굴 지대에서 굴 밖(outside)에 놓인 장치는 지표 높이를 따른다
+      const surface = currentSite === 'lavaTube' && def.outside?.[letter] ? (x, z) => surfaceSpot('lavaTube', [x, z])[1] : undefined;
+      sources.push(...water.sources.map(source => ({ ...source, ground: surface, past: layer.week < week })));
+    }
+    // 집 안 공기: 그 주에 열을 빼는 방법을 고르기 전에는 더운 공기(주황), 고르면 찬 공기(파랑)가 집 안에 아른거린다
+    const air = roomAirFor(selection, week);
+    if (air) for (const home of moduleLayer?.data.homes ?? []) sources.push({ type: 'room', air, r: home.r, center: home.at, top: home.top });
+    const flows = [], drawn = new Set();
+    for (const flow of flowsFor(selection)) {
+      const lists = flow.nodes.map(node => node.id === 'homes' ? homesOf() : node.id === 'out' ? 'out' : anchors.get(node.overlay) ?? []);
+      if (lists.some(list => !list.length)) continue;
+      const all = lists.filter(list => list !== 'out').flat();
+      const center = [0, 1, 2].map(j => all.reduce((sum, p) => sum + p[j], 0) / all.length);
+      const segments = [];
+      for (let i = 0; i + 1 < lists.length; i++) {
+        const to = lists[i + 1] === 'out' ? outSpots(lists[i], center) : lists[i + 1], below = flow.nodes[i + 1].id === flow.below;
+        // 같은 종류의 같은 구간은 한 번만 그린다 (발전 → 배터리는 집·산소 장치 흐름이 함께 지난다)
+        for (const [a, b] of pairSpots(lists[i], to)) {
+          const key = flow.kind + a.join() + b.join();
+          if (drawn.has(key)) continue;
+          drawn.add(key); segments.push(below ? [a, b, { below }] : [a, b]);
+        }
+      }
+      if (!segments.length) continue;
+      flows.push({ kind: flow.kind, amount: flow.amount, vary: flow.vary, past: flow.week < week, fadeEnd: lists.at(-1) === 'out', segments });
+    }
+    if (!flows.length && !sources.length) return;
+    const site = currentSite, ground = site === 'lavaTube' ? null : (x, z) => floorAt(site, x, z);
+    const data = buildFlowPoints(flows, ground, sources);
+    const geometry = geometryFrom(data);
+    geometry.setAttribute('lineWeight', new THREE.BufferAttribute(data.weights, 1));
+    const points = new THREE.Points(geometry, material);
+    points.frustumCulled = false; // 흐르는 점이 움직이므로 처음 경계 구로 자르지 않는다
+    assetGroup.add(points);
+    flowLayer = { points, animate: data.animate, start: performance.now() };
+    if (window.terrainDiagnostics) window.terrainDiagnostics.flows = flows.map(f => ({ kind: f.kind, amount: f.amount, past: f.past, segments: f.segments.length }));
+    if (window.terrainDiagnostics) window.terrainDiagnostics.sources = sources.map(source => ({ type: source.type, r: source.r, center: source.center }));
+  }
   function clearAssets() {
+    dropFlows();
     assetToken++; selection = {}; decided = {}; week = 1; focusTween = null;
     dropLayer(moduleLayer); moduleLayer = null;
     overlayLayers.forEach(dropLayer); overlayLayers.clear(); reveals.length = 0;
@@ -284,7 +345,7 @@ try {
       if (overlayLayers.has(id)) continue;
       const data = await buildOverlay(site, id, moduleLayer?.data, [...overlayLayers.values()].map(layer => layer.data));
       if (token !== assetToken) return;
-      if (data.positions.length) { overlayLayers.set(id, { week: layers.weeks[id], data, points: addLayer(data) }); added = true; }
+      if (data.positions.length || data.spots?.length) { overlayLayers.set(id, { week: layers.weeks[id], data, points: addLayer(data) }); added = true; }
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlaySpots = { ...window.terrainDiagnostics.overlaySpots, [id]: data.spots ?? data.spot };
       if (window.terrainDiagnostics) window.terrainDiagnostics.overlayRadius = { ...window.terrainDiagnostics.overlayRadius, [id]: data.footprint?.r };
     }
@@ -296,10 +357,12 @@ try {
     // 주차가 끝난 선지(앞 주차에 생긴 레이어)는 면으로 그린다
     const all = [moduleLayer, ...overlayLayers.values()].filter(Boolean);
     all.forEach(layer => showPast(layer, layer.week < week));
+    syncFlows();
     $('#legend').hidden = !moduleLayer;
     $('#legend-old').hidden = !all.some(layer => layer.points.visible && layer.role === 'old');
     $('#legend-past').hidden = !all.some(layer => layer.mesh?.visible);
-    if (added) focusAssets();
+    // 카드를 누르면 먼저 지금까지 지은 기지 전체(물 흐름·물이 나는 곳 포함)가 들어오게 물러서서 보여 준다 (2026-11-11 사용자 요청)
+    if (added) focusAssets(true);
   }
   // 단계별 선지: 1단계 위치(아래 A·B·C 카드) → 2단계 짓는 방식 → 3단계 숨 쉴 공기
   function renderStep(stepId, element, visible) {
@@ -461,6 +524,7 @@ try {
     let radius = size;
     const box = new THREE.Box3();
     for (const layer of shown) if (layer) box.union(new THREE.Box3().setFromBufferAttribute(layer.points.geometry.getAttribute('position')));
+    if (whole && flowLayer) box.union(new THREE.Box3().setFromBufferAttribute(flowLayer.points.geometry.getAttribute('position')));
     if (!box.isEmpty()) {
       box.getCenter(center);
       radius = Math.max(shown === overlays ? 2.2 : 3, box.getSize(new THREE.Vector3()).length() * 0.75);
@@ -610,8 +674,8 @@ try {
     let data = cache.get(key), cached = Boolean(data);
     if (!data) {
       data = BUILDERS[name](POINT_COUNT, { ...definitions[name], view: inside ? 'interior' : 'section' });
-      // 동굴 내부에서는 주변 지형이 보이지 않으므로 붙이지 않는다. 동굴 절개면 앞쪽은 비운다.
-      if (!inside) data = joinPoints(data, buildSurroundings(name, definitions[name], name === 'lavaTube'));
+      // 동굴 내부에서는 주변 지형이 보이지 않으므로 붙이지 않는다.
+      if (!inside) data = joinPoints(data, buildSurroundings(name, definitions[name])); // 동굴도 주변 땅은 앞쪽까지 다 그린다 (2026-11-11)
       cache.set(key, data);
     }
     const total = data.positions.length / 3, elapsed = performance.now() - start;
@@ -799,6 +863,12 @@ try {
           fadePoints(layer.points, 1 - smooth(0, 1, progress));
           if (progress >= 1) { pastFades.delete(layer); delete layer.fade; fadePoints(layer.points, 1); showPast(layer, true); }
         }
+      }
+      if (flowLayer) {
+        const geometry = flowLayer.points.geometry, position = geometry.getAttribute('position'), colorAttr = geometry.getAttribute('color');
+        const appear = clamp((time - flowLayer.start) / FLOW_APPEAR_MS);
+        flowLayer.animate(position.array, colorAttr.array, geometry.userData.baseColor, reducedMotion ? 0 : time / 1000, appear);
+        position.needsUpdate = true; colorAttr.needsUpdate = true;
       }
       if (reveals.length) {
         prepareProjection();
