@@ -91,11 +91,11 @@ export function createFaceController({ random = Math.random, reducedMotion = fal
   function update(dt, body) {
     dt = Math.min(dt, 0.1); t += dt;
     const s = body ? body.sev : { hypoxia: 0, heat: 0, sweat: 0, cold: 0, shiver: 0, pressure: 0, fatigue: 0 };
-    const H = smooth('H', s.hypoxia, dt), Q = smooth('Q', s.heat, dt), W = smooth('W', s.sweat, dt, 0.6),
-      C = smooth('C', s.cold, dt), S = smooth('S', s.shiver, dt), P = smooth('P', s.pressure, dt, 0.15), F = smooth('F', s.fatigue, dt, 0.6);
+    const H = smooth('H', s.hypoxia, dt), Q = smooth('Q', s.heat, dt), W = smooth('W', s.sweat, dt, 0.3),
+      C = smooth('C', s.cold, dt), S = smooth('S', s.shiver, dt), P = smooth('P', s.pressure, dt, 0.15), F = smooth('F', s.fatigue, dt, 0.3);
     // 더위를 "느끼는" 정도: 심부 체온(heat)은 몇 분에 걸쳐 천천히 오르지만, 덥다는 느낌·얼굴 붉어짐은 피부 온도로 바로 와요.
     // 느끼는 기온 30~42°C, 습구온도가 높을수록(땀이 안 마름) 더 세게 [GAME 근사]
-    const hotFeel = body && body.eff ? smooth('HF', ss(30, 42, body.eff.tempC) * (0.55 + 0.45 * ss(20, 30, body.wetBulbC ?? 20)), dt, 1.2) : 0;
+    const hotFeel = body && body.eff ? smooth('HF', ss(30, 42, body.eff.tempC) * (0.55 + 0.45 * ss(20, 30, body.wetBulbC ?? 20)), dt, 0.5) : 0;
     const Qx = union(Q, 0.75 * hotFeel);   // 표정에 쓰는 더위
     const motion = reducedMotion ? 0.25 : 1;
 

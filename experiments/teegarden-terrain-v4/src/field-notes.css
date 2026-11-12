@@ -1,0 +1,43 @@
+/* 메모장 창 (src/fieldNotes.js): 게임의 다른 창과 같은 틀(.window · .titlebar · .wbtn)에 주차별 노드만.
+   색은 CLAUDE.md 화면 토큰만 쓴다 (다크 테마, 빨강·초록·보라 없음). 감수는 주황 */
+.fn-modal{--fn-bg:#0A1434;--fn-ink:#E8DFC8;--fn-text:#DCE6FF;--fn-sub:#8C9DD0;--fn-hi:#8FC1FF;--fn-edge:#2B47C4;--fn-chosen:#0E1B48;--fn-orange:#FF993D;
+  position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,4,12,.72);font-family:"Terrarum Sans Bitmap",monospace}
+.fn-modal[hidden]{display:none}
+.fn-win{width:min(720px,96vw);max-height:min(80vh,720px);animation:fn-open .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes fn-open{from{opacity:0;transform:scaleY(.06)}60%{opacity:1}}
+.fn-win .titlebar{display:flex;align-items:center;justify-content:space-between}
+.fn-rows{flex:1 1 auto;min-height:0;overflow:auto;padding:14px 18px 10px;display:grid;gap:6px;scrollbar-width:thin;scrollbar-color:var(--fn-edge) transparent}
+.fn-row{display:flex;align-items:flex-start;gap:14px;padding:6px 0;border-bottom:1px solid rgba(143,193,255,.1)}
+.fn-row:last-child{border-bottom:0}
+.fn-wk{flex:none;width:34px;padding-top:26px;color:var(--fn-hi);font-size:16px}
+
+.fn-map{display:block;max-width:100%;height:auto;overflow:visible}
+.fn-line{stroke:var(--fn-ink);stroke-width:1.6;opacity:.8}
+.fn-line.wait{stroke:var(--fn-sub);stroke-dasharray:3 6;opacity:.5}
+.fn-node{outline:none}
+.fn-node .fn-hex{fill:none;stroke:var(--fn-sub);stroke-width:1.4;stroke-dasharray:5 4;opacity:.7}
+.fn-node.done .fn-hex{fill:var(--fn-chosen);stroke:var(--fn-hi);stroke-dasharray:none;stroke-width:1.6;opacity:1}
+.fn-node[data-w]{cursor:pointer}
+.fn-node[data-w]:hover .fn-hex,.fn-node[data-w]:focus-visible .fn-hex,.fn-node.pinned .fn-hex{stroke:var(--fn-ink);stroke-width:2.4}
+.fn-icon{fill:none;stroke:var(--fn-ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.fn-node text{text-anchor:middle}
+.fn-name{font-size:13px;fill:var(--fn-text)}
+.fn-q{font-size:16px;fill:var(--fn-sub)}
+
+/* 정보 팝업: 선지판 설명 팝업과 같은 모양 */
+.fn-tip{position:fixed;z-index:46;width:260px;padding:10px 12px;display:grid;gap:6px;background:rgba(10,20,52,.97);border:1px solid var(--fn-hi);color:var(--fn-text);font-size:13px;line-height:1.45;
+  pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.fn-tip.on{opacity:1;transform:none}
+.fn-tip p{margin:0}
+.fn-tip .t-step{font-size:12px;color:var(--fn-sub)}
+.fn-tip .t-name{font-size:15px;color:var(--fn-ink)}
+.fn-tip .t-row{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:start}
+.fn-tip .t-row span:first-child{border:1px solid var(--fn-edge);text-align:center;font-size:12px;color:var(--fn-hi)}
+.fn-tip .t-row.cost span:first-child{border-color:var(--fn-orange);color:var(--fn-orange)}
+
+/* 선지판 머리 줄의 '메모장' 단추. 한 주를 다 결정하면 두 번 반짝 */
+.hb-notes{font:inherit;font-size:13px;flex:none;background:#0A1434;color:#8FC1FF;border:1px solid #2B47C4;padding:1px 8px;cursor:pointer;white-space:nowrap}
+.hb-notes:hover,.hb-notes:focus-visible{border-color:#8FC1FF;outline:none}
+.hb-notes.new{animation:fn-ping 1.2s ease-out 2}
+@keyframes fn-ping{0%{box-shadow:0 0 0 0 rgba(143,193,255,.6)}100%{box-shadow:0 0 0 8px rgba(143,193,255,0)}}
+@media(prefers-reduced-motion:reduce){.fn-win,.hb-notes.new{animation:none}.fn-tip{transition:none}}
