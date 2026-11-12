@@ -10,8 +10,32 @@
 .hb-prompt{margin:0;display:flex;align-items:center;gap:10px;color:var(--hb-hi);word-break:keep-all}
 .hb-prompt b{font-weight:400;background:var(--hb-cream);color:var(--hb-ink);padding:0 8px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
 .hb-count{color:var(--hb-sub);font-size:13px;flex:none}
+/* 단계 이름 줄: 지금 비추는 묶음을 밝게. 결정한 단계는 눌러서 둘러볼 수 있다 */
+.hb-steps{display:flex;align-items:center;gap:6px;margin-left:auto;min-width:0}
+.hb-steps i{width:18px;height:1px;background:var(--hb-card-line)}
+.hb-steps button{font:inherit;font-size:13px;background:none;border:1px solid transparent;padding:1px 6px;cursor:pointer;color:var(--hb-sub);white-space:nowrap}
+.hb-steps button.ok{color:var(--hb-b2)}.hb-steps button.now{color:var(--hb-cream)}
+.hb-steps button.on{border-color:var(--hb-line);background:var(--hb-ink)}
+.hb-steps button:hover:not(:disabled),.hb-steps button:focus-visible{border-color:var(--hb-hi);outline:none}
+.hb-steps button:disabled{cursor:default;opacity:.7}
+@media(max-width:1100px){.hb-head{flex-wrap:wrap}.hb-steps{margin-left:0}}
+/* 판 안의 단계 제목은 위 단계 줄이 대신한다 */
+.hb-head-t{display:none}
+/* 단계를 넘어갈 때 연결선을 따라가는 빛 한 점 */
+.hb-comet{pointer-events:none}
+.hb-comet .c0{fill:var(--hb-b2);opacity:.45;filter:url(#hb-glow)}
+.hb-comet .c1{fill:var(--hb-hi);opacity:.9}
+.hb-comet .c2{fill:var(--hb-lamp)}
+.hexboard.hb-moving .hb-node{pointer-events:none}
 .hb-body{display:flex;align-items:center;gap:16px;min-width:0}
-.hb-map{display:block;flex:0 1 auto;max-width:100%;height:auto;overflow:visible}
+.hb-view{flex:1 1 auto;min-width:0;display:flex;justify-content:center;overflow:hidden}
+.hb-map{display:block;flex:none;max-width:100%;height:auto;overflow:hidden;
+  /* 잘린 느낌이 들지 않게 판 가장자리를 부드럽게 흐린다 (양옆은 넓게, 위아래는 살짝) */
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16%,#000 84%,transparent 100%),linear-gradient(180deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+  -webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0,#000 16%,#000 84%,transparent 100%),linear-gradient(180deg,transparent 0,#000 7%,#000 93%,transparent 100%);mask-composite:intersect}
+/* 한 주를 다 결정해 물러선 화면:  고른 길이 또렷하게, 나머지는 더 흐리게 */
+.hb-overview .s-done{opacity:.18;transition:opacity .6s}
+.hb-overview .hb-map{-webkit-mask-image:radial-gradient(ellipse 72% 80% at 50% 50%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 72% 80% at 50% 50%,#000 62%,transparent 100%)}
 .hb-decide{flex:0 0 220px;margin-left:auto}
 @media(max-width:1100px){.hb-body{flex-wrap:wrap}.hb-decide{flex:1 1 100%}}
 
@@ -59,7 +83,7 @@
 .hb-ghost text{fill:var(--hb-line);font-size:13px;text-anchor:middle}
 .hb-node.fire .glow{animation:hb-fire .6s ease-out}
 @keyframes hb-fire{0%{opacity:1;stroke-width:16}100%{opacity:.35;stroke-width:6}}
-.hb-node.reveal .body{animation:hb-in .5s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(.75s + var(--j, 0) * 90ms)}
+.hb-node.reveal .body{animation:hb-in .5s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(.85s + var(--j, 0) * 90ms)}
 @keyframes hb-in{0%{transform:scale(.4);opacity:0}40%{opacity:.3}55%{opacity:1}65%{opacity:.4}}
 
 .hb-tip{position:absolute;z-index:20;width:280px;padding:10px 12px;display:grid;gap:7px;background:rgba(10,20,52,.97);border:1px solid var(--hb-hi);color:var(--hb-text);font-size:14px;line-height:1.45;pointer-events:none;
@@ -73,3 +97,10 @@
 .hb-tip .t-row.cost span:first-child{border-color:var(--hb-orange);color:var(--hb-orange)}
 .hb-tip .t-hint{font-size:12px;color:var(--hb-cream)}
 @media(prefers-reduced-motion:reduce){.hexboard *{animation:none!important;transition:none!important}}
+
+/* '다음 주로': 고른 토큰이 앞 단계부터 한 번씩 커지며 번쩍, 그 사이 빛줄기도 차례로 밝아진다 (--o = 단계 순서) */
+.hb-cheer .s-chosen .body{animation:hb-cheer .75s cubic-bezier(.2,1.4,.4,1) calc(var(--o, 0) * .28s) both}
+.hb-cheer .s-chosen .glow{animation:hb-fire .9s ease-out calc(var(--o, 0) * .28s) both}
+.hb-cheer .hb-beam{animation:hb-beam-flash .7s ease-out calc((var(--o, 1) - .5) * .28s) both}
+@keyframes hb-cheer{0%{transform:scale(1)}35%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes hb-beam-flash{0%{filter:none}35%{filter:brightness(2.2)}100%{filter:none}}
