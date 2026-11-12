@@ -22,12 +22,13 @@ export const SCI = {
 /** 게임 조정값 [GAME] — 여기 숫자는 연출용이에요 */
 export const GAME = {
   dt: 0.1,                 // 계산 간격, 초
+  pace: 4,                 // 몸 상태 변화를 몇 배 빠르게 보여 줄지. 선지를 고르면 얼굴이 바로 반응하도록 시간을 압축해요 (1 = 아래 초 값 그대로)
   spo2TauDown: 6, spo2TauUp: 4,     // 산소포화도가 따라가는 속도, 초 (실제보다 훨씬 빠르게 압축)
-  coreTau: 20,             // 체온이 따라가는 속도, 초 (실제는 수십 분, 게임용 압축)
+  coreTau: 10,             // 체온이 따라가는 속도, 초 (실제는 수십 분, 게임용 압축)
   earTau: 3,               // 귀 안쪽 압력이 바깥에 맞춰지는 속도, 초
   hypoxicDriveStartKPa: 8, // 동맥 산소 분압이 이 아래로 떨어지면 숨이 가빠지기 시작 (약 60 mmHg 부근을 참고한 근사)
   activityO2DropKPa: 0.35, // 활동량 1 MET당 산소 분압 감소 (산소가 부족할 때만) — 근사
-  levelDwellSec: 1.0,      // 상태 단계가 바뀐 뒤 최소 유지 시간 (깜빡거림 방지)
+  levelDwellSec: 0.4,      // 상태 단계가 바뀐 뒤 최소 유지 시간 (깜빡거림 방지)
   levels: { mildOn: 0.25, mildOff: 0.15, severeOn: 0.6, severeOff: 0.48 }, // 단계 문턱 (켜질 때 > 꺼질 때)
 };
 
@@ -87,6 +88,7 @@ export class Physiology {
    */
   step(env, eff, dt = GAME.dt) {
     this.t += dt;
+    dt *= GAME.pace;  // 아래 따라가기 계산은 압축된 시간으로, 단계 유지 시간(this.t)은 실제 시간으로
     const met = env.activityMET;
     if (this.earKPa === null) this.earKPa = eff.pressureKPa;
 
