@@ -8,79 +8,58 @@ import './guide.css';
 const $ = selector => document.querySelector(selector);
 
 // target: 밝힐 칸. 여러 개를 적으면 화면에 보이는 첫 번째를 쓰고, 하나도 없으면 그 장을 건너뛴다
-// say: 설명 문단, list: 설명 아래 항목, todo: 사용자가 할 일
+// say: 설명 문단, list: 설명 아래 항목, todo: 사용자가 할 일 (모두 없어도 된다. 보면 아는 건 적지 않는다)
 // press: 밝힌 버튼을 사용자가 직접 눌러야 다음으로 간다 (다른 곳을 누르면 버튼이 깜빡여 알려 준다)
 // close: 큰 창을 보여 주는 장. 이 장을 떠날 때 그 창의 닫기 버튼을 대신 누른다
 const STEPS = [
   {
     target: ['.p-left'], title: '탐사 상태',
-    say: ['지금 몇 주차인지, 고른 곳의 기온(TEMP)과 산소(O₂), 지금까지 결정한 기록(LOG)이 나와요.'],
-    todo: '읽기만 하면 돼요. 위쪽 W1 같은 주차 탭을 누르면 그 주 브리핑을 다시 볼 수 있어요.',
+    say: ['기온 · 산소와 지금까지 결정한 기록(LOG)이에요.'],
+    todo: 'W1 같은 주차 탭을 누르면 그 주 브리핑을 다시 볼 수 있어요.',
   },
   {
     target: ['.p-stage'], title: '현장 화면',
-    say: ['행성과 기지를 점으로 보여 주는 화면이에요. 고른 선지가 여기에 바로 지어져요.'],
-    todo: '마우스로 끌면 돌려 볼 수 있어요. 행성 위 A · B · C 를 눌러도 그 지점으로 다가가요.',
+    say: ['고른 선지가 여기에 지어져요.'],
+    todo: '끌어서 돌려 볼 수 있어요.',
   },
   {
-    target: ['.p-right'], title: '행성 정보',
-    say: ['방금 브리핑에서 들은 이 행성의 기본 수치예요.'],
-    todo: '다음 장에서 이 칸의 확대 버튼을 같이 눌러 볼게요.',
-  },
-  {
-    target: ['#planet-max'], title: '행성 정보 확대 버튼', press: true,
-    say: ['PLANET_DATA 칸 오른쪽 위에 있는 □ 버튼이에요. 누르면 행성 정보가 큰 창으로 떠요.'],
-    todo: '깜빡이는 테두리 안의 □ 버튼을 직접 눌러 보세요.',
+    target: ['#planet-max'], title: '행성 정보', press: true,
+    todo: '깜빡이는 □ 를 눌러 크게 보세요.',
   },
   {
     target: ['.data-modal:not([hidden]) .data-card'], title: '행성 정보 큰 창', close: '#data-close',
-    say: ['□ 버튼을 누르면 이런 창이 떠요.'],
-    list: [
-      '맨 위: 행성 모습과 이름 · 상태',
-      '기본 수치: 숫자마다 무슨 뜻인지 쉬운 말로 풀어 줘요.',
-      '조석 고정: 낮 · 밤 · 황혼 지대가 왜 생기는지 알려 줘요.',
-    ],
-    todo: '다 봤으면 창 오른쪽 위 × 를 누르면 닫혀요. 지금은 다음 ▶ 을 누르면 안내가 대신 닫아 줘요.',
+    list: ['수치마다 뜻을 쉬운 말로 풀어 줘요.', '낮 · 밤 · 황혼 지대가 왜 생기는지 알려 줘요.'],
   },
   {
     target: ['.p-crew'], title: '대원 상태',
     say: [
-      '아직 아무도 이 행성으로 이주하지 않았어요.',
-      '이 얼굴은 “지금 이 행성에 사람이 서 있다면 어떤 상태일까”를 미리 보여 주는 거예요.',
-      '기지와 산소 방식을 정하기 전에는 바깥 공기를 그대로 마시는 셈이라 힘들어 보여요. 선택할수록 표정이 바뀌어요.',
+      '아직 아무도 이주하지 않았어요.',
+      '이 얼굴은 “지금 이 행성에 사람이 서 있다면 어떤 상태일까”를 보여 줘요.',
+      '산소 방식을 정하기 전에는 바깥 공기 그대로라 힘들어 보여요.',
     ],
-    todo: '다음 장에서 이 칸의 확대 버튼을 같이 눌러 볼게요.',
   },
   {
-    target: ['#crew-max'], title: '대원 상태 확대 버튼', press: true,
-    say: ['CREW_LINK 칸 오른쪽 위에 있는 □ 버튼이에요. 누르면 대원 상태가 큰 창으로 떠요. 얼굴을 눌러도 같은 창이 떠요.'],
-    todo: '깜빡이는 테두리 안의 □ 버튼을 직접 눌러 보세요.',
+    target: ['#crew-max'], title: '대원 상태', press: true,
+    todo: '깜빡이는 □ 를 눌러 크게 보세요.',
   },
   {
     target: ['.crew-modal:not([hidden]) .crew-card'], title: '대원 상태 큰 창', close: '#crew-close',
-    say: ['□ 버튼을 누르면 이런 창이 떠요. 왼쪽은 크게 본 얼굴, 오른쪽은 몸 상태예요.'],
-    list: [
-      '맨 위 글: 지금 가장 힘든 점과 그 정도 (예: 호흡곤란 · 심함)',
-      'SpO₂ · 체온 · 호흡: 피 속 산소, 몸 온도, 1분에 숨 쉬는 횟수',
-      '아래 막대: 호흡곤란 · 열 · 추위 · 압력 · 피로가 얼마나 심한지',
-      '모두 “지금 이 행성에 사람이 서 있다면”을 가정한 추정 값이에요.',
-    ],
-    todo: '다 봤으면 창 오른쪽 위 X 를 누르면 닫혀요. 지금은 다음 ▶ 을 누르면 안내가 대신 닫아 줘요.',
+    list: ['맨 위: 지금 가장 힘든 점과 그 정도', 'SpO₂: 피 속 산소', '막대: 증상마다 얼마나 심한지', '모두 추정 값이에요.'],
   },
   {
     target: ['.hb-head', '.p-decision .step-title'], title: '지금 할 일',
-    say: ['지금 해야 할 일과 순서가 나와요. 1주차는 1 위치 → 2 짓는 방식 → 3 산소 순서로 정해요.'],
-    todo: '오른쪽 숫자는 몇 개를 결정했는지예요. ▤ 메모장을 누르면 지금까지 고른 길을 볼 수 있어요.',
+    say: ['1 위치 → 2 짓는 방식 → 3 산소 순서로 정해요.'],
+    todo: '▤ 메모장에서 고른 길을 다시 볼 수 있어요.',
   },
   {
     target: ['.hb-view', '.p-decision .sites'], title: '선지',
-    say: ['육각형 하나가 선지 하나예요. 지금은 기지를 세울 위치 세 곳이 있어요.'],
-    todo: '하나를 눌러 보세요. 현장 화면에 그 선택이 보여요. 결정하기 전까지는 다른 것도 마음껏 눌러 봐도 돼요.',
+    say: ['육각형 하나가 선지 하나예요.'],
+    todo: '결정하기 전까지는 마음껏 눌러 봐도 돼요.',
   },
   {
     target: ['.hb-decide'], title: '결정 버튼',
-    say: ['마음에 드는 선지를 골랐으면 이 버튼으로 확정해요. 결정하면 다음 단계가 열려요.'],
-    todo: '이제 기지를 세울 위치 A · B · C 중 하나를 눌러 시작해 보세요.',
+    say: ['고른 선지를 확정해요.'],
+    todo: '이제 위치 A · B · C 중 하나를 골라 보세요.',
   },
 ];
 
@@ -139,9 +118,12 @@ function nudge() {
   spot.classList.remove('guide-nudge'); void spot.offsetWidth; spot.classList.add('guide-nudge');
 }
 /** 밝힌 확대 버튼을 진짜로 누르고, 뜬 큰 창을 보여 주는 다음 장으로 */
+let pressing = false; // 큰 창이 뜨기 전에 여러 번 눌러도 한 번만
 function press() {
+  if (pressing) return;
+  pressing = true;
   current.click();
-  requestAnimationFrame(() => go(index + 1, { fromPress: true }));
+  requestAnimationFrame(() => { pressing = false; go(index + 1, { fromPress: true }); });
 }
 function forward() {
   if (STEPS[index]?.press) return press(); // 확대 버튼 장의 Enter 는 그 버튼을 누른 것과 같다
@@ -168,9 +150,10 @@ function go(next, { fromPress = false, back = false } = {}) {
   current = targetOf(step);
   current.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   root.querySelector('#guide-title').textContent = step.title;
-  root.querySelector('.guide-say').replaceChildren(...step.say.map(text => Object.assign(document.createElement('p'), { textContent: text })));
+  root.querySelector('.guide-say').replaceChildren(...(step.say ?? []).map(text => Object.assign(document.createElement('p'), { textContent: text })));
   root.querySelector('.guide-list').replaceChildren(...(step.list ?? []).map(text => Object.assign(document.createElement('li'), { textContent: text })));
-  root.querySelector('.guide-todo span').textContent = step.todo;
+  root.querySelector('.guide-todo span').textContent = step.todo ?? '';
+  root.querySelector('.guide-todo').hidden = !step.todo;
   root.querySelector('.guide-count').textContent = `${index + 1} / ${STEPS.length}`;
   const last = !STEPS.slice(index + 1).some(reachable);
   // 확대 버튼 장에는 다음 버튼이 없다: 깜빡이는 테두리 속 버튼을 직접 눌러야 넘어간다 (키보드는 Enter 로도 누를 수 있다)
