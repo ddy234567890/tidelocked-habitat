@@ -441,3 +441,66 @@ body{background-image:linear-gradient(rgba(143,193,255,.06) 1px,transparent 1px)
 /* 노트북: 육각 선지판과 결정 버튼이 칸 안에 들어가게 */
 .hb-map{min-width:0}
 @media(max-width:1500px) and (min-width:1101px){.hb-decide{flex:0 0 160px}}
+
+/* 왼쪽 칸 주차 요약 (W1·W2 탭을 누르면 LOG 자리에 뜬다) */
+.p-left .panel-body{overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--c) transparent}
+.week-summary{margin-top:auto;border-top:1px dashed var(--c);padding-top:12px;display:flex;flex-direction:column;gap:8px;color:var(--t);font-size:var(--fs-m,16px);line-height:var(--lh-m,1.4)}
+.week-summary p{margin:0}
+.week-head{color:var(--c);text-shadow:1px 0 currentColor}
+.week-head b{font-weight:400;color:var(--o);border:1px solid var(--o);padding:0 6px;margin-right:4px}
+.week-goal{color:var(--t);opacity:.85}
+.week-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.week-rows li{display:flex;flex-direction:column;gap:2px;border-left:2px solid var(--c);padding-left:8px}
+.week-rows li.empty{opacity:.55}
+.week-rows small{font-size:var(--fs-s,13px);color:var(--c)}
+.week-rows em{font-style:normal;color:var(--o)}
+.week-total{color:var(--o)}
+.log[hidden],.week-summary[hidden],.p-left .stat[hidden]{display:none}
+.week-summary{margin-top:0;border-top:0;padding-top:0}
+/* TEMP·O₂ 칸: 바깥 값(작게)과 기지 안 값(크게)을 두 줄로 */
+.stat-row{display:flex;align-items:baseline;gap:10px}
+.stat-row>small{min-width:4.5em;color:var(--t)}
+.stat-row.out b{font-weight:400;font-size:var(--fs-m,16px);color:var(--o)}
+
+/* 게이지 4개 (공기 · 물 · 식량 · 전력): '현재' 탭 맨 위. 20 이하는 주황 #F2B84B (빨강 대신) */
+.gauge-list{display:flex;flex-direction:column;gap:6px;padding-bottom:12px;border-bottom:1px dashed var(--c)}
+.gauge-list[hidden]{display:none}
+.gauge-row{display:grid;grid-template-columns:3em 2.6em 1fr;align-items:center;gap:8px;color:var(--t);font-size:var(--fs-m,16px);line-height:1.3}
+.gauge-row .g-name{color:var(--t)}
+.gauge-row .g-val{font-weight:400;color:var(--c);text-align:right;font-variant-numeric:tabular-nums;text-shadow:1px 0 currentColor}
+.gauge-row .g-bar{display:block;height:10px;border:1px solid var(--c);min-width:0}
+.gauge-row .g-bar i{display:block;height:100%;width:0;background:var(--c);transition:width .4s}
+.gauge-row.low .g-name,.gauge-row.low .g-val{color:#F2B84B}
+.gauge-row.low .g-bar{border-color:#F2B84B}.gauge-row.low .g-bar i{background:#F2B84B}
+.week-rows em.gauge-change{color:var(--c)}
+@media (prefers-reduced-motion:reduce){.gauge-row .g-bar i{transition:none}}
+
+/* 게이지가 0 이 되면 뜨는 실패 창 */
+.fail-modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(2,4,12,.82);padding:16px}
+.fail-modal[hidden]{display:none}
+.fail-card{max-width:440px;width:100%;background:var(--ink);border:1px solid #F2B84B;padding:24px;display:flex;flex-direction:column;gap:12px;color:var(--t)}
+.fail-code{margin:0;color:#F2B84B;letter-spacing:.08em}
+.fail-card h2{margin:0;font-weight:400;font-size:28px;color:#F2B84B}
+.fail-card p{margin:0}
+.fail-card .decide{align-self:flex-start}
+
+/* 왼쪽 '현재' 칸을 스크롤 없이 한눈에 (2026-11-13): TEMP·O₂ 는 한 줄에 칩 | 바깥 | 기지 안 */
+.p-left .panel-body{gap:14px}
+.p-left .stat{display:grid;grid-template-columns:4.2em 1fr 1fr;align-items:end;column-gap:12px;row-gap:0}
+.p-left .stat .chip{align-self:center}
+.p-left .stat-row{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+.p-left .stat-row>small{min-width:0;font-size:var(--fs-s,13px);line-height:1.2;color:var(--t);opacity:.85}
+.p-left .stat-row.out b,.p-left .stat-row strong{font-weight:400;font-size:26px;line-height:1.15;white-space:nowrap;text-shadow:1px 0 currentColor}
+.p-left .stat-row.out b{color:var(--o)}
+.p-left .stat-row strong{color:var(--c)}
+.p-left .gauge-list{gap:5px;padding-bottom:12px}
+/* 게이지는 2×2 로, 간격은 촘촘하게 (작은 화면 1024×768 에서도 스크롤 없이) */
+.p-left .panel-body{padding-top:12px;padding-bottom:12px;gap:10px}
+.p-left .gauge-list{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:6px;padding-bottom:10px}
+.p-left .gauge-row{grid-template-columns:auto 2em 1fr;gap:6px}
+.p-left .stat-row.out b,.p-left .stat-row strong{font-size:22px}
+/* 주차 요약도 스크롤 없이: 단계 이름과 고른 선지를 한 줄에 */
+.week-summary{gap:6px}
+.week-rows{gap:4px}
+.week-rows li{flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap}
+.week-rows small{flex:0 0 auto;min-width:4.5em}

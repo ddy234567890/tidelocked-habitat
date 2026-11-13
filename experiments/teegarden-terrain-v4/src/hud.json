@@ -4,6 +4,8 @@
   "crewName": null,
   "temperature": { "night": 12, "day": 66, "now": null },
   "oxygen": null,
+  "outsideOxygen": 14,
+  "outsideOxygenNote": "왼쪽 칸 O₂ 의 바깥 값 (%). 1주차 행성 강의의 '산소 약 14%'와 같다. 지구 20.9% 보다 조금 부족해 숨이 찬 정도 (2026-11-13). 위 oxygen 은 대원 얼굴(crew.js)이 쓰는 값이라 따로 둔다",
   "sites": {
     "plain": { "temperature": [55, 66] },
     "lavaTube": { "temperature": [25, 30] },
