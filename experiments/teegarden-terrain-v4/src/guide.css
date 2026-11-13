@@ -17,4 +17,15 @@
 .guide-skip:hover{color:var(--hover)}
 .guide-next{border:2px solid var(--deep);background:var(--head);color:var(--hi);padding:6px 14px}
 .guide-next:hover{border-color:var(--edge)}
-@media (prefers-reduced-motion:reduce){.guide-spot,.guide-card{transition:none}.guide-card.guide-in .guide-body{animation:none}}
+.guide-list{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.guide-list li{position:relative;padding-left:14px;color:var(--hi);line-height:1.5}
+.guide-list li::before{content:"";position:absolute;left:0;top:.6em;width:6px;height:6px;background:var(--edge)}
+.guide-list:empty{display:none}
+/* 확대 버튼 장: 버튼 자리가 숨 쉬듯 빛나고, 다른 곳을 누르면 한 번 더 크게 깜빡인다 */
+.guide-pressing .guide-spot{border-color:var(--cream);animation:guide-breathe 1.4s ease-in-out infinite}
+.guide-pressing .guide-spot.guide-nudge{animation:guide-nudge .5s ease-out 2}
+@keyframes guide-breathe{50%{box-shadow:0 0 0 9999px rgba(2,4,12,.78),0 0 30px rgba(232,223,200,.8),inset 0 0 10px rgba(232,223,200,.4)}}
+@keyframes guide-nudge{50%{transform:scale(1.5)}}
+/* 큰 창을 보여 주는 장: 넓은 화면에서는 큰 창이 왼쪽으로 비켜 서서 안내 카드가 오른쪽 옆에 선다 */
+@media (min-width:1101px){.guide-modal .data-modal,.guide-modal .crew-modal{padding-right:384px}}
+@media (prefers-reduced-motion:reduce){.guide-pressing .guide-spot{animation:none}.guide-spot,.guide-card{transition:none}.guide-card.guide-in .guide-body{animation:none}}
