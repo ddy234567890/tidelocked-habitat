@@ -21,7 +21,11 @@ const VIEW_PAD = 64;                                           // 비추는 묶�
 const VIEW_W = GW + 2 * VIEW_PAD;
 const ZOOM_MAX = 1.9;                                          // 최대 확대 배율
 const HEIGHT_SHARE = 0.45;                                     // 판 높이는 창 높이의 이 비율까지 (3D 화면을 너무 밀어내지 않게)
-const VIEW_TOP = TOP - 14;                                     // 판 위쪽 빈 줄(예전 단계 제목 자리)은 잘라 내고 토큰을 그만큼 크게
+// 넓은 화면(가로 3칸 배치)에서는 위 칸들(탐사 상태·현장 화면·행성 정보)에 TOP_ROOM 만큼을 먼저 남기고 나머지만 판이 쓴다.
+// 0.45 로 두면 노트북 화면에서 판이 너무 커서 위 칸 글(LOG, 행성 수치)이 잘렸다 (사용자 2026-11-13)
+const TOP_ROOM = 730, BOARD_MIN = 200;
+const boardHeight = () => innerWidth > 1100 ? Math.min(innerHeight * HEIGHT_SHARE, Math.max(BOARD_MIN, innerHeight - TOP_ROOM)) : innerHeight * HEIGHT_SHARE;
+const VIEW_TOP = TOP - 14;                                    // 판 위쪽 빈 줄(예전 단계 제목 자리)은 잘라 내고 토큰을 그만큼 크게
 const NEIGHBOR = 150;                                          // 지금 묶음 양옆으로 흐리게 보이는 이웃 폭 (판 좌표)
 const DOLLY = 0.3;                                             // 단계를 넘어갈 때 가운데쯤 물러서는 정도 (0.3 = 30% 넓게)
 const ZOOM_OUT = 1200, ZOOM_IN = 900;                          // 한 주를 다 결정하면 물러서기 / 둘러보다 다시 다가가기 (ms)
@@ -277,7 +281,7 @@ export function createHexBoard(root, { onPick, onDecide }) {
   function fit() {
     if (!L) return;
     const avail = viewBox.clientWidth || VIEW_W;
-    zoom = Math.max(0.6, Math.floor(Math.min(ZOOM_MAX, avail / VIEW_W, innerHeight * HEIGHT_SHARE / viewH()) * 20) / 20);
+    zoom = Math.max(0.6, Math.floor(Math.min(ZOOM_MAX, avail / VIEW_W, boardHeight() / viewH()) * 20) / 20);
     baseW = avail / zoom;
     svg.setAttribute('width', Math.floor(avail)); svg.setAttribute('height', (viewH() * zoom).toFixed(0));
     if (cam && !tween) {

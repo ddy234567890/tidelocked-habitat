@@ -1,0 +1,33 @@
+/* 화면 안내 (guide.js): 바깥은 어둡게, 지금 설명하는 칸만 빛 테두리로 밝힌다. 색은 화면 토큰 (style.css :root) */
+.guide{position:fixed;inset:0;z-index:70;cursor:pointer}
+.guide-spot{position:fixed;border:2px solid var(--edge);box-shadow:0 0 0 9999px rgba(2,4,12,.78),0 0 24px rgba(143,193,255,.45),inset 0 0 18px rgba(143,193,255,.18);
+  pointer-events:none;transition:left .35s cubic-bezier(.2,.7,.2,1),top .35s cubic-bezier(.2,.7,.2,1),width .35s cubic-bezier(.2,.7,.2,1),height .35s cubic-bezier(.2,.7,.2,1)}
+.guide-card{position:fixed;width:min(340px,calc(100vw - 24px));border:2px solid var(--edge);background:var(--panel);box-shadow:inset 0 0 0 2px var(--bg0),0 0 28px rgba(61,107,255,.25);cursor:default;
+  transition:left .35s cubic-bezier(.2,.7,.2,1),top .35s cubic-bezier(.2,.7,.2,1)}
+.guide-card.guide-in .guide-body{animation:guide-in .35s ease-out}
+@keyframes guide-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.guide-count{letter-spacing:.04em}
+.guide-body{padding:14px 16px 14px}
+.guide-body h2{margin:0 0 8px;font-size:18px;font-weight:normal;color:var(--hi)}
+.guide-say p{margin:0 0 6px;color:var(--hi);line-height:1.55}
+.guide-todo{margin:10px 0 0;padding:8px 10px;border:1px solid var(--line);background:var(--soft);color:var(--cream);line-height:1.55}
+.guide-todo b{display:block;font-weight:normal;color:var(--edge);font-size:12px;letter-spacing:.06em;margin-bottom:2px}
+.guide-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px}
+.guide-skip{background:none;border:0;padding:4px 0;color:var(--mid);text-decoration:underline;text-underline-offset:3px}
+.guide-skip:hover{color:var(--hover)}
+.guide-next{border:2px solid var(--deep);background:var(--head);color:var(--hi);padding:6px 14px}
+.guide-next:hover{border-color:var(--edge)}
+.guide-list{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.guide-list li{position:relative;padding-left:14px;color:var(--hi);line-height:1.5}
+.guide-list li::before{content:"";position:absolute;left:0;top:.6em;width:6px;height:6px;background:var(--edge)}
+.guide-list:empty{display:none}
+/* 확대 버튼 장: 버튼 둘레 테두리가 크림색으로 깜빡인다. 다른 곳을 누르면 테두리가 한 번 크게 튄다 */
+.guide-pressing .guide-spot{border:3px solid var(--cream);animation:guide-blink .9s steps(1,end) infinite}
+.guide-pressing .guide-spot.guide-nudge{animation:guide-blink .9s steps(1,end) infinite,guide-nudge .5s ease-out 2}
+@keyframes guide-blink{
+ 0%{border-color:var(--cream);box-shadow:0 0 0 9999px rgba(2,4,12,.78),0 0 18px rgba(232,223,200,.9)}
+ 50%{border-color:transparent;box-shadow:0 0 0 9999px rgba(2,4,12,.78)}}
+@keyframes guide-nudge{50%{transform:scale(1.5)}}
+/* 큰 창을 보여 주는 장: 넓은 화면에서는 큰 창이 왼쪽으로 비켜 서서 안내 카드가 오른쪽 옆에 선다 */
+@media (min-width:1101px){.guide-modal .data-modal,.guide-modal .crew-modal{padding-right:384px}}
+@media (prefers-reduced-motion:reduce){.guide-pressing .guide-spot{animation:none}.guide-spot,.guide-card{transition:none}.guide-card.guide-in .guide-body{animation:none}}
