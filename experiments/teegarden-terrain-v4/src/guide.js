@@ -14,8 +14,8 @@ const $ = selector => document.querySelector(selector);
 const STEPS = [
   {
     target: ['.p-left'], title: '탐사 상태',
-    say: ['기온 · 산소와 지금까지 결정한 기록(LOG)이에요.'],
-    todo: 'W1 같은 주차 탭을 누르면 그 주 브리핑을 다시 볼 수 있어요.',
+    say: ['공기 · 물 · 식량 · 전력 게이지와 기온 · 산소예요.', '게이지가 하나라도 0이 되면 실패해요.'],
+    todo: 'W1 같은 주차 탭을 누르면 그 주에 고른 선지를 볼 수 있어요.',
   },
   {
     target: ['.p-stage'], title: '현장 화면',
