@@ -30,7 +30,7 @@ const STEPS = [
   {
     target: ['#planet-max'], title: '행성 정보 확대 버튼', press: true,
     say: ['PLANET_DATA 칸 오른쪽 위에 있는 □ 버튼이에요. 누르면 행성 정보가 큰 창으로 떠요.'],
-    todo: '빛나는 □ 버튼을 직접 눌러 보세요.',
+    todo: '깜빡이는 테두리 안의 □ 버튼을 직접 눌러 보세요.',
   },
   {
     target: ['.data-modal:not([hidden]) .data-card'], title: '행성 정보 큰 창', close: '#data-close',
@@ -54,7 +54,7 @@ const STEPS = [
   {
     target: ['#crew-max'], title: '대원 상태 확대 버튼', press: true,
     say: ['CREW_LINK 칸 오른쪽 위에 있는 □ 버튼이에요. 누르면 대원 상태가 큰 창으로 떠요. 얼굴을 눌러도 같은 창이 떠요.'],
-    todo: '빛나는 □ 버튼을 직접 눌러 보세요.',
+    todo: '깜빡이는 테두리 안의 □ 버튼을 직접 눌러 보세요.',
   },
   {
     target: ['.crew-modal:not([hidden]) .crew-card'], title: '대원 상태 큰 창', close: '#crew-close',
@@ -144,7 +144,7 @@ function press() {
   requestAnimationFrame(() => go(index + 1, { fromPress: true }));
 }
 function forward() {
-  if (STEPS[index]?.press) return press(); // 다음 ▶ · Enter 는 버튼을 대신 눌러 준다
+  if (STEPS[index]?.press) return press(); // 확대 버튼 장의 Enter 는 그 버튼을 누른 것과 같다
   go(index + 1);
 }
 /** 큰 창 장을 떠날 때 그 창을 닫는다 */
@@ -173,14 +173,16 @@ function go(next, { fromPress = false, back = false } = {}) {
   root.querySelector('.guide-todo span').textContent = step.todo;
   root.querySelector('.guide-count').textContent = `${index + 1} / ${STEPS.length}`;
   const last = !STEPS.slice(index + 1).some(reachable);
-  root.querySelector('.guide-next').textContent = step.press ? '대신 눌러 주기 ▶' : last ? '시작하기 ▶' : '다음 ▶';
+  // 확대 버튼 장에는 다음 버튼이 없다: 깜빡이는 테두리 속 버튼을 직접 눌러야 넘어간다 (키보드는 Enter 로도 누를 수 있다)
+  root.querySelector('.guide-next').textContent = last ? '시작하기 ▶' : '다음 ▶';
+  root.querySelector('.guide-next').hidden = Boolean(step.press);
   root.classList.toggle('guide-pressing', Boolean(step.press));
   spot.classList.remove('guide-nudge');
   card.classList.remove('guide-in'); void card.offsetWidth; card.classList.add('guide-in');
   place();
   // 창이 비켜 서는 움직임이 끝난 뒤 자리를 다시 잰다
   if (step.close) setTimeout(place, 60);
-  root.querySelector('.guide-next').focus({ preventScroll: true });
+  root.querySelector(step.press ? '.guide-skip' : '.guide-next').focus({ preventScroll: true });
 }
 
 /** 밝힌 칸 둘레에 빛 테두리, 카드는 칸 옆 빈 곳에 (오른쪽 → 왼쪽 → 아래 → 위 순서로 자리를 찾는다) */
