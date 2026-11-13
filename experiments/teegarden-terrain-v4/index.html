@@ -47,11 +47,12 @@
 
 <div class="hud" id="hud">
  <aside class="panel p-left" aria-label="탐사 상태">
-  <div class="tabs" role="tablist" aria-label="주차"><button type="button" class="tab on" role="tab" aria-selected="true" aria-label="1주차">W1</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="2주차">W2</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="3주차">W3</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="4주차">W4</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="5주차">W5</button></div>
+  <div class="tabs" role="tablist" aria-label="상태와 주차 요약"><button type="button" class="tab tab-now on" role="tab" aria-selected="true" aria-label="현재 스탯">현재</button><button type="button" class="tab" role="tab" aria-selected="false" aria-label="1주차">W1</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="2주차">W2</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="3주차">W3</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="4주차">W4</button><button type="button" class="tab" role="tab" aria-selected="false" hidden aria-label="5주차">W5</button></div>
   <div class="panel-body">
-   <div class="stat"><span class="chip">TEMP</span><strong id="hud-temp">—</strong><small id="hud-temp-note"></small></div>
-   <div class="stat"><span class="chip">O₂</span><strong id="hud-o2">측정 중</strong><span class="gauge" aria-hidden="true"><span id="hud-o2-bar"></span></span></div>
-   <div class="log" aria-label="결정 기록"><span id="hud-log-1">▶ LOG 01 ........ —</span><span id="hud-log-2">▶ LOG 02 ........ —</span><span id="hud-log-3">▶ LOG 03 ........ —</span></div>
+   <div class="gauge-list" id="hud-gauges" aria-label="기지 게이지 (공기 · 물 · 식량 · 전력)"></div>
+   <div class="stat"><span class="chip">TEMP</span><span class="stat-row out"><small>바깥</small><b id="hud-temp-out">—</b></span><span class="stat-row"><small>기지 안</small><strong id="hud-temp">—</strong></span></div>
+   <div class="stat"><span class="chip">O₂</span><span class="stat-row out"><small>바깥</small><b id="hud-o2-out">—</b></span><span class="stat-row"><small>기지 안</small><strong id="hud-o2">—</strong></span></div>
+   <div class="week-summary" id="hud-week" aria-live="polite" hidden></div>
   </div>
  </aside>
 
@@ -116,6 +117,14 @@
   <a class="brand" href="#" id="brand-home">ORBITAL RESEARCH INSTITUTE · SECTOR 7</a>
  </footer>
 </div>
+ <div class="fail-modal" id="fail" role="alertdialog" aria-modal="true" aria-labelledby="fail-title" aria-describedby="fail-text" hidden>
+  <div class="fail-card">
+   <p class="fail-code">기지 운영 실패</p>
+   <h2 id="fail-title"></h2>
+   <p id="fail-text"></p>
+   <button type="button" class="decide" id="fail-restart">▶ 처음부터 다시</button>
+  </div>
+ </div>
  <div class="crew-modal" id="crew-modal" role="dialog" aria-modal="true" aria-labelledby="crew-title" hidden>
   <div class="crew-card">
    <div class="titlebar"><span id="crew-title">대원 상태</span><span class="live">BIO · LIVE</span><button class="crew-x" id="crew-close" type="button" aria-label="닫기">X</button></div>

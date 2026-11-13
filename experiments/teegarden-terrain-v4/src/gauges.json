@@ -1,0 +1,93 @@
+{
+  "notes": {
+    "source": "숫자는 팀 플레이테스트 페이지 「기지 5주 플레이테스트」(https://claude.ai/artifact/24Cr489hQUyHoz1W29BB8f)의 가정값을 그대로 옮겼다. 돌발 사건·엔딩 판정은 아직 옮기지 않았다 (2026-11-13 사용자: 게이지만)",
+    "gauges": "air 공기 · water 물 · food 식량 · power 전력. 모두 start 에서 시작하고, 하나라도 0 이하가 되면 실패다. warn 이하면 주황으로 보인다",
+    "weekly": "아무것도 고르기 전 매주 줄어드는 양. 선지의 weekly 가 여기에 더해진다. '다음 주로'를 누를 때 한 주치가 반영된다",
+    "choices": "선지 id 마다 효과 목록. requires 가 맞는 항목만 쓴다 (형식은 weeks/weekN.json 의 requires 와 같다). now = 결정하자마자, weekly = 다음 주부터 매주",
+    "lowest": "그 순간 가장 낮은 게이지 하나에 더한다 (5주 '가장 부족한 것 채우기')",
+    "harvest": "from 주차가 끝날 때부터 매주 들어오는 수확. 식량(food)에는 그때까지 결정한 선지의 harvestScale 을 곱한다 (농장 위치·규모)",
+    "clamp": "게이지는 -50 ~ 100 사이로 자른다 (플레이테스트와 같다)"
+  },
+  "labels": { "air": "공기", "water": "물", "food": "식량", "power": "전력" },
+  "start": 60,
+  "warn": 20,
+  "clamp": [-50, 100],
+  "weekly": { "air": -2, "water": -2, "food": -3, "power": -2 },
+  "choices": {
+    "A": [{ "now": { "power": -2 }, "weekly": { "power": -2 } }],
+    "B": [{ "now": { "power": -6 } }],
+    "C": [{ "now": { "power": -4 }, "weekly": { "power": -1 } }],
+    "A1": [{ "weekly": { "power": -1 } }],
+    "A2": [{ "now": { "power": -7 }, "weekly": { "power": 1 } }],
+    "B1": [{ "now": { "power": -1 } }],
+    "B2": [{ "now": { "power": -6 } }],
+    "C1": [{ "now": { "power": -1 } }],
+    "C2": [{ "now": { "power": -6 } }],
+    "O1": [{ "weekly": { "air": 3, "water": -3, "power": -1 } }],
+    "O2": [{ "now": { "power": -8 }, "weekly": { "air": 3, "water": -1, "power": -2 } }],
+    "O3": [{ "now": { "power": -8 }, "weekly": { "air": 3, "water": -3, "power": -1 } }],
+
+    "P1": [
+      { "requires": { "module": ["B2"] }, "now": { "power": -7 } },
+      { "requires": { "module": ["A1", "A2", "B1", "C1", "C2"] }, "now": { "power": -4 } },
+      { "requires": { "location": ["A", "C"] }, "weekly": { "power": 23 } },
+      { "requires": { "location": ["B"] }, "weekly": { "power": 17 } }
+    ],
+    "P2": [{ "now": { "power": -12 }, "weekly": { "power": 22 } }],
+    "S1": [
+      { "requires": { "module": ["C2"] }, "now": { "power": -5 } },
+      { "requires": { "module": ["A1", "A2", "B1", "B2", "C1"] }, "now": { "power": -3 } }
+    ],
+    "S2": [
+      { "requires": { "module": ["C2"] }, "now": { "power": -5 } },
+      { "requires": { "module": ["A1", "A2", "B1", "B2", "C1"] }, "now": { "power": -7 } },
+      { "weekly": { "power": -1 } }
+    ],
+    "T1": [
+      { "now": { "power": -7 } },
+      { "requires": { "location": ["A"] }, "weekly": { "power": 3 } },
+      { "requires": { "location": ["B", "C"] }, "weekly": { "power": 2 } }
+    ],
+    "T2": [
+      { "now": { "power": -2 } },
+      { "requires": { "location": ["A"] }, "weekly": { "power": -1 } }
+    ],
+
+    "W1": [
+      { "requires": { "location": ["A"] }, "now": { "power": -7 }, "weekly": { "water": 6 } },
+      { "requires": { "location": ["B", "C"] }, "now": { "power": -4 }, "weekly": { "water": 8 } }
+    ],
+    "W2": [{ "now": { "power": -3 }, "weekly": { "water": 5, "power": -2 } }],
+    "R1": [{ "now": { "power": -1 } }],
+    "R2": [{ "now": { "power": -6 }, "weekly": { "water": 3, "power": -2 } }],
+    "D1": [
+      { "requires": { "module": ["B2", "C2"] }, "now": { "power": -5 } },
+      { "requires": { "module": ["A1", "A2", "B1", "C1"] }, "now": { "power": -2 } }
+    ],
+    "D2": [
+      { "requires": { "module": ["C2"] }, "now": { "power": -3 } },
+      { "requires": { "module": ["A1", "A2", "B1", "B2", "C1"] }, "now": { "power": -4 } },
+      { "weekly": { "power": -1 } }
+    ],
+
+    "G1": [{ "now": { "power": -4 }, "weekly": { "power": -3 } }],
+    "G2": [
+      { "requires": { "location": ["B"] }, "now": { "power": -10 }, "harvestScale": 0.8 },
+      { "requires": { "location": ["A"] }, "now": { "power": -7 }, "harvestScale": 1.2 },
+      { "requires": { "location": ["C"] }, "now": { "power": -7 } },
+      { "weekly": { "power": -1 } }
+    ],
+    "K1": [{ "now": { "food": 14 }, "weekly": { "food": 1 } }],
+    "K2": [{ "now": { "power": -3 }, "harvestScale": 1.5 }],
+    "C_leaf": [{ "weekly": { "water": -2 }, "harvest": { "from": 5, "food": 4 } }],
+    "C_staple": [{ "weekly": { "water": -3 }, "harvest": { "from": 8, "food": 16 } }],
+    "C_algae": [{ "weekly": { "water": -1, "power": -1 }, "harvest": { "from": 5, "food": 3, "air": 2 } }],
+
+    "U1": [{ "now": { "lowest": 12 }, "weekly": { "lowest": 2 } }],
+    "U2": [{ "now": { "power": -3 } }],
+    "X1": [],
+    "X2": [{ "now": { "power": -3 } }],
+    "M1": [],
+    "M2": [{ "now": { "power": -4 } }]
+  }
+}

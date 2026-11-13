@@ -11,6 +11,7 @@ import hud from './hud.json' with { type: 'json' };
 import { openBriefing } from './intro.js';
 import { createHexBoard, shortName } from './hexBoard.js';
 import { setCrewSite, setCrewStats } from './crew.js';
+import { gaugeState, GAUGE_KEYS, GAUGE_LABELS, GAUGE_WARN } from './gauges.js';
 import { buildModule, buildOverlay, tintLayer, TINT, faceColors } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
@@ -130,7 +131,7 @@ try {
   localGroup.scale.setScalar(LOCAL_SCALE); localGroup.visible = false; scene.add(localGroup);
   // 선지로 고른 주거 모듈·산소 장치. 지형과 같은 지역 좌표·같은 머티리얼을 쓴다
   const assetGroup = new THREE.Group(); localGroup.add(assetGroup);
-  let logWeek = null;
+  let summaryWeek = null; // 왼쪽 칸에 요약을 띄운 주차 (null = 요약 닫힘)
   let selection = {}, decided = {}, week = 1, moduleLayer = null, assetToken = 0, focusTween = null;
   // 육각 토큰 선지판 (src/hexBoard.js). 기존 글 카드·결정 버튼은 숨긴 채 그대로 돌고, 판은 그 상태를 보여 주며 같은 함수를 부른다.
   // 주소에 ?cards=1 을 붙이면 예전 글 카드 화면으로 본다 (비교용)
@@ -301,7 +302,7 @@ try {
   }
   function clearAssets() {
     dropFlows();
-    assetToken++; selection = {}; decided = {}; week = 1; focusTween = null;
+    assetToken++; selection = {}; decided = {}; week = 1; focusTween = null; summaryWeek = null;
     dropLayer(moduleLayer); moduleLayer = null;
     overlayLayers.forEach(dropLayer); overlayLayers.clear(); reveals.length = 0;
     $('#legend').hidden = true;
@@ -435,38 +436,99 @@ try {
     element.textContent = text;
     element.classList.remove('holo-flash'); void element.offsetWidth; element.classList.add('holo-flash');
   }
+  // 결정한 선지의 stats(tempC·oxygenPct·activityMET 변화량)를 더한다. steps 를 주면 그 단계들만 더한다
+  const stepStats = step => (decided[step.id] && step.choices.find(choice => choice.id === selection[step.id])?.stats) || {};
+  function sumStats(steps = ALL_STEPS) {
+    const total = {};
+    for (const step of steps) for (const [key, value] of Object.entries(stepStats(step))) total[key] = (total[key] ?? 0) + value;
+    return total;
+  }
+  // 왼쪽 칸에는 값이 어떻게 바뀌는지(선지 +4° 같은 변화량)를 적지 않는다 (2026-11-13 사용자 요청). 활동량은 대원 얼굴 계산에만 쓰인다
+  // 실내 기본값 (crew.js INDOOR 와 같은 값): 산소 방식을 결정하면 기지 안 값에 선지 stats 를 더해 보여 준다
+  const INDOOR = { tempC: 22, oxygenPct: 20.9, activityMET: 1.5 };
   function updateHud(local) {
     setCrewSite(local ? currentSite : null);
     // 대원 얼굴: 산소 방식을 결정하기 전에는 바깥 공기(숨 쉴 산소 없음)다.
     // 결정한 뒤에는 결정한 선지들의 stats 를 더해 넘긴다. 카드를 눌러 미리 보기만 할 때는 바뀌지 않는다
-    if (local && decided.oxygen) {
-      const total = {};
-      for (const step of ALL_STEPS) {
-        if (!decided[step.id]) continue;
-        const stats = step.choices.find(choice => choice.id === selection[step.id])?.stats ?? {};
-        for (const [key, value] of Object.entries(stats)) total[key] = (total[key] ?? 0) + value;
-      }
-      setCrewStats(total);
-    } else setCrewStats(null);
+    const total = local ? sumStats() : {};
+    const indoor = Boolean(local && decided.oxygen);
+    setCrewStats(indoor ? total : null);
+    // 왼쪽 상태 칸: 바깥 값(지역마다 고정)과 기지 안 값(실내 기본값 + 결정한 선지 stats)을 늘 함께 보여 준다.
+    // 기지 안 값은 위치를 결정한 순간부터 보이고, 선지를 결정할 때마다 바뀐다. 산소만은 산소 방식을 정해야 채워진다
+    const base = Boolean(local && decided.location);
+    const value = key => Math.round((INDOOR[key] + (total[key] ?? 0)) * 10) / 10;
     const range = local ? hud.sites[currentSite]?.temperature : null;
-    setText($('#hud-temp'), range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° / ' + hud.temperature.day + '°');
-    setText($('#hud-temp-note'), range ? COPY[currentSite].title + ' 기온 범위' : '밤 최저 / 낮 최고');
-    $('#hud-o2').textContent = hud.oxygen == null ? '측정 중' : hud.oxygen + '%';
-    $('#hud-o2-bar').style.width = (hud.oxygen ?? 0) + '%';
-    const shownWeek = logWeek ?? week; // 왼쪽 주차 탭으로 고른 주 (없으면 지금 주)
-    const entries = WEEKS[shownWeek - 1].steps.map(step => step.id === 'location'
-      ? (local && decided.location ? siteLetter(currentSite) + ' ' + COPY[currentSite].title : '—')
-      : decided[step.id] ? choiceLabel(step.id) : '—');
-    entries.forEach((text, i) => { setText($('#hud-log-' + (i + 1)), '▶ LOG 0' + (i + 1) + ' ........ ' + text); });
-    document.querySelectorAll('#hud .tab').forEach((tab, i) => {
+    setText($('#hud-temp-out'), range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° ~ ' + hud.temperature.day + '°');
+    setText($('#hud-temp'), base ? value('tempC') + '°' : '—');
+    // 바깥 산소: 1주차 행성 강의(planet-brief.json)와 같은 약 14% (지구 20.9% 보다 조금 부족해 숨이 찬 정도). hud.json outsideOxygen
+    const outsideO2 = hud.outsideOxygen;
+    setText($('#hud-o2-out'), outsideO2 + '%');
+    setText($('#hud-o2'), indoor ? value('oxygenPct') + '%' : '—');
+    renderGauges(local);
+    renderWeekSummary(local);
+    // 왼쪽 탭: '현재'(게이지 · 기온 · 산소) + 지난·이번 주차 요약 W1~W5
+    const now = $('#hud .tab-now');
+    now.classList.toggle('on', !summaryWeek); now.setAttribute('aria-selected', String(!summaryWeek));
+    document.querySelectorAll('#hud .tab:not(.tab-now)').forEach((tab, i) => {
       tab.hidden = i >= week; // 아직 오지 않은 주차는 탭을 보이지 않는다
-      tab.classList.toggle('on', i === shownWeek - 1); tab.setAttribute('aria-selected', String(i === shownWeek - 1));
+      tab.classList.toggle('on', i === summaryWeek - 1); tab.setAttribute('aria-selected', String(i === summaryWeek - 1));
     });
+  }
+  // 게이지 4개 (공기 · 물 · 식량 · 전력, gauges.js): '현재' 탭 맨 위. 값과 막대만 (매주 얼마 줄어드는지는 보여 주지 않는다, 2026-11-13 사용자 요청).
+  // 20 이하면 주황(.low)이다 (빨강은 쓰지 않는다). 하나라도 0 이 되면 실패 창이 뜬다
+  // 이름 뒤 조사: 받침이 있으면 '이', 없으면 '가' (물이 · 공기가)
+  const subject = word => word + ((word.charCodeAt(word.length - 1) - 0xAC00) % 28 ? '이' : '가');
+  function renderGauges(local) {
+    // 줄은 처음 부를 때 한 번만 만든다 (updateHud 가 이 함수보다 먼저 정의된 곳에서 불려도 되게)
+    const rows = renderGauges.rows ??= Object.fromEntries(GAUGE_KEYS.map(key => {
+      const row = document.createElement('div'); row.className = 'gauge-row';
+      row.innerHTML = '<span class="g-name"></span><b class="g-val"></b><span class="g-bar" aria-hidden="true"><i></i></span>';
+      row.querySelector('.g-name').textContent = GAUGE_LABELS[key];
+      $('#hud-gauges').append(row);
+      return [key, row];
+    }));
+    const state = local ? gaugeState(selection, decided, week) : gaugeState({}, {}, 1);
+    for (const key of GAUGE_KEYS) {
+      const row = rows[key], value = Math.max(0, state.values[key]);
+      setText(row.querySelector('.g-val'), String(value));
+      row.querySelector('.g-bar i').style.width = Math.min(100, value) + '%';
+      row.classList.toggle('low', value <= GAUGE_WARN);
+      row.setAttribute('aria-label', GAUGE_LABELS[key] + ' ' + value + (value <= GAUGE_WARN ? ', 위험' : ''));
+    }
+    if (local && state.failed && !renderGauges.failShown) {
+      renderGauges.failShown = true;
+      const name = GAUGE_LABELS[state.failed.key];
+      $('#fail-title').textContent = subject(name) + ' 바닥났어요';
+      $('#fail-text').textContent = state.failed.week + '주차에 ' + name + ' 게이지가 0이 되어 기지를 더 운영할 수 없어요. 처음부터 다시 골라 보세요.';
+      $('#fail').hidden = false; $('#fail-restart').focus();
+    }
+  }
+  $('#fail-restart').addEventListener('click', () => { location.href = location.pathname; });
+  // 왼쪽 주차 탭을 누르면 '현재' 칸 자리에 그 주 요약이 뜬다: 주제 · 목표 · 단계마다 고른 선지 (변화량은 적지 않는다).
+  // '현재' 탭을 누르면 게이지·기온·산소 칸으로 돌아온다
+  function renderWeekSummary(local) {
+    const box = $('#hud-week'), data = summaryWeek && WEEKS[summaryWeek - 1];
+    // 요약이 열려 있는 동안은 게이지·기온·산소 칸을 접어 요약이 왼쪽 칸 전체를 쓴다 (닫으면 그대로 돌아온다)
+    box.hidden = !data;
+    for (const el of document.querySelectorAll('#hud .p-left .stat, #hud-gauges')) el.hidden = Boolean(data);
+    if (!data) { box.replaceChildren(); return; }
+    const make = (tag, className, text) => { const el = document.createElement(tag); if (className) el.className = className; if (text != null) el.textContent = text; return el; };
+    const title = data.title ?? data.brief?.split('\n').at(-1) ?? '';
+    const head = make('p', 'week-head'); head.append(make('b', null, 'W' + summaryWeek), ' ' + title);
+    const rows = make('ul', 'week-rows');
+    for (const step of data.steps) {
+      const chosen = step.id === 'location'
+        ? (local && decided.location ? siteLetter(currentSite) + ' ' + COPY[currentSite].title : null)
+        : decided[step.id] ? choiceLabel(step.id) : null;
+      const row = make('li', chosen ? '' : 'empty');
+      row.append(make('small', null, shortName(step)), make('span', null, chosen ?? '아직 고르지 않았어요'));
+      rows.append(row);
+    }
+    box.replaceChildren(head, ...(data.goal ? [make('p', 'week-goal', data.goal)] : []), rows);
   }
   // 1단계 지대 카드는 누르면 그 지역으로 날아가 둘러볼 수 있고, '지대 결정'을 눌러야 다음 단계가 열린다
   let lastStepKey, stepTimer;
   function renderSteps(local) {
-    logWeek = null; // 무언가 고르거나 결정하면 LOG 는 지금 주로 돌아온다
     if (local) selection.location = siteLetter(currentSite);
     const sites = $('nav.sites');
     sites.querySelector('.decide')?.remove();
@@ -563,10 +625,10 @@ try {
     const shown = WEEKS[number - 1];
     openBriefing(shown, textsFor(shown.situation, selection), week, showBrief);
   };
-  // 왼쪽 주차 탭: 그 주 브리핑을 다시 띄우고, LOG 도 그 주에 결정한 것으로 바꿔 보여 준다
-  document.querySelectorAll('#hud .tab').forEach((tab, i) => tab.addEventListener('click', () => {
-    logWeek = i + 1 === week ? null : i + 1; updateHud(mode === 'local' && !transition);
-    showBrief(i + 1);
+  // 왼쪽 탭: '현재'는 게이지·기온·산소, W1·W2… 는 그 주차로 돌아가거나 브리핑을 띄우지 않고 그 주 요약을 보여 준다
+  $('#hud .tab-now').addEventListener('click', () => { summaryWeek = null; updateHud(mode === 'local' && !transition); });
+  document.querySelectorAll('#hud .tab:not(.tab-now)').forEach((tab, i) => tab.addEventListener('click', () => {
+    summaryWeek = i + 1; updateHud(mode === 'local' && !transition);
   }));
   $('#next-week').addEventListener('click', () => { week++; renderSteps(true); syncAssets(); showBrief(week); });
 
@@ -738,7 +800,7 @@ try {
   // 키보드: 아래 줄 안내(선택 ◀ ▶ · 확정 OK)대로 ◀ ▶ 로 지금 보이는 카드를 고르고 Enter 로 결정 버튼을 누른다
   const visibleNow = element => element && !element.disabled && element.offsetParent !== null;
   document.addEventListener('keydown', event => {
-    const blocked = !$('#intro').hidden || !$('#crew-modal').hidden || [...document.querySelectorAll('.data-modal')].some(modal => !modal.hidden);
+    const blocked = !$('#intro').hidden || !$('#crew-modal').hidden || !$('#fail').hidden || [...document.querySelectorAll('.data-modal')].some(modal => !modal.hidden);
     if (event.key === 'Escape') { if (!blocked) returnToPlanet(); return; }
     if (blocked || transition || event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.target.closest?.('input, textarea, select')) return;
