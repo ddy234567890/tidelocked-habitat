@@ -186,3 +186,11 @@
 | face/face.landmarks.json, face/face.credit.json | (팀 작성) | 팀 「얼굴 반응 테스트」 페이지 (https://claude.ai/artifact/7t8SLnr1DFk428FNWxZRpi) | 팀 | - | 얼굴 기준점과 출처 정보 |
 
 - 글꼴은 OFL이라 그대로 쓰고 나눠 줄 수 있어요. 다만 글꼴 파일을 바꿔 다시 배포할 때는 예약 이름 「TERRARUM」을 쓰면 안 되고, 라이선스 전문을 함께 두어야 해요.
+
+## 사람 배치 실험 (experiments/teegarden-terrain-v4/src/models)
+
+| 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 곳 |
+|---|---|---|---|---|---|
+| human.glb | Universal Animation Library [Standard] 의 UAL1_Standard.glb (Mannequin, 뼈대 65개) | https://quaternius.itch.io/universal-animation-library (https://quaternius.com/packs/universalanimationlibrary.html) | Quaternius | CC0 | 지역 화면에 놓는 사람 (src/people.js) |
+
+- 받은 날: 2026-11-14 (묶음 v3.0). 동작 43개 중 12개만 남겼어요: Idle_Loop · Idle_Talking_Loop · Walk_Loop · Jog_Fwd_Loop · Sprint_Loop · Crouch_Fwd_Loop · Crouch_Idle_Loop · Death01 · Interact · Fixing_Kneeling · Hit_Chest · Push_Loop (7.6 MB → 3.0 MB). 다시 만들 때는 `node scripts/trim-glb.mjs 원본.glb src/models/human.glb 동작이름,…`.

@@ -11,6 +11,7 @@ import hud from './hud.json' with { type: 'json' };
 import { openBriefing } from './intro.js';
 import { createHexBoard, shortName } from './hexBoard.js';
 import { setCrewSite, setCrewStats } from './crew.js';
+import { createPeople } from './people.js';
 import { gaugeState, GAUGE_KEYS, GAUGE_LABELS, GAUGE_WARN } from './gauges.js';
 import { buildModule, buildOverlay, tintLayer, TINT, faceColors } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
@@ -866,6 +867,10 @@ try {
     scene.updateMatrixWorld(); camera.updateMatrixWorld();
     projection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
   }
+  // 사람 배치 실험 (src/people.js, 2026-11-14 사용자 허락으로 main.js 에 연결만 더함): 장면·카메라·지금 지대·집 자리·결정한 선지·주차·세워진 장치 자리만 건넨다
+  const people = createPeople({ host, camera, parent: localGroup, material, geometryFrom,
+    getState: () => ({ site: currentSite, active: mode === 'local' && !transition, homes: moduleLayer?.data.homes ?? [], stats: sumStats(), decided, week,
+      devices: [...overlayLayers].map(([id, layer]) => ({ id, week: layer.week, spots: layer.data.spots ?? [], radii: (layer.data.footprints ?? []).map(f => f.r) })) }) });
   function frame(time) {
     requestAnimationFrame(frame);
     let backgroundAmount = mode === 'planet' ? 1 : 0;
@@ -944,6 +949,7 @@ try {
     backgroundStars(backgroundAmount);
     stage.dataset.mode = transition ? transition.kind === 'site' ? 'travelling' : 'flying' : mode;
     stage.dataset.site = currentSite ?? '';
+    people.frame(time);
     renderer.render(scene, camera); labels(); pickPast();
   }
   requestAnimationFrame(frame);
