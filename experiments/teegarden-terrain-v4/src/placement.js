@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { choiceData, placeAt, overlaySpot, surfaceSpot, findSpot, occupancy, siteLetter } from './choices.js';
+import { choiceData, placeAt, overlaySpot, surfaceSpot, findSpot, occupancy, siteLetter, overlayDef } from './choices.js';
 import { buildCaveSeal } from './lavaTube.js';
 import { toneColors, cream, blue, orange, gray } from './palette.js';
 import definitions from './sites.json' with { type: 'json' };
 import modelSizes from './modelSizes.json' with { type: 'json' };
 import { mulberry32 } from './terrain.js';
+import { growMotion, fillMotion } from './motion.js';
 // 1주차 건물·산소 장치는 가벼운 Kenney Space Kit 모델(CC0, 모두 삼각형 500개 이하)로 바꿨다.
 // 메인 게임 public/models 에서 복사했다. 출처·라이선스는 저장소 루트 ASSETS.md "1주차 와이어프레임용" 표.
 import hangarRound from './models/hangar-round.glb';
@@ -280,8 +281,28 @@ async function footprintOf(parts) {
  * perHome 이면 주거 모듈의 집(homes)마다 그 옆 빈자리에 같은 장치를 하나씩 둔다.
  * wallCoat 는 지금 주거 모듈 겉면을 덮는 크림 점이라 모듈 점이 필요하다.
  * placed 는 앞서 놓은 오버레이 레이어들이다. 주차가 쌓여도 장치가 서로 겹치지 않게 그 자리를 비워 둔다 */
+// 장치마다 마지막으로 놓은 자리. 키운 장치(like)는 원래 장치 자리에서 그대로 커진다
+const lastSpots = new Map();
+// stage 가 있는 부품(창고에 쌓는 상자)은 단계마다 따로 점을 만들어, 점마다 몇 번째로 나타날지(stages) 붙인다
+async function sampleStaged(site, parts, spot, seed, def) {
+  const groups = new Map();
+  for (const part of parts) groups.set(part.stage ?? 0, [...(groups.get(part.stage ?? 0) ?? []), part]);
+  if (groups.size < 2) return sampleParts(site, parts, 'overlay', spot, seed, def);
+  const pieces = [];
+  for (const [stage, group] of [...groups].sort((a, b) => a[0] - b[0])) pieces.push([stage, await sampleParts(site, group, 'overlay', spot, seed + stage * 31, def)]);
+  const n = pieces.reduce((sum, [, c]) => sum + c.shake.length, 0), out = empty(n);
+  out.levels = new Float32Array(n); out.stages = new Float32Array(n);
+  let at = 0;
+  for (const [stage, c] of pieces) {
+    out.positions.set(c.positions, at * 3); out.colors.set(c.colors, at * 3); out.levels.set(c.levels, at);
+    out.stages.fill(stage, at, at + c.shake.length); at += c.shake.length;
+  }
+  out.faces = Float32Array.from(pieces.flatMap(([, c]) => [...c.faces]));
+  return out;
+}
+
 export async function buildOverlay(site, id, moduleData = {}, placed = []) {
-  const def = choiceData.layers.overlay[id], { positions: modulePoints, homes = [], blocks } = moduleData;
+  const def = overlayDef(id), { positions: modulePoints, homes = [], blocks } = moduleData;
   if (def.special === 'wallCoat') {
     if (!modulePoints) return empty(0);
     const m = modulePoints.length / 3, random = mulberry32(5150), n = Math.min(LAYER_POINTS.coat, Math.round(m * 0.3)), out = empty(n);
@@ -292,8 +313,12 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
     }
     return out;
   }
-  // scaleAt: 지대마다 장치 묶음 크기 배율 (좁은 동굴에서는 작게 둬야 바닥에 들어간다)
-  const k0 = def.scaleAt?.[siteLetter(site)] ?? 1, letter = siteLetter(site);
+  // anchor: 앞서 놓은 이 장치들(id 목록) 안에 놓는다. 그 장치와 같은 자리·같은 배율 (작물은 고른 농장 안에)
+  const hosts = def.anchor ? placed.filter(layer => def.anchor.includes(layer.id) && layer.spots?.length) : [];
+  const host = hosts[0];
+  // scaleAt: 지대마다 장치 묶음 크기 배율 (좁은 동굴에서는 작게 둬야 바닥에 들어간다). 기대는 장치가 있으면 그 배율을 따른다
+  const letter = siteLetter(site), k0 = host?.scale ?? def.scaleAt?.[letter] ?? 1;
+  const source = def.partsAt?.[letter] ?? def.parts ?? [def];
   const water = def.water?.type ? def.water : def.water?.[letter];
   // faceStar: 장치 묶음 전체를 항성 방위로 돌린다 (태양광 패널 앞면이 별을 향하게). 모델 앞면(+z)이 별 쪽으로 가고,
   // 옆으로 늘어선 줄(offset)도 함께 돌아 패널끼리 가리지 않는다
@@ -301,11 +326,13 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
   // 장치 묶음을 f 배로 줄여 만든다. 빈자리가 없으면(좁은 동굴) 조금씩 줄여 겹치지 않는 자리를 찾는다 (SHRINK)
   const shaped = async f => {
     const k = k0 * f;
-    const parts = (def.partsAt?.[letter] ?? def.parts ?? [def]).map(p => {
+    const parts = source.map(p => {
       const [dx, dz] = (p.offset ?? [0, 0]).map(v => v * k);
       // faceTilt: 모델 앞면이 원래 하늘로 들린 각. 별 높이만큼만 남도록 세워 앞면이 별을 똑바로 마주 보게 한다
       const tilt = def.faceStar && p.faceTilt != null ? p.faceTilt - definitions[site].star.elevation : p.tilt;
-      return { ...p, scale: (p.scale ?? 1) * k, offset: [dx * c + dz * s, -dx * s + dz * c], rotation: (p.rotation ?? 0) + turn, tilt };
+      // 쌓는 상자(stage)는 띄우는 높이도 함께 줄인다 (아래 상자 위에 얹혀야 한다)
+      const lift = p.stage && p.lift ? p.lift * k : p.lift;
+      return { ...p, scale: (p.scale ?? 1) * k, offset: [dx * c + dz * s, -dx * s + dz * c], rotation: (p.rotation ?? 0) + turn, tilt, lift };
     });
     const footprint = await footprintOf(parts);
     // reserve·물웅덩이: 모델 없이 점으로 그리는 부분까지 자리를 비워 둔다
@@ -342,9 +369,29 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
   const outside = def.outside?.[siteLetter(site)];
   // away: 집 근처 대신 이 자리에서 가장 가까운 빈자리 (멀리 있는 수원처럼). 다른 장치 자리는 피한다
   const away = def.away?.[siteLetter(site)];
+  // near: 앞서 놓은 이 장치들 바로 옆 빈자리에 둔다 (비상식량 창고는 농장 옆)
+  const neighbor = def.near ? placed.find(layer => def.near.includes(layer.id) && layer.spots?.length) : null;
+  if (neighbor) wanted.splice(0, wanted.length, { at: neighbor.spot });
+  // like: 키운 장치는 원래 장치가 있던 자리 그대로에서 커진다 (자리를 새로 찾지 않는다)
+  const raw = choiceData.layers.overlay[id], grownFrom = raw.like && lastSpots.get(raw.like);
   const spots = [], chunks = [], footprints = [];
-  let shrink = 1;
-  for (const [k, home] of wanted.entries()) {
+  let shrink = 1, animate = null;
+  if (grownFrom?.site === site) {
+    const shape = await shaped(grownFrom.shrink);
+    shrink = grownFrom.shrink;
+    spots.push(grownFrom.spot); footprints.push(shape.footprint);
+    reserve(grownFrom.spot, shape.footprint);
+    chunks.push(await sampleParts(site, shape.parts, 'overlay', grownFrom.spot, 7002, def));
+    animate = growMotion(grownFrom.spot, 1 / raw.grow);
+  } else if (host) {
+    // 기대는 장치마다 그 자리에 그대로 넣는다. 자리는 이미 그 장치가 차지했으니 따로 비워 두지 않는다
+    const shape = await shaped(1);
+    for (const [k, spot] of hosts.flatMap(h => h.spots).entries()) {
+      spots.push(spot); footprints.push(shape.footprint);
+      chunks.push(await sampleParts(site, shape.parts, 'overlay', spot, 7002 + k, def));
+    }
+  }
+  if (!host && !chunks.length) for (const [k, home] of wanted.entries()) {
     const wish = away ? placeAt(site, away) : home.at;
     let fit = null;
     // 간격을 둔 자리 → 줄여서라도 간격을 둔 자리 → 간격 없이 겹치지만 않는 자리 순으로 찾는다
@@ -371,14 +418,23 @@ export async function buildOverlay(site, id, moduleData = {}, placed = []) {
     }
     spots.push(spot); footprints.push(footprint);
     reserve(spot, footprint);
-    chunks.push(await sampleParts(site, parts, 'overlay', spot, 7002 + k, def));
+    chunks.push(await sampleStaged(site, parts, spot, 7002 + k, def));
   }
   const n = chunks.reduce((sum, c) => sum + c.shake.length, 0), out = empty(n);
   let offset = 0;
   out.levels = new Float32Array(n);
   out.faces = new Float32Array(chunks.reduce((sum, c) => sum + c.faces.length, 0));
   chunks.reduce((at, c) => (out.faces.set(c.faces, at), at + c.faces.length), 0);
-  for (const c of chunks) { out.positions.set(c.positions, offset * 3); out.colors.set(c.colors, offset * 3); out.levels.set(c.levels, offset); offset += c.shake.length; }
+  if (chunks.some(c => c.stages)) out.stages = new Float32Array(n);
+  for (const c of chunks) {
+    out.positions.set(c.positions, offset * 3); out.colors.set(c.colors, offset * 3); out.levels.set(c.levels, offset);
+    if (c.stages) out.stages.set(c.stages, offset);
+    offset += c.shake.length;
+  }
+  // 나타나는 움직임 (main.js 가 data.animate 를 매 장면 부른다): 제자리에서 커지기, 또는 상자가 하나씩 떨어져 쌓이기
+  out.animate = animate ?? (out.stages ? fillMotion(out.stages, 0.7 * k0 * shrink) : undefined);
+  if (spots.length) lastSpots.set(id, { site, spot: spots[0], shrink });
+  out.id = id; out.scale = k0 * shrink;
   out.spot = spots[0]; out.spots = spots; out.footprints = footprints; out.shrink = shrink;
   out.footprint = footprints.reduce((a, b) => (b.r > a.r ? b : a), footprints[0] ?? { r: 0, h: 0 });
   return out;
