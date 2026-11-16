@@ -36,3 +36,20 @@ body.event-alert #stage{animation:event-pulse 1.2s ease-in-out 3}
 @keyframes event-pulse{50%{box-shadow:inset 0 0 0 3px #F2B84B}}
 @media (prefers-reduced-motion:reduce){body.event-alert #stage{animation:none;box-shadow:inset 0 0 0 3px #F2B84B}}
 @media (max-width:560px){.event-card{padding:16px}.event-card h2{font-size:24px;line-height:32px}}
+/* 제한 시간 (나쁜 사건만): 주황 막대가 줄어들고, 5초 남으면 막대·숫자·카드 테두리가 깜빡인다 */
+.event-card.timed{animation:event-in .35s ease-out}
+@keyframes event-in{0%{transform:translateY(-6px) scale(.98);opacity:0}60%{transform:translateX(4px)}80%{transform:translateX(-3px)}100%{transform:none;opacity:1}}
+.event-card.timed .event-code{color:#F2B84B;animation:event-blink 1s steps(2,start) infinite}
+.event-timer{display:flex;align-items:center;gap:10px;font-size:var(--fs-s,16px);color:#8C9DD0}
+.event-timer-bar{flex:1;height:8px;background:#0E1B48;border:1px solid #2B47C4;overflow:hidden}
+.event-timer-bar i{display:block;height:100%;width:100%;background:#F2B84B}
+.event-timer b{font-weight:400;min-width:3.2em;text-align:right;color:#F2B84B;font-size:var(--fs-l,22px)}
+.event-timer.urgent b,.event-timer.urgent .event-timer-bar i{animation:event-blink .5s steps(2,start) infinite}
+.event-card.timed:has(.event-timer.urgent){animation:event-edge .5s steps(2,start) infinite}
+@keyframes event-blink{50%{opacity:.25}}
+@keyframes event-edge{50%{border-color:#E8DFC8;box-shadow:0 0 0 2px #F2B84B}}
+.event-card.timeout h2{color:#F2B84B}
+@media (prefers-reduced-motion:reduce){
+  .event-card.timed,.event-card.timed .event-code,.event-timer.urgent b,.event-timer.urgent .event-timer-bar i,.event-card.timed:has(.event-timer.urgent){animation:none}
+  .event-timer.urgent b{text-decoration:underline}
+}

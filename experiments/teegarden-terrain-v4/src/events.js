@@ -93,16 +93,58 @@ export function createEvents({ onChange = () => {} } = {}) {
     close.focus();
   }
 
+  // 나쁜 사건은 제한 시간 안에 대응을 골라야 한다 (events.json timerSeconds). 기록장을 보는 동안은 시간이 멈춘다.
+  // 시간이 다 되면 가장 나쁜 대응을 고른 것으로 치고, 가장 낮은 게이지가 조금 더 줄어든다 (머뭇거린 대가)
+  const TIMER_MS = (data.timerSeconds ?? 20) * 1000, URGENT_MS = 5000;
+  const loss = r => Object.values(r.now ?? {}).reduce((a, b) => a + b, 0) + 3 * Object.values(r.weekly ?? {}).reduce((a, b) => a + b, 0);
+  function timeoutResponse(event, open) {
+    const worst = open.filter(r => !r.requires).reduce((a, b) => loss(b) < loss(a) ? b : a);
+    const now = { ...(worst.now ?? {}) };
+    now.lowest = (now.lowest ?? 0) + (data.timeoutPenalty ?? -3);
+    return { ...worst, id: 'timeout', label: '시간 초과', now, timeout: true,
+      result: '정하지 못하고 머뭇거리는 사이 상황이 더 나빠졌어요. 결국 「' + worst.label + '」 쪽으로 흘러갔어요. ' + worst.result };
+  }
+
   function play(event, week, selection) {
     return new Promise(resolve => {
       const firstTime = !seen.has(event.id);
       seen.add(event.id); saveSeen(seen); used.add(event.id);
       const adjusts = (event.adjust ?? []).filter(a => meets(a.requires, selection));
+      const open = event.responses.filter(r => !r.requires || meets(r.requires, selection));
+      const timed = event.kind === 'bad';
+      let left = TIMER_MS, last = null, frame = 0, answered = false, view = null;
+      const stopClock = () => { cancelAnimationFrame(frame); last = null; };
+      const tick = time => {
+        if (answered) return;
+        if (last != null) left -= time - last;
+        last = time;
+        if (view) {
+          const shown = Math.max(0, Math.ceil(left / 1000));
+          view.num.textContent = shown + '초';
+          view.fill.style.width = Math.max(0, left / TIMER_MS * 100) + '%';
+          view.box.classList.toggle('urgent', left <= URGENT_MS);
+          view.box.setAttribute('aria-valuenow', String(shown));
+        }
+        if (left <= 0) return answer(timeoutResponse(event, open));
+        frame = requestAnimationFrame(tick);
+      };
+      const onKey = e => { // 숫자 키 1·2·3 으로 바로 고른다
+        const index = Number(e.key) - 1;
+        if (!answered && view && open[index]) { e.preventDefault(); answer(open[index]); }
+      };
       const ask = () => {
-        card.className = 'event-card ' + event.kind;
-        const code = make('p', 'event-code', (event.kind === 'good' ? '좋은 소식' : '돌발 사건') + ' · ' + (week === LAST_WEEK ? '입주 날' : week + '주차 끝') + (firstTime ? ' · 새 사건' : ''));
+        card.className = 'event-card ' + event.kind + (timed ? ' timed' : '');
+        const code = make('p', 'event-code', (event.kind === 'good' ? '좋은 소식' : '경보 · 돌발 사건') + ' · ' + (week === LAST_WEEK ? '입주 날' : week + '주차 끝') + (firstTime ? ' · 새 사건' : ''));
         const title = make('h2', null, event.name); title.id = 'event-title';
-        const parts = [code, title, make('p', 'event-text', event.text)];
+        const parts = [code, title];
+        if (timed) {
+          const box = make('div', 'event-timer'), bar = make('span', 'event-timer-bar'), fill = make('i'), num = make('b', null, Math.ceil(left / 1000) + '초');
+          box.setAttribute('role', 'timer'); box.setAttribute('aria-label', '남은 시간');
+          bar.append(fill); box.append(make('span', 'event-timer-label', '남은 시간'), bar, num);
+          parts.push(box);
+          view = { box, fill, num };
+        }
+        parts.push(make('p', 'event-text', event.text));
         const linked = causes(event, selection);
         if (linked.length) parts.push(make('p', 'event-cause', '연결된 선택: ' + linked.join(' · ')));
         if (adjusts.length) {
@@ -110,21 +152,24 @@ export function createEvents({ onChange = () => {} } = {}) {
           for (const a of adjusts) why.append(make('li', null, a.text));
           parts.push(why);
         }
-        parts.push(make('p', 'event-ask', '어떻게 할까요?'));
+        parts.push(make('p', 'event-ask', timed ? '빨리 정해야 해요! 어떻게 할까요?' : '어떻게 할까요?'));
         const options = make('div', 'event-options');
-        for (const response of event.responses) {
-          if (response.requires && !meets(response.requires, selection)) continue;
+        open.forEach((response, i) => {
           const button = make('button', 'event-option' + (response.requires ? ' unlocked' : '')); button.type = 'button';
-          button.append(make('b', null, response.label), make('span', null, response.line));
+          button.append(make('b', null, (i + 1) + '. ' + response.label), make('span', null, response.line));
           if (response.requires) button.append(make('small', null, '열림 · ' + causes({ when: [response.requires] }, selection).join(' · ') + ' 덕분'));
           button.addEventListener('click', () => answer(response));
           options.append(button);
-        }
-        parts.push(options, footer(() => showBook(ask)));
+        });
+        parts.push(options, footer(() => { stopClock(); view = null; showBook(ask); }));
         card.replaceChildren(...parts);
         options.querySelector('button')?.focus();
+        if (timed) { stopClock(); frame = requestAnimationFrame(tick); }
       };
       const answer = response => {
+        if (answered) return;
+        answered = true; stopClock(); view = null;
+        document.removeEventListener('keydown', onKey);
         // 사건 기본 피해(adjust)와 대응 효과를 한 항목으로 넣는다
         const now = {};
         for (const effect of [...adjusts.map(a => a.now ?? {}), response.now ?? {}]) for (const [key, value] of Object.entries(effect)) now[key] = (now[key] ?? 0) + value;
@@ -132,8 +177,8 @@ export function createEvents({ onChange = () => {} } = {}) {
         follow = response.follow ?? null;
         onChange();
         const done = () => {
-          card.className = 'event-card ' + event.kind;
-          const parts = [make('p', 'event-code', event.name + ' · 결과'), make('h2', null, response.label), make('p', 'event-text', response.result)];
+          card.className = 'event-card ' + event.kind + (response.timeout ? ' timeout' : '');
+          const parts = [make('p', 'event-code', event.name + ' · 결과'), make('h2', null, response.timeout ? '시간 초과' : response.label), make('p', 'event-text', response.result)];
           if (response.aftermath) parts.push(make('p', 'event-cause', response.aftermath));
           const next = make('button', 'decide', '▶ 계속'); next.type = 'button';
           next.addEventListener('click', () => { modal.hidden = true; document.body.classList.remove('event-alert'); resolve(); });
@@ -144,6 +189,7 @@ export function createEvents({ onChange = () => {} } = {}) {
         done();
       };
       document.body.classList.add('event-alert');
+      document.addEventListener('keydown', onKey);
       modal.hidden = false;
       ask();
     });

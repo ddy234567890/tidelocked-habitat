@@ -7,8 +7,11 @@
     "followOnly": "앞 사건의 대응(follow)으로만 나오는 후속 사건",
     "adjust": "조건이 맞으면 어떤 대응을 골라도 더해지는 피해·도움과 그 이유. 사건 카드의 '왜 이렇게 됐나요'에 뜬다",
     "responses": "대응 버튼. requires 가 있으면 그 선지를 고른 사람에게만 열린다. now = 바로, weekly = 다음 주부터 매주, clearedBy = 이 선지를 결정하면 weekly 가 멈춘다. 'lowest' 는 그 순간 가장 낮은 게이지",
-    "gauges": "air 공기 · water 물 · food 식량 · power 전력 (gauges.json 과 같다)"
+    "gauges": "air 공기 · water 물 · food 식량 · power 전력 (gauges.json 과 같다)",
+    "timer": "나쁜 사건은 timerSeconds 초 안에 대응을 골라야 한다. 시간이 다 되면 누구나 고를 수 있는 대응 중 가장 손해가 큰 것을 고른 것으로 치고, 가장 낮은 게이지에 timeoutPenalty 를 더한다. 좋은 소식은 시간제한이 없다"
   },
+  "timerSeconds": 20,
+  "timeoutPenalty": -3,
   "events": [
     {
       "id": "flare", "name": "항성 플레어", "kind": "bad",

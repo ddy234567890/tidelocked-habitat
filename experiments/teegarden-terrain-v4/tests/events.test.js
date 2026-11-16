@@ -56,4 +56,7 @@ const allDec = Object.fromEntries(Object.keys(all).map(k => [k, true]));
 const u1 = { ...all, fix: 'U1' };
 assert.equal(gaugeState(all, allDec, 5, extra).weekly.power, gaugeState(all, allDec, 5).weekly.power, 'U2 로 고치면 여파 없음');
 assert.equal(gaugeState(u1, allDec, 5, extra).weekly.power, gaugeState(u1, allDec, 5).weekly.power - 1, 'U1 이면 여파 그대로');
+// events.js 가 문법 오류 없이 불러와지고, 아무 선택이 없어도 사건이 뽑힌다
+const { pickEvent } = await import('../src/events.js');
+assert.ok(pickEvent({}, new Set(), new Set(), () => 0.5), '선택이 없어도 사건이 뽑힌다');
 console.log('events ok:', data.events.length, '개');
