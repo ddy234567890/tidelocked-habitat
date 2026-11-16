@@ -2,7 +2,7 @@
   "week": 4,
   "brief": "이번 주에는 식량을 조사할게요.\n작물이 자랄 시간까지 미리 챙겨야 해요.",
   "title": "먹을 것 만들기",
-  "goal": "가져온 식량이 떨어지기 전에 농장을 만들어요. 작물은 하루아침에 자라지 않아요!",
+  "goal": "가져온 식량이 떨어지기 전에 농장을 만들어요.",
   "situation": [
     {
       "text": "착륙선에서 가져온 식량이 매주 줄고 있어요."
@@ -72,64 +72,133 @@
       },
       "food_store": {
         "label": "비상식량 창고 채우기",
+        "near": [
+          "led_farm",
+          "greenhouse"
+        ],
         "scaleAt": {
           "B": 0.55,
           "C": 0.7
         },
         "parts": [
           {
-            "box": [
-              0.6,
-              0.45,
-              0.6
-            ],
-            "offset": [
-              -0.35,
-              0
-            ]
+            "asset": "structure"
           },
           {
             "box": [
-              0.6,
-              0.45,
-              0.6
+              0.3,
+              0.26,
+              0.3
             ],
             "offset": [
-              0.35,
-              0
-            ]
+              -0.18,
+              -0.18
+            ],
+            "stage": 1
           },
           {
             "box": [
-              0.6,
-              0.45,
-              0.6
+              0.3,
+              0.26,
+              0.3
             ],
             "offset": [
-              0,
-              0.5
-            ]
+              0.18,
+              -0.18
+            ],
+            "stage": 2
+          },
+          {
+            "box": [
+              0.3,
+              0.26,
+              0.3
+            ],
+            "offset": [
+              -0.18,
+              0.18
+            ],
+            "stage": 3
+          },
+          {
+            "box": [
+              0.3,
+              0.26,
+              0.3
+            ],
+            "offset": [
+              0.18,
+              0.18
+            ],
+            "stage": 4
+          },
+          {
+            "box": [
+              0.3,
+              0.26,
+              0.3
+            ],
+            "offset": [
+              -0.18,
+              -0.18
+            ],
+            "stage": 5,
+            "lift": 0.26
+          },
+          {
+            "box": [
+              0.3,
+              0.26,
+              0.3
+            ],
+            "offset": [
+              0.18,
+              -0.18
+            ],
+            "stage": 6,
+            "lift": 0.26
+          },
+          {
+            "box": [
+              0.3,
+              0.26,
+              0.3
+            ],
+            "offset": [
+              -0.18,
+              0.18
+            ],
+            "stage": 7,
+            "lift": 0.26
           }
         ]
       },
       "farm_extension": {
         "label": "농장 크게 키우기",
-        "scaleAt": {
-          "B": 0.55,
-          "C": 0.7
-        },
-        "parts": [
-          {
-            "asset": "corridor-window",
-            "offset": [
-              0,
-              0
-            ]
-          }
-        ]
+        "grows": {
+          "led_farm": "led_farm_big",
+          "greenhouse": "greenhouse_big"
+        }
+      },
+      "led_farm_big": {
+        "label": "실내 LED 농장 (크게)",
+        "like": "led_farm",
+        "grow": 1.5
+      },
+      "greenhouse_big": {
+        "label": "바깥 유리 온실 (크게)",
+        "like": "greenhouse",
+        "grow": 1.5
       },
       "crop_leaf": {
         "label": "상추(잎채소)",
+        "anchor": [
+          "led_farm",
+          "greenhouse",
+          "led_farm_big",
+          "greenhouse_big"
+        ],
+        "anchorMode": "inside",
         "scaleAt": {
           "B": 0.55,
           "C": 0.7
@@ -138,10 +207,18 @@
           {
             "asset": "cabbage",
             "offset": [
-              -0.5,
+              -0.6,
               -0.3
             ],
-            "scale": 0.4
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              -0.3,
+              -0.3
+            ],
+            "scale": 0.22
           },
           {
             "asset": "cabbage",
@@ -149,23 +226,79 @@
               0,
               -0.3
             ],
-            "scale": 0.4
+            "scale": 0.22
           },
           {
             "asset": "cabbage",
             "offset": [
-              0.5,
+              0.3,
               -0.3
             ],
-            "scale": 0.4
+            "scale": 0.22
           },
           {
             "asset": "cabbage",
             "offset": [
-              -0.5,
+              0.6,
+              -0.3
+            ],
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              -0.6,
+              0
+            ],
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              -0.3,
+              0
+            ],
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              0,
+              0
+            ],
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              0.3,
+              0
+            ],
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              0.6,
+              0
+            ],
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              -0.6,
               0.3
             ],
-            "scale": 0.4
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              -0.3,
+              0.3
+            ],
+            "scale": 0.22
           },
           {
             "asset": "cabbage",
@@ -173,20 +306,35 @@
               0,
               0.3
             ],
-            "scale": 0.4
+            "scale": 0.22
           },
           {
             "asset": "cabbage",
             "offset": [
-              0.5,
+              0.3,
               0.3
             ],
-            "scale": 0.4
+            "scale": 0.22
+          },
+          {
+            "asset": "cabbage",
+            "offset": [
+              0.6,
+              0.3
+            ],
+            "scale": 0.22
           }
         ]
       },
       "crop_staple": {
         "label": "감자·밀(주식)",
+        "anchor": [
+          "led_farm",
+          "greenhouse",
+          "led_farm_big",
+          "greenhouse_big"
+        ],
+        "anchorMode": "inside",
         "scaleAt": {
           "B": 0.55,
           "C": 0.7
@@ -196,70 +344,173 @@
             "asset": "wheat",
             "offset": [
               -0.6,
-              -0.3
+              -0.45
             ],
-            "scale": 0.6
+            "scale": 0.32
           },
           {
             "asset": "wheat",
             "offset": [
-              -0.2,
-              -0.3
+              -0.3,
+              -0.45
             ],
-            "scale": 0.6
+            "scale": 0.32
           },
           {
-            "asset": "corn",
+            "asset": "wheat",
             "offset": [
-              0.2,
-              -0.3
+              0,
+              -0.45
             ],
-            "scale": 0.5
+            "scale": 0.32
           },
           {
-            "asset": "corn",
+            "asset": "wheat",
+            "offset": [
+              0.3,
+              -0.45
+            ],
+            "scale": 0.32
+          },
+          {
+            "asset": "wheat",
             "offset": [
               0.6,
-              -0.3
+              -0.45
             ],
-            "scale": 0.5
+            "scale": 0.32
           },
           {
             "asset": "wheat",
             "offset": [
               -0.6,
-              0.3
+              -0.15
             ],
-            "scale": 0.6
+            "scale": 0.32
           },
           {
             "asset": "wheat",
             "offset": [
-              -0.2,
-              0.3
+              -0.3,
+              -0.15
             ],
-            "scale": 0.6
+            "scale": 0.32
+          },
+          {
+            "asset": "wheat",
+            "offset": [
+              0,
+              -0.15
+            ],
+            "scale": 0.32
+          },
+          {
+            "asset": "wheat",
+            "offset": [
+              0.3,
+              -0.15
+            ],
+            "scale": 0.32
+          },
+          {
+            "asset": "wheat",
+            "offset": [
+              0.6,
+              -0.15
+            ],
+            "scale": 0.32
           },
           {
             "asset": "corn",
             "offset": [
-              0.2,
-              0.3
+              -0.6,
+              0.15
             ],
-            "scale": 0.5
+            "scale": 0.28
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              -0.3,
+              0.15
+            ],
+            "scale": 0.28
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0,
+              0.15
+            ],
+            "scale": 0.28
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0.3,
+              0.15
+            ],
+            "scale": 0.28
           },
           {
             "asset": "corn",
             "offset": [
               0.6,
-              0.3
+              0.15
             ],
-            "scale": 0.5
+            "scale": 0.28
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              -0.6,
+              0.45
+            ],
+            "scale": 0.28
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              -0.3,
+              0.45
+            ],
+            "scale": 0.28
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0,
+              0.45
+            ],
+            "scale": 0.28
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0.3,
+              0.45
+            ],
+            "scale": 0.28
+          },
+          {
+            "asset": "corn",
+            "offset": [
+              0.6,
+              0.45
+            ],
+            "scale": 0.28
           }
         ]
       },
       "crop_algae": {
         "label": "미세조류",
+        "anchor": [
+          "led_farm",
+          "greenhouse",
+          "led_farm_big",
+          "greenhouse_big"
+        ],
+        "anchorMode": "inside",
         "scaleAt": {
           "B": 0.55,
           "C": 0.7
@@ -268,26 +519,66 @@
           {
             "asset": "glass-cylinder",
             "offset": [
-              -0.5,
-              0
+              -0.45,
+              -0.2
             ],
-            "scale": 0.6
+            "scale": 0.35
           },
           {
             "asset": "glass-cylinder",
             "offset": [
-              0,
-              0
+              -0.15,
+              -0.2
             ],
-            "scale": 0.6
+            "scale": 0.35
           },
           {
             "asset": "glass-cylinder",
             "offset": [
-              0.5,
-              0
+              0.15,
+              -0.2
             ],
-            "scale": 0.6
+            "scale": 0.35
+          },
+          {
+            "asset": "glass-cylinder",
+            "offset": [
+              0.45,
+              -0.2
+            ],
+            "scale": 0.35
+          },
+          {
+            "asset": "glass-cylinder",
+            "offset": [
+              -0.45,
+              0.2
+            ],
+            "scale": 0.35
+          },
+          {
+            "asset": "glass-cylinder",
+            "offset": [
+              -0.15,
+              0.2
+            ],
+            "scale": 0.35
+          },
+          {
+            "asset": "glass-cylinder",
+            "offset": [
+              0.15,
+              0.2
+            ],
+            "scale": 0.35
+          },
+          {
+            "asset": "glass-cylinder",
+            "offset": [
+              0.45,
+              0.2
+            ],
+            "scale": 0.35
           }
         ]
       }
@@ -338,7 +629,9 @@
       "choices": [
         {
           "id": "K1",
-          "stats": { "activityMET": -0.2 },
+          "stats": {
+            "activityMET": -0.2
+          },
           "label": "비상식량 창고 채우기",
           "line": "지금 먹을 식량을 넉넉히 쌓아 둬요.",
           "gain": "지금은 든든해요",
@@ -349,7 +642,9 @@
         },
         {
           "id": "K2",
-          "stats": { "activityMET": 0.3 },
+          "stats": {
+            "activityMET": 0.3
+          },
           "label": "농장 크게 키우기",
           "line": "지금은 아끼고 농장을 크게 지어요.",
           "gain": "수확이 시작되면 1.5배 많이 거둬요",
@@ -387,7 +682,9 @@
         },
         {
           "id": "C_algae",
-          "stats": { "oxygenPct": 0.5 },
+          "stats": {
+            "oxygenPct": 0.5
+          },
           "label": "미세조류",
           "line": "먹을 것과 산소를 함께 만들어요.",
           "gain": "조금 먹을 수도 있고 산소도 만들어 줘요",
@@ -400,6 +697,8 @@
     }
   ],
   "notes": {
-    "scaleAt": "좁은 동굴(B)과 능선(C)에서는 장치를 줄여야 주차가 쌓여도 겹치지 않는다"
+    "scaleAt": "좁은 동굴(B)과 능선(C)에서는 장치를 줄여야 주차가 쌓여도 겹치지 않는다",
+    "anchor": "작물은 고른 농장 안에 놓는다 (placement.js anchor). 농장 크게 키우기는 새 장치 없이 고른 농장을 1.5배 키운 것으로 바꾼다 (choices.js grows·like)",
+    "store": "창고는 고른 농장 옆에 서고(near), 상자(stage 1~7)가 차례로 떨어져 쌓인다 (src/motion.js fillMotion)"
   }
 }

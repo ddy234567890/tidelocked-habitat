@@ -224,16 +224,18 @@ function addSource({ type, r, center, past, patches, unit, air, top }, ground, a
   if (type === 'pool') {
     // 물웅덩이: 땅을 따라 가운데가 오목하게 파인 물 표면 (비탈에서도 땅에 붙어 있다).
     // 가운데에서 잔물결 고리가 바깥으로 퍼진다. 둘레는 밝은 테두리
-    for (let x = -r; x <= r; x += POOL_STEP) for (let z = -r; z <= r; z += POOL_STEP) {
-      const jx = x + (random() - 0.5) * POOL_STEP, jz = z + (random() - 0.5) * POOL_STEP, d = Math.hypot(jx, jz * 1.25);
+    // 지난 주차 물웅덩이는 점을 성기게·어둡게 둔다. 촘촘한 점이 겹쳐 밝아지면 지난 것인데도 파랗게 튄다
+    const step = past ? POOL_STEP * 2.5 : POOL_STEP, surface = past ? 0.45 : 0.75, edge = past ? 0.5 : 1.1;
+    for (let x = -r; x <= r; x += step) for (let z = -r; z <= r; z += step) {
+      const jx = x + (random() - 0.5) * step, jz = z + (random() - 0.5) * step, d = Math.hypot(jx, jz * 1.25);
       if (d > r) continue;
       const y = groundAt(ground, cx + jx, cz + jz, cy) + 0.015 - POOL_DIP * (1 - (d / r) ** 2);
-      add([cx + jx, y, cz + jz], blue(0.75 * dim), 0, seconds => ({ light: 0.35 + 0.65 * Math.max(0, Math.sin(d / r * 14 - seconds * 2.4)) ** 2 }));
+      add([cx + jx, y, cz + jz], blue(surface * dim), 0, seconds => ({ light: 0.35 + 0.65 * Math.max(0, Math.sin(d / r * 14 - seconds * 2.4)) ** 2 }));
     }
-    const rim = Math.ceil(Math.PI * 2 * r / 0.02);
+    const rim = Math.ceil(Math.PI * 2 * r / (past ? 0.05 : 0.02));
     for (let i = 0; i < rim; i++) {
       const a = i / rim * Math.PI * 2, x = Math.cos(a) * r, z = Math.sin(a) * r / 1.25;
-      add([cx + x, groundAt(ground, cx + x, cz + z, cy) + 0.01, cz + z], blue(1.1 * dim), 0.6);
+      add([cx + x, groundAt(ground, cx + x, cz + z, cy) + 0.01, cz + z], blue(edge * dim), past ? 0 : 0.6);
     }
   } else if (type === 'ice') {
     // 얼음 덩어리: 크기가 다른 각진 덩어리 몇 개. 표면 점이 천천히 반짝인다
