@@ -26,6 +26,13 @@ for (const event of data.events) {
   for (const cond of event.when ?? []) checkRequires(cond, at + ' when');
   for (const a of event.adjust ?? []) { checkRequires(a.requires, at + ' adjust'); checkEffect(a.now, at + ' adjust'); assert.ok(a.text, at + ' adjust 이유 글'); }
   assert.ok(event.responses.filter(r => !r.requires).length >= 2, `${at}: 누구나 고를 수 있는 대응이 2개 이상`);
+  if (event.kind === 'bad') {
+    // 시간 초과(아무 조치도 못 함)는 누구나 고를 수 있는 어떤 대응보다 손해가 크다 (여파는 3주치로 셈)
+    assert.ok(event.ignore?.result, `${at}: 나쁜 사건은 ignore(시간 초과 결과)가 있다`);
+    checkEffect(event.ignore.now, at + ' ignore'); checkEffect(event.ignore.weekly, at + ' ignore'); checkRequires(event.ignore.clearedBy, at + ' ignore');
+    const loss = r => Object.values(r.now ?? {}).reduce((a, b) => a + b, 0) + 3 * Object.values(r.weekly ?? {}).reduce((a, b) => a + b, 0);
+    for (const r of event.responses.filter(r => !r.requires)) assert.ok(loss(event.ignore) < loss(r), `${at}: 시간 초과가 ${r.id} 보다 손해가 크다`);
+  }
   for (const r of event.responses) {
     checkRequires(r.requires, `${at}.${r.id}`); checkRequires(r.clearedBy, `${at}.${r.id} clearedBy`);
     checkEffect(r.now, `${at}.${r.id}`); checkEffect(r.weekly, `${at}.${r.id}`);

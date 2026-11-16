@@ -399,7 +399,7 @@ try {
   function decideStep(stepId) {
     if (transition || !selection[stepId]) return;
     decided[stepId] = true; renderSteps(true);
-    if (stepId === 'arrive' && !eventBusy) { eventBusy = true; events.endOfWeek(week, selection).then(() => { eventBusy = false; renderSteps(true); }); } // 입주 날 사건
+    events.afterDecide(week, stepId, selection).then(played => { if (played) renderSteps(true); }); // 돌발 사건은 단계를 결정한 뒤 무작위로 뜰 수 있다
     if (stepId !== 'location') focusAssets(true); // 결정하면 지금까지 지은 기지 전체가 화면에 알맞게 들어오게 물러선다
   }
   // 토큰판에 넘길 이번 주 단계들: 결정한 단계 'done', 지금 고를 단계 'open' (앞 단계를 결정해야 열린다), 그 뒤는 'locked'("?" 자리)
@@ -638,7 +638,7 @@ try {
     summaryWeek = i + 1; updateHud(mode === 'local' && !transition);
   }));
   $('#next-week').addEventListener('click', async () => {
-    if (eventBusy) return;
+    if (eventBusy || events.busy()) return;
     eventBusy = true; await events.endOfWeek(week, selection); eventBusy = false; // 그 주 돌발 사건이 있으면 대응을 고른 뒤 넘어간다
     week++; renderSteps(true); syncAssets(); showBrief(week);
   });

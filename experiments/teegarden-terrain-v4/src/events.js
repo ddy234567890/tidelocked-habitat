@@ -1,15 +1,16 @@
 // 돌발 사건 (체험판, 2026-11-16): 고른 선지와 선지 조합에서 사건이 생긴다. 데이터는 events.json.
-// 한 판에 4번 (2·3·4주차를 마칠 때 + 5주차 입주 방법을 결정할 때). 사건은 한 주 앞서 뽑아 두고 그 주 브리핑에 예고(hint)를 띄운다.
+// 2~5주차에 한 번씩. 사건은 한 주 앞서 뽑아 두고 그 주 브리핑에 예고(hint)를 띄운다.
+// 언제 터질지는 무작위다: 그 주 단계 중 하나를 결정하고 1~3초 뒤, 또는 '다음 주로'를 누를 때 (5주차는 단계 중 하나).
 // 사건이 뜨면 대응 버튼을 고르고, 그 효과는 gauges.js gaugeState 의 extras 로 들어간다.
 // 기록장: 한 번이라도 만난 사건은 이 브라우저에 남는다 (localStorage). 아직 못 만난 사건은 ??? 와 힌트로만 보인다.
 import data from './events.json' with { type: 'json' };
-import { ALL_STEPS } from './choices.js';
+import { ALL_STEPS, WEEKS } from './choices.js';
 import { mulberry32 } from './terrain.js';
 
 export const EVENTS = data.events;
 const byId = Object.fromEntries(EVENTS.map(event => [event.id, event]));
 const SEEN_KEY = 'tidelocked.events.seen';
-const LAST_WEEK = 5; // 마지막 주: 입주 방법(arrive)을 결정하면 사건이 뜬다
+const LAST_WEEK = 5; // 마지막 주에는 '다음 주로'가 없어서 단계를 결정할 때만 사건이 뜬다
 
 const meets = (requires, selection) => Object.entries(requires ?? {}).every(([step, ids]) => ids.includes(selection[step]));
 /** 지금 선택으로 그 사건이 나올 수 있나 */
@@ -55,11 +56,12 @@ const make = (tag, className, text) => {
 
 /** onChange: 대응을 고를 때마다 불린다 (게이지 다시 그리기) */
 export function createEvents({ onChange = () => {} } = {}) {
-  let rand, scheduled, used, results, follow;
+  let rand, scheduled, used, results, follow, pending = null, playing = false;
   const seen = loadSeen();
   function reset() {
     rand = mulberry32((Date.now() ^ 0x5eed) >>> 0);
-    scheduled = {}; used = new Set(); results = []; follow = null;
+    if (pending) clearTimeout(pending.timer);
+    scheduled = {}; used = new Set(); results = []; follow = null; pending = null;
   }
   reset();
 
@@ -94,16 +96,10 @@ export function createEvents({ onChange = () => {} } = {}) {
   }
 
   // 나쁜 사건은 제한 시간 안에 대응을 골라야 한다 (events.json timerSeconds). 기록장을 보는 동안은 시간이 멈춘다.
-  // 시간이 다 되면 가장 나쁜 대응을 고른 것으로 치고, 가장 낮은 게이지가 조금 더 줄어든다 (머뭇거린 대가)
+  // 시간이 다 되면 아무 조치도 못 한 것이다: 사건의 ignore(손 놓았을 때 피해)가 그대로 들어온다. 어떤 대응보다 손해가 크다
   const TIMER_MS = (data.timerSeconds ?? 20) * 1000, URGENT_MS = 5000;
-  const loss = r => Object.values(r.now ?? {}).reduce((a, b) => a + b, 0) + 3 * Object.values(r.weekly ?? {}).reduce((a, b) => a + b, 0);
-  function timeoutResponse(event, open) {
-    const worst = open.filter(r => !r.requires).reduce((a, b) => loss(b) < loss(a) ? b : a);
-    const now = { ...(worst.now ?? {}) };
-    now.lowest = (now.lowest ?? 0) + (data.timeoutPenalty ?? -3);
-    return { ...worst, id: 'timeout', label: '시간 초과', now, timeout: true,
-      result: '정하지 못하고 머뭇거리는 사이 상황이 더 나빠졌어요. 결국 「' + worst.label + '」 쪽으로 흘러갔어요. ' + worst.result };
-  }
+  const timeoutResponse = event => ({ ...event.ignore, id: 'timeout', timeout: true, label: '시간 초과',
+    result: '아무 조치도 하지 못했어요. ' + event.ignore.result });
 
   function play(event, week, selection) {
     return new Promise(resolve => {
@@ -125,7 +121,7 @@ export function createEvents({ onChange = () => {} } = {}) {
           view.box.classList.toggle('urgent', left <= URGENT_MS);
           view.box.setAttribute('aria-valuenow', String(shown));
         }
-        if (left <= 0) return answer(timeoutResponse(event, open));
+        if (left <= 0) return answer(timeoutResponse(event));
         frame = requestAnimationFrame(tick);
       };
       const onKey = e => { // 숫자 키 1·2·3 으로 바로 고른다
@@ -134,7 +130,7 @@ export function createEvents({ onChange = () => {} } = {}) {
       };
       const ask = () => {
         card.className = 'event-card ' + event.kind + (timed ? ' timed' : '');
-        const code = make('p', 'event-code', (event.kind === 'good' ? '좋은 소식' : '경보 · 돌발 사건') + ' · ' + (week === LAST_WEEK ? '입주 날' : week + '주차 끝') + (firstTime ? ' · 새 사건' : ''));
+        const code = make('p', 'event-code', (event.kind === 'good' ? '좋은 소식' : '경보 · 돌발 사건') + ' · ' + week + '주차' + (firstTime ? ' · 새 사건' : ''));
         const title = make('h2', null, event.name); title.id = 'event-title';
         const parts = [code, title];
         if (timed) {
@@ -178,16 +174,17 @@ export function createEvents({ onChange = () => {} } = {}) {
         onChange();
         const done = () => {
           card.className = 'event-card ' + event.kind + (response.timeout ? ' timeout' : '');
-          const parts = [make('p', 'event-code', event.name + ' · 결과'), make('h2', null, response.timeout ? '시간 초과' : response.label), make('p', 'event-text', response.result)];
+          const parts = [make('p', 'event-code', event.name + ' · 결과'), make('h2', null, response.timeout ? '시간 초과 · 아무 조치도 못 했어요' : response.label), make('p', 'event-text', response.result)];
           if (response.aftermath) parts.push(make('p', 'event-cause', response.aftermath));
           const next = make('button', 'decide', '▶ 계속'); next.type = 'button';
-          next.addEventListener('click', () => { modal.hidden = true; document.body.classList.remove('event-alert'); resolve(); });
+          next.addEventListener('click', () => { modal.hidden = true; playing = false; document.body.classList.remove('event-alert'); resolve(); });
           parts.push(next, footer(() => showBook(done)));
           card.replaceChildren(...parts);
           next.focus();
         };
         done();
       };
+      playing = true;
       document.body.classList.add('event-alert');
       document.addEventListener('keydown', onKey);
       modal.hidden = false;
@@ -200,17 +197,37 @@ export function createEvents({ onChange = () => {} } = {}) {
     /** gaugeState 의 extras */
     effects: () => results,
     /** 그 주 브리핑에 붙일 예고 문장 */
-    hintFor: week => scheduled[week] ? [byId[scheduled[week]].hint] : [],
+    hintFor: week => scheduled[week] ? [byId[scheduled[week].id].hint] : [],
+    /** 사건 창이 떠 있으면 true ('다음 주로'를 막는다) */
+    busy: () => playing,
     /**
-     * 주가 끝날 때 (5주차는 입주 방법을 결정했을 때) 부른다: 예약된 사건이 있으면 띄우고, 다음 사건을 뽑아 둔다.
+     * 단계를 결정할 때마다 부른다. 이번 주 사건이 이 단계 뒤로 잡혀 있으면 1~3초 뒤 갑자기 뜬다.
+     * 사건 창을 닫으면 true 로 끝나는 Promise (사건이 없으면 바로 false)
+     */
+    afterDecide(week, stepId, selection) {
+      const plan = scheduled[week];
+      if (!plan || plan.at !== stepId || pending) return Promise.resolve(false);
+      delete scheduled[week];
+      let run;
+      const promise = new Promise(resolve => { run = () => { pending = null; play(byId[plan.id], week, selection).then(() => resolve(true)); }; });
+      pending = { run, promise, timer: setTimeout(() => pending?.run(), plan.delay) };
+      return promise;
+    },
+    /**
+     * '다음 주로'를 누를 때 부른다: 아직 안 뜬 이번 주 사건이 있으면 지금 띄우고, 다음 주 사건과 터질 때를 뽑아 둔다.
      * 사건 창을 닫으면 끝나는 Promise
      */
     async endOfWeek(week, selection) {
-      if (scheduled[week]) { const id = scheduled[week]; delete scheduled[week]; await play(byId[id], week, selection); }
+      if (pending) { clearTimeout(pending.timer); const { promise } = pending; pending.run(); await promise; } // 곧 뜰 참이던 사건은 지금 띄운다
+      if (scheduled[week]) { const { id } = scheduled[week]; delete scheduled[week]; await play(byId[id], week, selection); }
       if (week < LAST_WEEK) {
         const next = pickEvent(selection, used, seen, rand, follow);
         follow = null;
-        if (next) { scheduled[week + 1] = next.id; used.add(next.id); }
+        if (next) {
+          const moments = [...WEEKS[week].steps.map(step => step.id), ...(week + 1 < LAST_WEEK ? ['end'] : [])];
+          scheduled[week + 1] = { id: next.id, at: moments[Math.floor(rand() * moments.length)], delay: 1000 + Math.floor(rand() * 2000) };
+          used.add(next.id);
+        }
       }
     }
   };
