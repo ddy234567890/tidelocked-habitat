@@ -13,6 +13,7 @@ import { createHexBoard, shortName } from './hexBoard.js';
 import { setCrewSite, setCrewStats } from './crew.js';
 import { createPeople } from './people.js';
 import { gaugeState, GAUGE_KEYS, GAUGE_LABELS, GAUGE_WARN } from './gauges.js';
+import { createEvents } from './events.js'; // 돌발 사건 (체험판)
 import { buildModule, buildOverlay, tintLayer, TINT, faceColors } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
@@ -134,6 +135,9 @@ try {
   const assetGroup = new THREE.Group(); localGroup.add(assetGroup);
   let summaryWeek = null; // 왼쪽 칸에 요약을 띄운 주차 (null = 요약 닫힘)
   let selection = {}, decided = {}, week = 1, moduleLayer = null, assetToken = 0, focusTween = null;
+  // 돌발 사건 (events.js, 체험판): 대응을 고르면 게이지를 다시 그린다. eventBusy 는 사건 창이 떠 있는 동안 '다음 주로'를 두 번 누르지 않게 막는다
+  const events = createEvents({ onChange: () => renderGauges(true) });
+  let eventBusy = false;
   // 육각 토큰 선지판 (src/hexBoard.js). 기존 글 카드·결정 버튼은 숨긴 채 그대로 돌고, 판은 그 상태를 보여 주며 같은 함수를 부른다.
   // 주소에 ?cards=1 을 붙이면 예전 글 카드 화면으로 본다 (비교용)
   const hexMode = !new URLSearchParams(location.search).has('cards');
@@ -308,6 +312,7 @@ try {
   function clearAssets() {
     dropFlows();
     assetToken++; selection = {}; decided = {}; week = 1; focusTween = null; summaryWeek = null;
+    events.reset();
     dropLayer(moduleLayer); moduleLayer = null;
     overlayLayers.forEach(dropLayer); overlayLayers.clear(); reveals.length = 0; motions.clear();
     $('#legend').hidden = true;
@@ -399,6 +404,7 @@ try {
   function decideStep(stepId) {
     if (transition || !selection[stepId]) return;
     decided[stepId] = true; renderSteps(true);
+    events.afterDecide(week, stepId, selection).then(played => { if (played) renderSteps(true); }); // 돌발 사건은 단계를 결정한 뒤 무작위로 뜰 수 있다
     if (stepId !== 'location') focusAssets(true); // 결정하면 지금까지 지은 기지 전체가 화면에 알맞게 들어오게 물러선다
   }
   // 토큰판에 넘길 이번 주 단계들: 결정한 단계 'done', 지금 고를 단계 'open' (앞 단계를 결정해야 열린다), 그 뒤는 'locked'("?" 자리)
@@ -493,7 +499,7 @@ try {
       $('#hud-gauges').append(row);
       return [key, row];
     }));
-    const state = local ? gaugeState(selection, decided, week) : gaugeState({}, {}, 1);
+    const state = local ? gaugeState(selection, decided, week, events.effects()) : gaugeState({}, {}, 1);
     for (const key of GAUGE_KEYS) {
       const row = rows[key], value = Math.max(0, state.values[key]);
       setText(row.querySelector('.g-val'), String(value));
@@ -629,14 +635,18 @@ try {
   // 주차 브리핑: 다음 주로 넘어갈 때 뜨고, 왼쪽 주차 탭이나 브리핑의 탭으로 지난 주 것을 다시 본다
   const showBrief = number => {
     const shown = WEEKS[number - 1];
-    openBriefing(shown, textsFor(shown.situation, selection), week, showBrief);
+    openBriefing(shown, [...textsFor(shown.situation, selection), ...(number === week ? events.hintFor(week) : [])], week, showBrief);
   };
   // 왼쪽 탭: '현재'는 게이지·기온·산소, W1·W2… 는 그 주차로 돌아가거나 브리핑을 띄우지 않고 그 주 요약을 보여 준다
   $('#hud .tab-now').addEventListener('click', () => { summaryWeek = null; updateHud(mode === 'local' && !transition); });
   document.querySelectorAll('#hud .tab:not(.tab-now)').forEach((tab, i) => tab.addEventListener('click', () => {
     summaryWeek = i + 1; updateHud(mode === 'local' && !transition);
   }));
-  $('#next-week').addEventListener('click', () => { week++; renderSteps(true); syncAssets(); showBrief(week); });
+  $('#next-week').addEventListener('click', async () => {
+    if (eventBusy || events.busy()) return;
+    eventBusy = true; await events.endOfWeek(week, selection); eventBusy = false; // 그 주 돌발 사건이 있으면 대응을 고른 뒤 넘어간다
+    week++; renderSteps(true); syncAssets(); showBrief(week);
+  });
 
   // A와 B는 사용자 표시 위치, C는 기존 위치다. 실제 경위도 자료는 아니다.
   const sun = new THREE.Vector3(PLANET_SUN.x, PLANET_SUN.y, PLANET_SUN.z).normalize();

@@ -17,13 +17,16 @@ export const effectsFor = (choiceId, selection) => (data.choices[choiceId] ?? []
 
 /**
  * selection: { 단계id: 선지id }, decided: { 단계id: true }, week: 지금 주차 (1~5)
+ * extras: 돌발 사건 대응 효과 (events.js) [{ week, now, weekly, clearedBy }]. 그 주차 선지 효과 뒤, 주가 끝나기 전에 더한다.
+ *   clearedBy 의 선지를 결정하면 그 순간부터 weekly 를 더 이상 더하지 않는다 (5주 '가장 약한 곳 튼튼하게')
  * → { values: {air…}, weekly: {air…} (다음 주에 더해질 양), failed: null | { key, week } }
  */
-export function gaugeState(selection, decided, week) {
+export function gaugeState(selection, decided, week, extras = []) {
   const values = Object.fromEntries(GAUGE_KEYS.map(key => [key, data.start]));
   const rates = { ...data.weekly };
   const harvests = [];
   let harvestScale = 1, failed = null;
+  const cleared = new Set();
   const check = w => { if (!failed) { const key = GAUGE_KEYS.find(k => values[k] <= 0); if (key) failed = { key, week: w }; } };
   const harvestAt = w => {
     const out = Object.fromEntries(GAUGE_KEYS.map(key => [key, 0]));
@@ -44,6 +47,22 @@ export function gaugeState(selection, decided, week) {
         if (entry.harvest) harvests.push({ ...entry.harvest, food: Math.round((entry.harvest.food ?? 0) * harvestScale) });
       }
       check(w);
+    }
+    for (const extra of extras) {
+      if (extra.week !== w) continue;
+      const lowest = lowestKey(values);
+      for (const [key, value] of Object.entries(extra.now ?? {})) {
+        const target = key === 'lowest' ? lowest : key;
+        values[target] = clamp(values[target] + value);
+      }
+      extra.applied = Object.entries(extra.weekly ?? {}).map(([key, value]) => [key === 'lowest' ? lowest : key, value]);
+      for (const [key, value] of extra.applied) rates[key] += value;
+      check(w);
+    }
+    for (const extra of extras) {
+      if (extra.week > w || !extra.clearedBy || cleared.has(extra) || !extra.applied) continue;
+      const fixed = Object.entries(extra.clearedBy).every(([step, ids]) => decided[step] && ids.includes(selection[step]));
+      if (fixed) { cleared.add(extra); for (const [key, value] of extra.applied) rates[key] -= value; }
     }
     if (w < week) { // 지난 주차는 끝났다: 한 주치 변화를 더한다
       const h = harvestAt(w);
