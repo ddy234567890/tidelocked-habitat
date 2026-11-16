@@ -12,6 +12,9 @@ const byId = Object.fromEntries(EVENTS.map(event => [event.id, event]));
 const SEEN_KEY = 'tidelocked.events.seen';
 const LAST_WEEK = 5; // 마지막 주에는 '다음 주로'가 없어서 단계를 결정할 때만 사건이 뜬다
 
+// 사건 피해 세기 (events.json severity): 줄어드는 값(음수)에만 곱한다. 좋아지는 값은 그대로다
+export const SEVERITY = data.severity ?? 1;
+export const harsh = effect => effect && Object.fromEntries(Object.entries(effect).map(([key, value]) => [key, value < 0 ? Math.round(value * SEVERITY) : value]));
 const meets = (requires, selection) => Object.entries(requires ?? {}).every(([step, ids]) => ids.includes(selection[step]));
 /** 지금 선택으로 그 사건이 나올 수 있나 */
 export function eligible(event, selection) {
@@ -169,7 +172,7 @@ export function createEvents({ onChange = () => {} } = {}) {
         // 사건 기본 피해(adjust)와 대응 효과를 한 항목으로 넣는다
         const now = {};
         for (const effect of [...adjusts.map(a => a.now ?? {}), response.now ?? {}]) for (const [key, value] of Object.entries(effect)) now[key] = (now[key] ?? 0) + value;
-        results.push({ week, id: event.id, response: response.id, now, weekly: response.weekly, clearedBy: response.clearedBy });
+        results.push({ week, id: event.id, response: response.id, now: harsh(now), weekly: harsh(response.weekly), clearedBy: response.clearedBy });
         follow = response.follow ?? null;
         onChange();
         const done = () => {
@@ -197,37 +200,43 @@ export function createEvents({ onChange = () => {} } = {}) {
     /** gaugeState 의 extras */
     effects: () => results,
     /** 그 주 브리핑에 붙일 예고 문장 */
-    hintFor: week => scheduled[week] ? [byId[scheduled[week].id].hint] : [],
+    hintFor: week => (scheduled[week] ?? []).map(plan => byId[plan.id].hint),
     /** 사건 창이 떠 있으면 true ('다음 주로'를 막는다) */
     busy: () => playing,
     /**
-     * 단계를 결정할 때마다 부른다. 이번 주 사건이 이 단계 뒤로 잡혀 있으면 1~3초 뒤 갑자기 뜬다.
-     * 사건 창을 닫으면 true 로 끝나는 Promise (사건이 없으면 바로 false)
+     * 단계를 결정할 때마다 부른다. 이번 주 사건이 이 단계 뒤로 잡혀 있으면 1~3초 뒤 갑자기 뜬다
+     * (다른 사건이 곧 뜰 참이면 그 사건이 끝난 뒤). 사건 창을 닫으면 true 로 끝나는 Promise (사건이 없으면 바로 false)
      */
     afterDecide(week, stepId, selection) {
-      const plan = scheduled[week];
-      if (!plan || plan.at !== stepId || pending) return Promise.resolve(false);
-      delete scheduled[week];
-      let run;
-      const promise = new Promise(resolve => { run = () => { pending = null; play(byId[plan.id], week, selection).then(() => resolve(true)); }; });
-      pending = { run, promise, timer: setTimeout(() => pending?.run(), plan.delay) };
-      return promise;
+      const list = scheduled[week] ?? [], index = list.findIndex(plan => plan.at === stepId);
+      if (index < 0) return Promise.resolve(false);
+      const [plan] = list.splice(index, 1);
+      const before = pending?.promise ?? Promise.resolve();
+      return before.then(() => {
+        let run;
+        const promise = new Promise(resolve => { run = () => { pending = null; play(byId[plan.id], week, selection).then(() => resolve(true)); }; });
+        pending = { run, promise, timer: setTimeout(() => pending?.run(), plan.delay) };
+        return promise;
+      });
     },
     /**
      * '다음 주로'를 누를 때 부른다: 아직 안 뜬 이번 주 사건이 있으면 지금 띄우고, 다음 주 사건과 터질 때를 뽑아 둔다.
-     * 사건 창을 닫으면 끝나는 Promise
+     * 한 주에 사건은 1개, secondChance 확률로 2개. 사건 창을 닫으면 끝나는 Promise
      */
     async endOfWeek(week, selection) {
-      if (pending) { clearTimeout(pending.timer); const { promise } = pending; pending.run(); await promise; } // 곧 뜰 참이던 사건은 지금 띄운다
-      if (scheduled[week]) { const { id } = scheduled[week]; delete scheduled[week]; await play(byId[id], week, selection); }
-      if (week < LAST_WEEK) {
+      while (pending) { clearTimeout(pending.timer); const { promise } = pending; pending.run(); await promise; } // 곧 뜰 참이던 사건은 지금 띄운다
+      for (const plan of scheduled[week]?.splice(0) ?? []) await play(byId[plan.id], week, selection);
+      if (week >= LAST_WEEK) return;
+      const moments = [...WEEKS[week].steps.map(step => step.id), ...(week + 1 < LAST_WEEK ? ['end'] : [])];
+      const count = 1 + (rand() < (data.secondChance ?? 0) ? 1 : 0);
+      scheduled[week + 1] = [];
+      for (let k = 0; k < count && moments.length; k++) {
         const next = pickEvent(selection, used, seen, rand, follow);
         follow = null;
-        if (next) {
-          const moments = [...WEEKS[week].steps.map(step => step.id), ...(week + 1 < LAST_WEEK ? ['end'] : [])];
-          scheduled[week + 1] = { id: next.id, at: moments[Math.floor(rand() * moments.length)], delay: 1000 + Math.floor(rand() * 2000) };
-          used.add(next.id);
-        }
+        if (!next) break;
+        const at = moments.splice(Math.floor(rand() * moments.length), 1)[0];
+        scheduled[week + 1].push({ id: next.id, at, delay: 1000 + Math.floor(rand() * 2000) });
+        used.add(next.id);
       }
     }
   };
