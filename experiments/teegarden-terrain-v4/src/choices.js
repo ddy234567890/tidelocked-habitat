@@ -39,6 +39,15 @@ export function choose(selection, stepId, choiceId) {
 }
 
 /** 선택 상태 → 그릴 레이어 */
+/** 오버레이 정의. like 가 있으면 그 장치를 grow 배 키운 것이다 (농장 크게 키우기 → 고른 농장 자체가 커진다) */
+export function overlayDef(id) {
+  const def = week1.layers.overlay[id];
+  if (!def?.like) return def;
+  const base = week1.layers.overlay[def.like];
+  const scaleAt = Object.fromEntries(Object.values(week1.sites).map(l => [l, (base.scaleAt?.[l] ?? 1) * def.grow]));
+  return { ...base, label: def.label ?? base.label, scaleAt };
+}
+
 export function resolve(selection) {
   // weeks: 레이어마다 몇 주차 선지로 생겼는지 ('module' 또는 오버레이 id → 주차 번호)
   const layers = { module: null, overlays: [], weeks: {} };
@@ -47,7 +56,19 @@ export function resolve(selection) {
       const choice = step.choices.find(c => c.id === selection[step.id]);
       if (!choice || !isAvailable(choice, selection)) continue;
       if (choice.module) { layers.module = choice.module; layers.weeks.module = w + 1; }
-      for (const id of choice.overlays ?? []) { layers.overlays.push(id); layers.weeks[id] ??= w + 1; }
+      for (const id of choice.overlays ?? []) {
+        // grows: 이 선지는 새 장치를 더하지 않고, 앞서 놓은 장치를 키운 것으로 바꾼다 ({ 원래 id: 키운 id })
+        const grows = week1.layers.overlay[id]?.grows;
+        if (grows) {
+          layers.overlays = layers.overlays.map(old => {
+            if (!grows[old]) return old;
+            layers.weeks[grows[old]] ??= layers.weeks[old];
+            return grows[old];
+          });
+          continue;
+        }
+        layers.overlays.push(id); layers.weeks[id] ??= w + 1;
+      }
     }
   });
   return layers;

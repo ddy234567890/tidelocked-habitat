@@ -149,12 +149,13 @@ try {
       if (open) decideStep(open.id); else if (!$('#next-week').hidden) $('#next-week').click();
     }
   }) : null;
-  const overlayLayers = new Map(), reveals = [], pastFades = new Set();
+  // motions: 스스로 움직이며 나타나는 레이어 (data.animate, src/motion.js — 제자리에서 커지는 농장, 상자가 쌓이는 창고)
+  const overlayLayers = new Map(), reveals = [], pastFades = new Set(), motions = new Map();
   const REVEAL_MS = 1600; // 새 건물 점이 아래에서 위로 채워지는 시간
   const PAST_FADE_MS = 1400; // 지난 주차 건물 선이 사라지며 회색 면으로 바뀌는 시간
   function dropLayer(layer) {
     if (!layer) return;
-    pastFades.delete(layer);
+    pastFades.delete(layer); motions.delete(layer.points);
     if (layer === hovered) setHover(null);
     assetGroup.remove(layer.points); layer.points.geometry.dispose();
     if (layer.mesh) { assetGroup.remove(layer.mesh); layer.mesh.geometry.dispose(); }
@@ -250,7 +251,6 @@ try {
     assetGroup.remove(flowLayer.points); flowLayer.points.geometry.dispose(); flowLayer = null;
   }
   function syncFlows() {
-    dropFlows();
     const homesOf = () => {
       const homes = moduleLayer?.data.homes;
       if (homes?.length) return homes.map(home => home.at);
@@ -289,6 +289,10 @@ try {
       if (!segments.length) continue;
       flows.push({ kind: flow.kind, amount: flow.amount, vary: flow.vary, past: flow.week < week, fadeEnd: lists.at(-1) === 'out', segments });
     }
+    // 그리는 내용이 그대로면 다시 만들지 않는다 (다른 선지를 누를 때마다 물웅덩이·흐름이 꺼졌다 켜지며 깜빡이지 않게)
+    const key = JSON.stringify([currentSite, flows, sources]);
+    if (flowLayer?.key === key) return;
+    dropFlows();
     if (!flows.length && !sources.length) return;
     const site = currentSite, ground = site === 'lavaTube' ? null : (x, z) => floorAt(site, x, z);
     const data = buildFlowPoints(flows, ground, sources);
@@ -297,7 +301,7 @@ try {
     const points = new THREE.Points(geometry, material);
     points.frustumCulled = false; // 흐르는 점이 움직이므로 처음 경계 구로 자르지 않는다
     assetGroup.add(points);
-    flowLayer = { points, animate: data.animate, start: performance.now() };
+    flowLayer = { key, points, animate: data.animate, start: performance.now() };
     if (window.terrainDiagnostics) window.terrainDiagnostics.flows = flows.map(f => ({ kind: f.kind, amount: f.amount, past: f.past, segments: f.segments.length }));
     if (window.terrainDiagnostics) window.terrainDiagnostics.sources = sources.map(source => ({ type: source.type, r: source.r, center: source.center }));
   }
@@ -305,13 +309,14 @@ try {
     dropFlows();
     assetToken++; selection = {}; decided = {}; week = 1; focusTween = null; summaryWeek = null;
     dropLayer(moduleLayer); moduleLayer = null;
-    overlayLayers.forEach(dropLayer); overlayLayers.clear(); reveals.length = 0;
+    overlayLayers.forEach(dropLayer); overlayLayers.clear(); reveals.length = 0; motions.clear();
     $('#legend').hidden = true;
   }
   function addLayer(data) {
     const points = new THREE.Points(geometryFrom(data, TINT.new.weight), material);
     assetGroup.add(points); fadePoints(points, 0);
-    reveals.push({ points, start: performance.now() });
+    if (data.animate) motions.set(points, { animate: data.animate, start: performance.now() });
+    else reveals.push({ points, start: performance.now() });
     return points;
   }
   // 레이어 색만 바꾼다. 점이 채워지는 중이면 그 동작이 baseColor 를 읽어 알아서 새 색으로 그린다
@@ -325,7 +330,7 @@ try {
     }
     const weight = geometry.getAttribute('lineWeight');
     weight.array.fill(TINT[role].weight); weight.needsUpdate = true;
-    if (!reveals.some(reveal => reveal.points === layer.points)) fadePoints(layer.points, 1);
+    if (!reveals.some(reveal => reveal.points === layer.points) && !motions.has(layer.points)) fadePoints(layer.points, 1);
   }
   // 선택 상태에 맞춰 레이어를 맞춘다: 바뀐 것만 새로 만들고 점이 아래에서 위로 채워진다
   async function syncAssets() {
@@ -936,6 +941,12 @@ try {
         const appear = clamp((time - flowLayer.start) / FLOW_APPEAR_MS);
         flowLayer.animate(position.array, colorAttr.array, geometry.userData.baseColor, reducedMotion ? 0 : time / 1000, appear);
         position.needsUpdate = true; colorAttr.needsUpdate = true;
+      }
+      for (const [points, motion] of motions) {
+        const geometry = points.geometry, position = geometry.getAttribute('position'), colorAttr = geometry.getAttribute('color');
+        const done = motion.animate(position.array, colorAttr.array, geometry.userData.baseColor, reducedMotion ? Infinity : time - motion.start);
+        position.needsUpdate = true; colorAttr.needsUpdate = true;
+        if (done) motions.delete(points);
       }
       if (reveals.length) {
         prepareProjection();
