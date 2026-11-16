@@ -1,0 +1,184 @@
+/* 화면 스타일: 낯선 행성 탐사 · 우주적 공포 (2026-11-16, 사용자 요청)
+   참고: 표본 분석 화면(지시선·번호 붙은 칸), 레이더 화면(동심원·훑는 빛), 터미널(커서·글자 등장),
+        색은 남색 바탕의 시안 망점 · 검정 바탕의 강철 파랑 망점.
+   void-theme.css(전체 화면 배치) 위에 겉모습만 덮는다. 글·칸·순서와 main.js 는 그대로.
+   기능 색: 기본 강철 파랑 · 신호/고름 시안 · 가장 밝은 값 얼음빛 · 경고/감수/뜨거움 호박색 하나 */
+:root{
+  --k-void:#020309;     /* 바탕 검정 */
+  --k-navy:#0A1030;     /* 깊은 남색 (창 안쪽) */
+  --k-deep:#13204F;     /* 고른 칸 */
+  --k-steel:#2A5C9E;    /* 선·틀 */
+  --k-ice:#8EC4F0;      /* 기본 글 */
+  --k-pale:#DDF4FF;     /* 값·중요한 글 */
+  --k-cyan:#5EF0E4;     /* 신호: 지금 고른 것·켜진 것·제목 */
+  --k-sub:#5F7FAE;      /* 흐린 보조 글 */
+  --k-amber:#FFA351;    /* 경고·감수·뜨거움 (기능 구분용 따뜻한 색 하나) */
+  --k-line:rgba(94,240,228,.22);
+  --k-line2:rgba(142,196,240,.14);
+  --k-glass:rgba(4,7,22,.74);
+  --k-glow:0 0 6px rgba(94,240,228,.45);
+  /* void-theme 토큰을 새 색으로 */
+  --v-bg:var(--k-void);--v-card:var(--k-navy);--v-pick:var(--k-deep);--v-hi:var(--k-cyan);--v-cream:var(--k-pale);--v-text:var(--k-ice);--v-sub:var(--k-sub);--v-amber:var(--k-amber);
+  --v-glass:var(--k-glass);--v-edge:var(--k-line);
+  /* 예전 테마 토큰도 같은 색으로 (다른 파일이 쓰는 이름) */
+  --c:var(--k-ice);--t:var(--k-pale);--o:var(--k-cyan);--ink:var(--k-navy);--sel:var(--k-deep);
+  --edge:var(--k-cyan);--hi:var(--k-pale);--text:var(--k-ice);--deep:var(--k-steel);--line:var(--k-steel);--panel:var(--k-navy);--cream:var(--k-pale);--orange:var(--k-amber);--bg0:var(--k-void);--bg1:var(--k-navy);
+  --v-dots:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='1' height='1' fill='%235EF0E4' fill-opacity='.07'/%3E%3C/svg%3E");
+}
+body{background:var(--k-void);color:var(--k-ice)}
+body::before,body::after{display:none}                      /* 예전 흐르는 격자판은 끔: 바탕은 깊은 어둠 */
+::selection{background:var(--k-cyan);color:var(--k-void)}
+
+/* ── 화면 위 효과: 시안 주사선 · 입자 · 가끔 찢기는 줄 · 아주 약한 형광 떨림 ── */
+.scanlines{background:repeating-linear-gradient(0deg,rgba(94,240,228,.035) 0 1px,transparent 1px 3px)!important}
+.scanlines::after{background:linear-gradient(90deg,transparent,rgba(94,240,228,.55) 20%,rgba(221,244,255,.7) 50%,rgba(94,240,228,.45) 72%,transparent)!important}
+
+/* ── 창: 표본 분석 카드 — 번호 붙은 머리줄, 네 모서리 눈금, 점선 칸막이 ── */
+.hud{counter-reset:kpanel}
+.panel,.p-decision{background-color:var(--k-glass)!important;background-image:var(--v-dots),linear-gradient(180deg,rgba(94,240,228,.05),transparent 38%)!important;border:1px solid var(--k-line)!important}
+.panel::before,.panel::after,.p-decision::before,.p-decision::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none;border:solid var(--k-cyan);opacity:.9}
+.panel::before,.p-decision::before{top:-1px;left:-1px;border-width:1px 0 0 1px}
+.panel::after,.p-decision::after{right:-1px;bottom:-1px;border-width:0 1px 1px 0}
+.p-decision{position:relative}
+.panel>.titlebar{counter-increment:kpanel;height:28px;color:var(--k-cyan)!important;text-shadow:var(--k-glow)!important;letter-spacing:.22em;border-bottom:1px dashed var(--k-line)!important;
+  background:linear-gradient(90deg,rgba(94,240,228,.10),transparent 60%)!important}
+.panel>.titlebar>span:first-child::before{content:counter(kpanel,decimal-leading-zero) " / "!important;color:var(--k-sub);opacity:1;text-shadow:none}
+.tabs{border-bottom:1px dashed var(--k-line)!important}
+.tab{color:var(--k-sub)!important}.tab.on{color:var(--k-cyan)!important;border-bottom-color:var(--k-cyan)!important;text-shadow:var(--k-glow)}
+.panel-body{background:transparent}
+hr,.log,.facts li{border-color:var(--k-line2)!important}
+
+/* 글: 기본 얼음 파랑, 값은 옅은 시안, 이름표는 흐린 강철 */
+.stat strong,.facts b,.gauge-list b,.meta b{color:var(--k-pale)!important}
+.stat small,.facts,.meta,.facts span{color:var(--k-ice)!important}
+.chip{color:var(--k-cyan)!important;border-left-color:var(--k-cyan)!important;text-shadow:var(--k-glow)}
+.facts li::before{content:"+"!important;color:var(--k-cyan)!important}
+.facts i{border-bottom:1px dotted var(--k-line)!important}
+.meta b.on{color:var(--k-cyan)!important;text-shadow:var(--k-glow)}
+
+/* 게이지: 눈금 막대 (레이더 숫자판처럼) */
+.gauge{border:1px solid var(--k-line)!important;background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(94,240,228,.18) 9px 10px)!important}
+.gauge>span{background:repeating-linear-gradient(90deg,var(--k-cyan) 0 2px,transparent 2px 4px)!important;box-shadow:0 0 6px rgba(94,240,228,.35)}
+
+/* 창 단추 */
+.wbtn,.wbtns i{border-color:var(--k-line)!important;color:var(--k-sub)!important}
+.wbtn:hover,.wbtn:focus-visible{background:var(--k-cyan)!important;color:var(--k-void)!important;border-color:var(--k-cyan)!important}
+
+/* ── 행성 화면 ── */
+.p-stage>.titlebar{color:var(--k-cyan)!important;text-shadow:var(--k-glow);letter-spacing:.32em}
+.p-stage>.titlebar>span:first-child::after{content:" ▌";animation:k-caret 1.1s steps(1) infinite}
+.stage-bottom span{color:var(--k-ice)!important}
+.pin b{color:var(--k-cyan)!important;border-color:var(--k-cyan)!important;background:rgba(2,3,9,.75)!important;box-shadow:0 0 0 3px rgba(2,3,9,.6),0 0 0 4px rgba(94,240,228,.35)!important}
+.pin span{border-left-color:var(--k-cyan)!important;color:var(--k-pale)}
+.pin small{color:var(--k-sub)!important}
+.pin:hover b,.pin:focus-visible b{background:var(--k-cyan)!important;color:var(--k-void)!important}
+.landmark{border-left-color:var(--k-cyan)!important;color:var(--k-pale)!important}.landmark small{color:var(--k-ice)!important}
+.local-nav button{border:1px solid var(--k-line)!important;background:rgba(2,3,9,.8)!important;color:var(--k-ice)!important;letter-spacing:.1em}
+.local-nav button:hover:not(:disabled){border-color:var(--k-cyan)!important;color:var(--k-cyan)!important;background:rgba(2,3,9,.9)!important}
+.legend i.new{background:var(--k-cyan)!important}.legend i.terrain{background:var(--k-steel)!important}
+@keyframes k-caret{50%{opacity:0}}
+
+/* 레이더 고리 · 지시선 (src/cosmic-fx.js 가 그림) */
+.k-radar,.k-leads{position:absolute;inset:0;pointer-events:none;z-index:1}
+.k-leads{position:fixed;z-index:4}
+.k-radar svg,.k-leads svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.k-radar .ring{fill:none;stroke:rgba(94,240,228,.16);stroke-width:1}
+.k-radar .ring.dash{stroke-dasharray:2 6}
+.k-radar .tick{stroke:rgba(94,240,228,.32);stroke-width:1}
+.k-radar .tick.major{stroke:rgba(94,240,228,.6)}
+.k-radar .axis{stroke:rgba(142,196,240,.12);stroke-width:1;stroke-dasharray:1 5}
+.k-radar .sweep{transform-box:view-box;transform-origin:var(--cx) var(--cy);animation:k-sweep 9s linear infinite}
+.k-radar .sweep path{fill:url(#k-sweep-g)}
+@keyframes k-sweep{to{transform:rotate(360deg)}}
+.hud.k-local .k-radar{opacity:0;transition:opacity .6s}.k-radar{transition:opacity .6s}
+.k-leads path{fill:none;stroke:rgba(94,240,228,.42);stroke-width:1;stroke-dasharray:3 3;animation:k-draw 1.2s ease-out both}
+.k-leads circle.end{fill:var(--k-void);stroke:var(--k-cyan);stroke-width:1}
+.k-leads circle.dot{fill:var(--k-cyan)}
+.k-leads circle.pulse{fill:none;stroke:var(--k-cyan);animation:k-pulse 2.8s ease-out infinite}
+@keyframes k-draw{from{stroke-dashoffset:400;opacity:0}to{stroke-dashoffset:0;opacity:1}}
+@keyframes k-pulse{0%{r:3;opacity:.9}100%{r:16;opacity:0}}
+.hud.k-local .k-leads{opacity:.35}
+
+/* ── 선지판 ── */
+.hexboard{--hb-ink:rgba(2,3,9,.85);--hb-sel:rgba(19,32,79,.7);--hb-line:var(--k-steel);--hb-card-line:rgba(94,240,228,.18);--hb-hi:var(--k-cyan);--hb-cream:var(--k-cyan);--hb-lamp:var(--k-pale);
+  --hb-text:var(--k-pale);--hb-sub:var(--k-sub);--hb-b2:var(--k-ice);--hb-b3:var(--k-pale);--hb-orange:var(--k-amber)}
+#hb-chosen stop:first-child{stop-color:#2A5C9E}#hb-chosen stop:last-child{stop-color:#0A1030}
+.hb-prompt b,.step-title b{background:var(--k-cyan)!important;color:var(--k-void)!important}
+.hb-tip{background:rgba(2,3,9,.95)!important;border:1px solid var(--k-cyan)!important;box-shadow:0 0 0 4px rgba(2,3,9,.6);animation:k-unfold .28s ease-out both}
+.hb-tip::before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:3px;background:linear-gradient(90deg,var(--k-cyan),transparent)}
+.site,.decide{border-color:var(--k-line)!important;background:rgba(2,3,9,.6)!important}
+.site:hover:not(:disabled),.site.active{border-color:var(--k-cyan)!important}
+.site.active .name{color:var(--k-cyan)!important}
+.decide{color:var(--k-cyan)!important;text-shadow:var(--k-glow)}
+.decide:hover:not(:disabled){background:var(--k-cyan)!important;color:var(--k-void)!important;text-shadow:none}
+.effects .cost i,.effects .cost{color:var(--k-amber)!important;border-color:var(--k-amber)!important}
+.hb-notes,.hb-steps button.on{border-color:var(--k-line)!important;color:var(--k-ice)!important}
+.hb-steps button.now{color:var(--k-cyan)!important}
+
+/* ── 아래 줄: 터미널 상태줄 ── */
+.p-foot{background:rgba(2,3,9,.92)!important;border-top:1px solid var(--k-line)!important;color:var(--k-sub)!important}
+.p-foot .brand::before{content:"> ";color:var(--k-cyan)}
+.p-foot .brand::after{content:"▌";color:var(--k-cyan);animation:k-caret 1.1s steps(1) infinite;margin-left:4px}
+kbd{border-color:var(--k-line)!important;color:var(--k-ice)}
+
+/* ── 상세창(대원·실패·사건·메모장·안내): 가는 빛줄 → 펼쳐짐, 머리에 시안 띠 ── */
+@keyframes k-unfold{0%{opacity:0;clip-path:inset(50% 0 50% 0)}25%{opacity:1;clip-path:inset(49% 0 49% 0)}100%{opacity:1;clip-path:inset(0 0 0 0)}}
+.crew-modal:not([hidden]) .crew-card,.fail-modal:not([hidden]) .fail-card,.event-modal:not([hidden]) .event-card{animation:k-unfold .45s cubic-bezier(.2,.7,.2,1) both}
+.crew-card,.fail-card,.event-card{background:rgba(4,7,22,.96)!important;background-image:var(--v-dots)!important;border:1px solid var(--k-cyan)!important;border-image:none!important;position:relative;box-shadow:0 0 0 6px rgba(2,3,9,.7),0 0 40px rgba(94,240,228,.08)!important}
+.crew-card::before,.fail-card::before,.event-card::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--k-cyan),transparent 70%)}
+.crew-modal,.fail-modal,.event-modal{background:rgba(2,3,9,.82)!important;backdrop-filter:blur(2px)}
+.crew-card .titlebar{background:transparent!important;color:var(--k-cyan)!important;border-bottom:1px dashed var(--k-line)!important;letter-spacing:.2em}
+.fail-card .fail-code{color:var(--k-amber)!important;letter-spacing:.24em}
+.fail-card h2{color:var(--k-pale)!important}
+.event-card{color:var(--k-pale)!important}
+.event-card h2{color:var(--k-amber)!important;letter-spacing:.04em}
+.event-card.good h2{color:var(--k-cyan)!important}.event-card.book h2{color:var(--k-ice)!important}
+.event-card.good,.event-card.book{border-color:var(--k-line)!important}
+.event-card button{border-color:var(--k-line)!important;background:rgba(2,3,9,.6)!important;color:var(--k-ice)!important}
+.event-card button:hover,.event-card button:focus-visible{border-color:var(--k-cyan)!important;color:var(--k-cyan)!important}
+.past-tip,.travel-status,#error{background:rgba(2,3,9,.94)!important;border-color:var(--k-cyan)!important;color:var(--k-pale)!important;animation:k-unfold .3s ease-out both}
+
+/* ── 이동·브리핑 화면 ── */
+.intro{background:var(--k-void)!important}
+.travel h1{color:var(--k-cyan)!important;text-shadow:var(--k-glow);letter-spacing:.2em}
+.travel .news,.travel .eta{color:var(--k-ice)!important}
+.travel .track{border-color:var(--k-line)!important}.travel .fill{background:repeating-linear-gradient(90deg,var(--k-cyan) 0 2px,transparent 2px 4px)!important}
+/* 픽셀 지구·행성·로켓 그림: 파랑 → 강철·얼음 */
+.intro svg [fill="#3D6BFF"]{fill:#2A5C9E}.intro svg [fill="#2846B8"]{fill:#163A70}.intro svg [fill="#9DB6FF"]{fill:#8EC4F0}
+.intro svg [fill="#7FA0FF"]{fill:#5E9AD6}.intro svg [fill="#5C7FE8"]{fill:#3F74B4}.intro svg [fill="#6E92FF"]{fill:#4F8BC8}
+.intro svg [fill="#C9D6FF"],.intro svg [fill="#E8EEFF"],.intro svg [fill="#DCE6FF"]{fill:#DDF4FF}
+.avatar svg{stroke:var(--k-ice)}
+.brief-view{border-color:var(--k-line)!important}
+.brief-view .cam-l,.brief-view .cam-r{color:var(--k-ice)!important}.brief-view .cam-l .hi,.brief-view .cam-r .hi{color:var(--k-cyan)!important}
+.bubble .who{color:var(--k-cyan)!important}.bubble p{color:var(--k-pale)!important}
+.brief-box{border-color:var(--k-line)!important}
+.next{border-color:var(--k-cyan)!important;color:var(--k-cyan)!important}.next:hover{background:var(--k-cyan)!important;color:var(--k-void)!important}
+
+/* 처음 메인 화면이 나올 때: 창이 하나씩 가는 선에서 펼쳐짐 (번쩍임 없이, 2026-11-11 요청 유지) */
+.hud.k-boot .panel,.hud.k-boot .p-decision{animation:k-unfold .7s cubic-bezier(.2,.7,.2,1) both}
+.hud.k-boot .p-left{animation-delay:.05s}.hud.k-boot .p-right{animation-delay:.2s}.hud.k-boot .p-crew{animation-delay:.35s}.hud.k-boot .p-decision{animation-delay:.5s}
+
+@media (prefers-reduced-motion:reduce){
+  .k-radar .sweep,.k-leads path,.k-leads circle.pulse,.p-foot .brand::after,.p-stage>.titlebar>span:first-child::after{animation:none!important}
+  .crew-card,.fail-card,.event-card,.hb-tip,.hud.k-boot .panel,.hud.k-boot .p-decision{animation:none!important}
+}
+@media (max-width:960px){.k-leads,.k-radar{display:none}}
+
+/* 게이지 줄 (공기·물·식량·전력): 시안 눈금 막대, 부족하면 호박색 (기능 유지) */
+.gauge-list{border-bottom:1px dashed var(--k-line)!important}
+.gauge-row .g-name{color:var(--k-ice)!important}.gauge-row .g-val{color:var(--k-pale)!important;text-shadow:none!important}
+.gauge-row .g-bar{border-color:var(--k-line)!important;background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(94,240,228,.16) 9px 10px)}
+.gauge-row .g-bar i{background:repeating-linear-gradient(90deg,var(--k-cyan) 0 2px,transparent 2px 4px)!important;box-shadow:0 0 6px rgba(94,240,228,.35)}
+.gauge-row.low .g-name,.gauge-row.low .g-val{color:var(--k-amber)!important}
+.gauge-row.low .g-bar{border-color:var(--k-amber)!important}.gauge-row.low .g-bar i{background:repeating-linear-gradient(90deg,var(--k-amber) 0 2px,transparent 2px 4px)!important;animation:k-warn 1.2s steps(1) infinite}
+@keyframes k-warn{50%{opacity:.45}}
+/* 아래 선지 창은 진하게 (뒤 행성 이름표가 비치지 않게) */
+@media (min-width:961px){.p-decision{background-color:rgba(3,5,16,.94)!important}}
+/* 브리핑: 망점 그림(풍경·ORI·행성)을 얼음빛 시안으로 물들이고, 강의 칸 틀도 새 색으로 */
+.brief-view canvas,.brief-view .robot,.travel canvas{filter:sepia(1) saturate(2.4) hue-rotate(148deg) brightness(.92) contrast(1.05)}
+.brief-panel{border-color:var(--k-steel)!important;mix-blend-mode:normal!important}.brief-panel::before,.brief-panel::after{border-color:var(--k-cyan)!important}
+.avatar{background:transparent!important;border-color:var(--k-line)!important}
+/* 지역 화면의 사람 놓기 도구: 왼쪽 상태 창에 가리지 않게 행성 화면 안쪽으로 */
+@media (min-width:961px){.pp-tools{left:calc(var(--v-side) + 2 * var(--v-m))!important;top:calc(var(--v-m) + 64px)!important}}
+.pp-tools button{border:1px solid var(--k-line)!important;background:rgba(2,3,9,.8)!important;color:var(--k-ice)!important}
+.pp-tools button[aria-pressed="true"],.pp-tools button:hover:not(:disabled){border-color:var(--k-cyan)!important;color:var(--k-cyan)!important}
