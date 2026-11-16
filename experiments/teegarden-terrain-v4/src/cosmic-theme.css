@@ -182,3 +182,7 @@ kbd{border-color:var(--k-line)!important;color:var(--k-ice)}
 @media (min-width:961px){.pp-tools{left:calc(var(--v-side) + 2 * var(--v-m))!important;top:calc(var(--v-m) + 64px)!important}}
 .pp-tools button{border:1px solid var(--k-line)!important;background:rgba(2,3,9,.8)!important;color:var(--k-ice)!important}
 .pp-tools button[aria-pressed="true"],.pp-tools button:hover:not(:disabled){border-color:var(--k-cyan)!important;color:var(--k-cyan)!important}
+
+/* 글꼴: Neo둥근모 (2026-11-16 사용자 요청, SIL OFL 1.1). 없는 기호는 HBIOS-SYS → Terrarum 순으로 대신 */
+@font-face{font-family:"NeoDunggeunmo";src:url("./assets/fonts/neodgm.ttf") format("truetype");font-display:swap}
+:root{--font:"NeoDunggeunmo","HBIOS-SYS","Terrarum Sans Bitmap","Apple SD Gothic Neo","Malgun Gothic",monospace}
