@@ -1,0 +1,128 @@
+/* 화면 스타일: 우주적 공포 · 전체 화면 (2026-11-16, 사용자 요청)
+   - 글꼴: HBIOS-SYS (없는 기호만 Terrarum 이 대신)
+   - 행성 화면이 화면 전체를 채우고, 상태 칸들은 그 위에 떠 있는 반투명 창
+   - 참고: 망점 사진 · 주사선 · 글리치 · 어둠에 먹히는 가장자리 (팀 레퍼런스 1번)
+   겉모습만 바꾼다. 글·칸·순서와 main.js 는 그대로. 색은 CLAUDE.md 화면 토큰만 쓴다 */
+@font-face{font-family:"HBIOS-SYS";src:url("./assets/fonts/hbios-sys.ttf") format("truetype");font-display:swap}
+:root{
+  --font:"HBIOS-SYS","Terrarum Sans Bitmap","Apple SD Gothic Neo","Malgun Gothic",monospace;
+  --v-bg:#02040C;--v-black:#000000;--v-card:#0A1434;--v-pick:#0E1B48;--v-btn-line:#2B47C4;--v-card-line:#1A2B72;--v-btn:#1B2A9C;
+  --v-hi:#8FC1FF;--v-cream:#E8DFC8;--v-text:#DCE6FF;--v-sub:#8C9DD0;--v-amber:#F2B84B;
+  --v-glass:rgba(2,4,12,.66);                 /* 떠 있는 창 바탕: 거의 검정, 뒤 행성이 비침 */
+  --v-edge:rgba(143,193,255,.26);             /* 창 테두리: 아주 가는 선 */
+  --v-m:20px;--v-side:300px;--v-foot:30px;
+  /* 망점 결 (레퍼런스의 거친 1비트 점) */
+  --v-dots:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='1' height='1' fill='%238FC1FF' fill-opacity='.10'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%238FC1FF' fill-opacity='.05'/%3E%3C/svg%3E");
+  --v-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .56 0 0 0 0 .76 0 0 0 0 1 0 0 0 1.6 -.9'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E")}
+body,.hexboard,.field-notes,.fn-card{font-family:var(--font)}
+body{background:var(--v-black)}
+
+/* ── 전체 화면 위 효과: 가장자리 어둠 · 입자 · 주사선 · 가끔 지나가는 글리치 줄 ── */
+.scanlines{z-index:60;background:repeating-linear-gradient(0deg,rgba(143,193,255,.045) 0 1px,transparent 1px 3px)}
+.scanlines::before{content:"";position:absolute;inset:0;background:var(--v-grain);opacity:.35;mix-blend-mode:screen;animation:v-grain .9s steps(3) infinite}
+.scanlines::after{content:"";position:absolute;left:0;right:0;height:3px;top:-10px;background:linear-gradient(90deg,transparent,rgba(143,193,255,.5) 18%,rgba(232,223,200,.65) 50%,rgba(143,193,255,.4) 70%,transparent);opacity:0;animation:v-tear 11s linear infinite}
+@keyframes v-grain{0%{background-position:0 0}33%{background-position:-60px 40px}66%{background-position:50px -70px}100%{background-position:0 0}}
+@keyframes v-tear{0%,86%{top:-10px;opacity:0}87%{top:22%;opacity:.9}88%{top:23%;opacity:0}93%{top:61%;opacity:0}93.5%{top:61%;opacity:.7}94.5%{top:62%;opacity:0}100%{top:110%;opacity:0}}
+@media (prefers-reduced-motion:reduce){.scanlines::before,.scanlines::after{animation:none}}
+
+/* ── 창 공통: 장식 틀을 걷어내고 가는 한 줄 + 모서리 눈금 ── */
+.panel,.window{border:1px solid var(--v-edge)!important;border-image:none!important;background:var(--v-glass);background-image:var(--v-dots);box-shadow:none!important;position:relative}
+.panel::before,.panel::after{content:"";position:absolute;width:10px;height:10px;pointer-events:none;border-color:var(--v-hi);border-style:solid;opacity:.7}
+.panel::before{top:-1px;left:-1px;border-width:1px 0 0 1px}.panel::after{right:-1px;bottom:-1px;border-width:0 1px 1px 0}
+.panel>.titlebar,.window>.titlebar{background:transparent!important;border-bottom:1px solid var(--v-edge);color:var(--v-sub);text-shadow:none;letter-spacing:.18em;text-transform:uppercase}
+.panel>.titlebar>span:first-child,.window>.titlebar>span:first-child,.panel>.titlebar .wbtns,.window>.titlebar .wbtns,.crew-state{background:transparent!important}
+.panel>.titlebar>span:first-child::before{content:"■ ";color:var(--v-cream);opacity:.8}
+.wbtns i,.wbtn{border-color:var(--v-edge)!important;color:var(--v-sub)}
+
+/* 글자: 긴 글은 흐린 파랑, 숫자·중요한 값만 크림 — 번지는 그림자 효과는 뺌 */
+.stat strong,.facts b,.gauge-list b,.site .name,.decide,.heading h1,.bubble p::first-line{text-shadow:none!important}
+.stat strong{color:var(--v-cream)}.facts b{color:var(--v-text)}.stat small,.facts,.meta{color:var(--v-sub)}
+.chip{color:var(--v-hi);border:0;border-left:2px solid var(--v-hi);clip-path:none;padding:0 6px;background:none}
+
+/* 탭: 채운 칩 대신 밑줄 */
+.tabs{background:transparent!important;border-bottom:1px solid var(--v-edge)!important}
+.tab{clip-path:none!important;border:0!important;background:none!important;color:var(--v-sub)!important;border-bottom:2px solid transparent!important}
+.tab.on{color:var(--v-cream)!important;border-bottom-color:var(--v-cream)!important}
+
+/* 게이지: 가는 선 */
+.gauge{border:1px solid var(--v-edge)!important;background:none!important}
+.gauge>span{background:repeating-linear-gradient(90deg,var(--v-hi) 0 3px,transparent 3px 5px)!important}
+
+/* 행성 정보의 둥근 지구 그림·고리 장식은 감춤 (행성은 뒤 화면에 이미 있음) */
+.p-right .globe{display:none}
+.facts li::before{content:"·";color:var(--v-hi)}.facts li{border-bottom-color:rgba(143,193,255,.1)!important}
+
+/* 결정 버튼 · 카드: 둥근/깎인 틀 대신 가는 선, 고르면 크림 */
+.site,.decide{border:1px solid var(--v-edge)!important;border-image:none!important;background:rgba(2,4,12,.55)!important}
+.site:hover:not(:disabled),.site.active{border-color:var(--v-cream)!important}
+.decide{color:var(--v-cream)!important;letter-spacing:.12em}
+.decide:hover:not(:disabled){background:var(--v-cream)!important;color:var(--v-bg)!important}
+.step-title b,.hb-prompt b{clip-path:none!important}
+
+/* ── 데스크톱: 행성 화면이 화면 전체, 나머지는 그 위에 떠 있는 창 ── */
+@media (min-width:961px){
+  .hud{position:fixed;inset:0;height:auto;min-height:0;padding:0;display:block}
+  .p-stage{position:absolute!important;inset:0;z-index:0;border:0!important;background:var(--v-black)!important;background-image:none!important}
+  .p-stage::before,.p-stage::after{display:none}
+  .p-stage>.titlebar{position:absolute;z-index:4;top:calc(var(--v-m) + 2px);left:50%;transform:translateX(-50%);border:0!important;color:var(--v-sub);opacity:.75;gap:16px}
+  .p-stage>.titlebar .wbtns{display:none}
+  .p-stage .window-body{position:absolute;inset:0}
+  /* 화면 가장자리를 어둠이 먹어 들어옴 (행성 화면 위, 창들 아래) */
+  .p-stage .window-body::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse 70% 64% at 50% 46%,transparent 40%,rgba(0,0,0,.55) 75%,rgba(0,0,0,.92) 100%)}
+  .cross{display:none}
+  .p-left,.p-right,.p-crew,.p-decision,.p-foot{position:absolute!important;z-index:5}
+  .p-left{top:var(--v-m);left:var(--v-m);width:var(--v-side);max-height:calc(100vh - var(--v-foot) - 3 * var(--v-m) - 230px)}
+  .p-right{top:var(--v-m);right:var(--v-m);width:var(--v-side);max-height:calc(100vh - var(--v-foot) - 4 * var(--v-m) - 250px)}
+  .p-crew{left:var(--v-m);bottom:calc(var(--v-foot) + var(--v-m));width:var(--v-side);height:230px}
+  .p-decision{left:calc(var(--v-side) + 2 * var(--v-m));right:var(--v-m);bottom:calc(var(--v-foot) + var(--v-m));max-height:250px;
+    border:1px solid var(--v-edge);background:var(--v-glass);background-image:var(--v-dots);padding:10px 14px}
+  .p-foot{left:0;right:0;bottom:0;height:var(--v-foot);border-top:1px solid var(--v-edge)!important;background:rgba(0,0,0,.8)!important;color:var(--v-sub);padding:4px var(--v-m) 0!important}
+  .p-left.collapsed,.p-right.collapsed,.p-crew.collapsed{height:auto}
+  /* 행성 화면 안의 안내 글은 위쪽 가운데로 (아래는 선지 창이 덮으므로) */
+  .stage-bottom{top:calc(var(--v-m) + 34px);bottom:auto;left:calc(var(--v-side) + 2 * var(--v-m));right:calc(var(--v-side) + 2 * var(--v-m));justify-content:center;z-index:4}
+  .stage-bottom span{background:transparent!important;color:var(--v-sub)}
+  .local-nav{top:auto;bottom:calc(var(--v-foot) + 2 * var(--v-m) + 250px);right:var(--v-m);z-index:4}
+  .travel-status{bottom:calc(var(--v-foot) + 2 * var(--v-m) + 260px)}
+}
+
+/* ── 남은 '채운 칸'들을 비우기: 버튼·이름표·말풍선 ── */
+:root{--fs-s:14px;--lh-s:20px;--fs-m:16px;--lh-m:24px;--fs-l:20px;--lh-l:28px}   /* 새 글꼴이 넓어서 한 단계 작게 */
+@media(min-width:1700px){:root{--fs-s:16px;--lh-s:22px;--fs-m:18px;--lh-m:26px;--fs-l:22px;--lh-l:30px}}
+.wbtn{background:none!important}.wbtn:hover,.wbtn:focus-visible{background:var(--v-cream)!important;color:var(--v-bg)!important}
+.meta b.on{border:0!important;color:var(--v-cream)!important;padding:0!important;animation:v-blink 2.4s steps(1) infinite}
+@keyframes v-blink{0%,92%{opacity:1}93%,96%{opacity:.25}}
+.pin b{background:rgba(0,0,0,.6)!important;box-shadow:none!important;border-color:var(--v-edge)!important;color:var(--v-hi)!important}
+.pin span{background:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,0))!important;border-left:1px solid var(--v-hi)!important}
+.pin small{color:var(--v-sub)!important;letter-spacing:.14em}
+.pin:hover b,.pin:focus-visible b{background:var(--v-cream)!important;color:var(--v-bg)!important}
+.hexboard{--hb-ink:rgba(2,4,12,.82);--hb-sel:rgba(14,27,72,.55)}
+.hb-tip{background:rgba(2,4,12,.94)!important;border-color:var(--v-edge)!important}
+.hb-notes,.hb-steps button.on{background:transparent!important;border:1px solid var(--v-edge)!important;color:var(--v-sub)!important}
+.hb-notes:hover,.hb-notes:focus-visible{border-color:var(--v-cream)!important;color:var(--v-cream)!important}
+.hb-steps button.now{color:var(--v-cream)!important}
+.past-tip,.travel-status,#error{background:rgba(2,4,12,.9)!important;border-color:var(--v-edge)!important}
+.p-foot a,.p-foot .brand{color:var(--v-sub);letter-spacing:.2em}
+kbd{border-color:var(--v-edge)}
+@media (min-width:961px){
+  :root{--v-side:320px}
+  .p-decision{background-color:rgba(2,4,12,.9)}                 /* 아래 선지 창은 진하게: 뒤의 행성 이름표가 비치지 않게 */
+}
+@media (min-width:961px) and (max-height:820px){
+  :root{--v-m:14px}
+  .p-crew{height:190px}.p-decision{max-height:220px}
+  .p-left{max-height:calc(100vh - var(--v-foot) - 3 * var(--v-m) - 190px)}
+}
+@media (min-width:961px) and (max-height:820px){ .p-crew{height:236px}.p-decision{max-height:none;height:236px} }
+@media (min-width:961px){ .p-decision{overflow:visible} }
+
+/* ── 이동·브리핑 화면도 같은 어둠으로: 파란 바탕 → 검정, 칸은 가는 선 ── */
+.intro{background:var(--v-black)!important}
+.brief-view{background-color:var(--v-black)!important;border:1px solid var(--v-edge)!important;border-image:none!important}
+.brief-view::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 72% 70% at 45% 45%,transparent 45%,rgba(0,0,0,.8) 100%)}
+.brief-box,.brief-box .brief-body{background:var(--v-glass)!important;border-image:none!important}
+.brief-box{border:1px solid var(--v-edge)!important}.brief-box .tabs{border:0!important}
+.brief-panel{background:rgba(2,4,12,.55)!important}
+.next{border-image:none!important;clip-path:none!important;background:transparent!important;border:1px solid var(--v-cream)!important;color:var(--v-cream)!important}
+.next:hover{background:var(--v-cream)!important;color:var(--v-bg)!important}
+.brief-view .cam-l,.brief-view .cam-r{background:transparent!important;border:0!important}
