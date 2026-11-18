@@ -5,7 +5,7 @@ const $ = (s) => document.querySelector(s);
 const hud = $('#hud'), body = $('#stage .window-body');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 // 행성 화면에서 행성이 놓이는 자리 (카메라 기본 구도 기준, 1366×768 · 1440×900 화면에서 잼: 가로 59%, 세로 40%, 반지름 = 높이의 37%)
-const CENTER_X = 0.59, CENTER_Y = 0.40, PLANET_R = 0.37;
+let CENTER_X = 0.5, CENTER_Y = 0.435, PLANET_R = 0.378;   // 2026-11-18: 행성이 화면 가운데로 옮겨짐 (main.js overviewPose)
 
 function el(tag, attrs = {}, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent?.appendChild(e); return e; }
 
@@ -16,7 +16,7 @@ function drawRadar() {
   const w = body.clientWidth, h = body.clientHeight, cx = w * CENTER_X, cy = h * CENTER_Y, R = h * PLANET_R;
   rs.setAttribute('viewBox', `0 0 ${w} ${h}`); rs.innerHTML = '';
   const defs = el('defs', {}, rs), g = el('radialGradient', { id: 'k-sweep-g', cx: cx, cy: cy, r: R * 1.45, gradientUnits: 'userSpaceOnUse' }, defs);
-  el('stop', { offset: '0', 'stop-color': '#5EF0E4', 'stop-opacity': '0' }, g); el('stop', { offset: '.6', 'stop-color': '#5EF0E4', 'stop-opacity': '.05' }, g); el('stop', { offset: '1', 'stop-color': '#5EF0E4', 'stop-opacity': '.12' }, g);
+  el('stop', { offset: '0', 'stop-color': '#8FC1FF', 'stop-opacity': '0' }, g); el('stop', { offset: '.6', 'stop-color': '#8FC1FF', 'stop-opacity': '.05' }, g); el('stop', { offset: '1', 'stop-color': '#8FC1FF', 'stop-opacity': '.12' }, g);
   [1.08, 1.24, 1.42].forEach((k, i) => el('circle', { class: 'ring' + (i === 1 ? ' dash' : ''), cx, cy, r: R * k }, rs));
   for (let a = 0; a < 360; a += 5) {           // 바깥 고리 눈금 (숫자는 쓰지 않음)
     const rad = a * Math.PI / 180, major = a % 30 === 0, r0 = R * 1.42, r1 = r0 + (major ? 12 : 5);
@@ -31,9 +31,10 @@ function drawRadar() {
 
 // ── 지시선: 각 창 가장자리 → 꺾임 → 행성 고리 위 한 점 ──
 const leads = document.createElement('div'); leads.className = 'k-leads'; leads.setAttribute('aria-hidden', 'true');
-const ls = el('svg', {}, leads); hud?.appendChild(leads);
+const ls = el('svg', {}, leads); /* 2026-11-18: 상자 없는 배치로 바꾸며 지시선은 뺌 */
 let lastKey = '';
 function drawLeads() {
+  return;
   if (!body) return;
   const b = body.getBoundingClientRect(), cx = b.left + b.width * CENTER_X, cy = b.top + b.height * CENTER_Y, R = b.height * PLANET_R * 1.08;
   const items = ['.p-left', '.p-right', '.p-crew'].map(s => $(s)).filter(p => p && p.offsetParent && getComputedStyle(p).position === 'absolute');
@@ -51,6 +52,14 @@ function drawLeads() {
   });
 }
 
+// ── 화면 장식: 제목 블록 · 모서리 꺾쇠 · 위쪽 계기선 (글은 장식이고 기능은 없음) ──
+if (hud) {
+  const t = document.createElement('div'); t.className = 'k-title'; t.setAttribute('aria-hidden', 'true');
+  t.innerHTML = '<span class="k-name">TEEGARDEN <b>b</b></span><span class="k-sub"><i></i>SITE SURVEY · <em>YEAR 7777</em></span>';
+  hud.appendChild(t);
+  ['tl', 'tr', 'bl', 'br'].forEach(c => { const e = document.createElement('i'); e.className = 'k-corner ' + c; e.setAttribute('aria-hidden', 'true'); hud.appendChild(e); });
+  const line = document.createElement('i'); line.className = 'k-topline'; line.setAttribute('aria-hidden', 'true'); hud.appendChild(line);
+}
 // 행성에서 탐사 지점으로 들어가면(지역 화면) 레이더를 감춘다
 const nav = $('#local-nav');
 const syncLocal = () => hud?.classList.toggle('k-local', !!nav && !nav.hidden);
@@ -80,3 +89,11 @@ if (intro) new MutationObserver(() => { if (intro.hidden) boot(); }).observe(int
 if (body) { new ResizeObserver(() => { drawRadar(); lastKey = ''; drawLeads(); }).observe(body); drawRadar(); }
 // 창을 접거나 닫으면 지시선도 따라가게 (가볍게 0.5초마다 확인, 바뀐 게 없으면 다시 그리지 않음)
 setInterval(drawLeads, 500); syncLocal();
+
+// 행성이 돌다가 지점 표시(A·B·C)가 아래 선지판 쪽으로 내려가면 흐리게 감춘다 (선지판 글과 겹치지 않게)
+const deck = $('.p-decision');
+setInterval(() => {
+  if (!deck || getComputedStyle(deck).position !== 'absolute') return;
+  const top = deck.getBoundingClientRect().top - 8;
+  document.querySelectorAll('#planet-labels .pin').forEach(p => { const r = p.getBoundingClientRect(); p.classList.toggle('k-under', r.bottom > top); });
+}, 120);

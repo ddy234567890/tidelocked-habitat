@@ -1,16 +1,12 @@
 // 지형 색은 이 파일에서만 만든다. 화면 배경색과는 별개다.
-// 2026-11-16 '낯선 행성 탐사' 테마 (사용자 요청, 참고: 남색 바탕의 시안 망점 · 검정 바탕의 강철 파랑 망점):
-//   blue  = 강철 파랑 (지형·건물 기본)      #4A82C4
-//   cream = 얼음빛 시안 (가장 밝은 곳·창문·출입구·산소 흐름·방금 추가) #BDFFF6
-//   orange= 호박색 (땅속·빈 산소통·내쉰 공기·깜빡이는 등·뜨거운 쪽) #FFA351 — 기능 구분을 위해 따뜻한 색 하나는 남긴다
-const BLUE = [0x4a / 255, 0x82 / 255, 0xc4 / 255];
-const CREAM = [0xbd / 255, 0xff / 255, 0xf6 / 255];
-const ORANGE = [1, 0xa3 / 255, 0x51 / 255];
+const BLUE = [0x42 / 255, 0x91 / 255, 0xdf / 255];
+const CREAM = [0xf2 / 255, 0xeb / 255, 0xdb / 255];
+const ORANGE = [1, 0x99 / 255, 0x3d / 255];
 const clamp = v => Math.max(0, Math.min(1, v));
 const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * clamp(t));
 export const blue = (brightness = 1) => BLUE.map(v => v * brightness);
-// 파랑 단계: 0 깊은 남색 #0E1A44 → 강철 #2A5C9E → 얼음 파랑 #6FB8E8 → 1 옅은 시안 #D2FBFF (전기 흐름)
-const BLUE_STEPS = [[0x0e, 0x1a, 0x44], [0x2a, 0x5c, 0x9e], [0x6f, 0xb8, 0xe8], [0xd2, 0xfb, 0xff]].map(c => c.map(v => v / 255));
+// 파랑 단계 (CLAUDE.md): 0 #121F5C → #2E4DBD → #73A8FF → 1 #D1E6FF. 1 쪽은 흰빛에 가까운 옅은 파랑 (전기 흐름)
+const BLUE_STEPS = [[0x12, 0x1f, 0x5c], [0x2e, 0x4d, 0xbd], [0x73, 0xa8, 0xff], [0xd1, 0xe6, 0xff]].map(c => c.map(v => v / 255));
 export function blueStep(t) {
   const x = clamp(t) * 3, i = Math.min(2, Math.floor(x));
   return mix(BLUE_STEPS[i], BLUE_STEPS[i + 1], x - i);
