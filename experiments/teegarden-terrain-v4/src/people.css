@@ -2,10 +2,10 @@
 .pp-tools{position:absolute;left:50%;top:92px;transform:translateX(-50%);justify-items:center;z-index:3;display:grid;gap:4px;max-width:calc(100% - 24px)}
 .pp-tools[hidden]{display:none}
 .pp-row{display:flex;gap:6px;flex-wrap:wrap}
-.pp-tools button{font:inherit;font-size:var(--fs-m,16px);border:1px solid #2B47C4;background:#0A1434;color:#8FC1FF;padding:2px 10px;cursor:pointer}
+.pp-tools button{font:inherit;font-size:var(--fs-m,16px);border:1px solid #3D8BFF;background:#03081A;color:#8FC1FF;padding:2px 10px;cursor:pointer}
 .pp-tools button:hover,.pp-tools button:focus-visible{border-color:#8FC1FF;outline:none}
 .pp-tools button[aria-pressed="true"]{background:#8FC1FF;color:#02040C;border-color:#8FC1FF}
-.pp-count{margin:0;padding:1px 8px;justify-self:center;white-space:nowrap;background:#02040C;color:#8C9DD0;font-size:var(--fs-s,14px)}
+.pp-count{margin:0;padding:1px 8px;justify-self:center;white-space:nowrap;background:#02040C;color:#6A8CC8;font-size:var(--fs-s,14px)}
 .pp-count b{font-weight:400;color:#F2B84B}
 .pp-tools button:disabled{opacity:.45;cursor:wait}
 #canvas-host.pp-placing canvas{cursor:crosshair}
@@ -34,7 +34,7 @@
 /* 마우스가 대원 위에 없을 때: 마지막 대원 얼굴이 어둡고 흐리게 남는다 (crew.js) */
 .crew-slot .face-stage { transition: filter .35s ease, opacity .35s ease; }
 .crew-slot.crew-idle .face-stage { filter: brightness(.4) saturate(.5) blur(1px); opacity: .75; }
-.crew-hint-idle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; padding: 3px 8px; background: rgba(10, 20, 52, .85); border: 1px solid #2B47C4; color: #E8DFC8; font-size: 11px; white-space: normal; width: 88%; text-align: center; line-height: 1.4; pointer-events: none; }
+.crew-hint-idle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; padding: 3px 8px; background: rgba(10, 20, 52, .85); border: 1px solid #3D8BFF; color: #E8DFC8; font-size: 11px; white-space: normal; width: 88%; text-align: center; line-height: 1.4; pointer-events: none; }
 
 /* 눌러서 고른 대원: 이름표 테두리가 크림색, 얼굴 창 테두리도 크림색 (people.js · crew.js) */
 .pp-tag.pp-pinned { border-color: #E8DFC8; box-shadow: 0 0 0 1px #E8DFC8, 0 0 12px rgba(232, 223, 200, .35); }
@@ -45,6 +45,6 @@
 .pp-on-person #past-tip { display: none !important; }
 
 /* 얼굴 위 왼쪽 위: 고정 여부 · 상태 (crew.js). 힘들어함·쓰러짐은 주황 */
-.crew-caption { position: absolute; left: 8px; top: 8px; z-index: 2; padding: 2px 8px; background: rgba(2, 4, 12, .8); border: 1px solid #2B47C4; color: #DCE6FF; font-size: 12px; line-height: 1.4; white-space: nowrap; pointer-events: none; }
+.crew-caption { position: absolute; left: 8px; top: 8px; z-index: 2; padding: 2px 8px; background: rgba(2, 4, 12, .8); border: 1px solid #3D8BFF; color: #DCE6FF; font-size: 12px; line-height: 1.4; white-space: nowrap; pointer-events: none; }
 .crew-caption[data-lv="1"], .crew-caption[data-lv="2"] { color: #F2B84B; border-color: #F2B84B; }
 .crew-caption[hidden] { display: none; }
