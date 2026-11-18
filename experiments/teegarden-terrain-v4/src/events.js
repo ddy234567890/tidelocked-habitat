@@ -59,12 +59,16 @@ const make = (tag, className, text) => {
 
 /** onChange: 대응을 고를 때마다 불린다 (게이지 다시 그리기) */
 export function createEvents({ onChange = () => {} } = {}) {
-  let rand, scheduled, used, results, follow, pending = null, playing = false;
+  let rand, scheduled, used, results, follow, activeWeeks, pending = null, playing = false;
   const seen = loadSeen();
   function reset() {
     rand = mulberry32((Date.now() ^ 0x5eed) >>> 0);
     if (pending) clearTimeout(pending.timer);
     scheduled = {}; used = new Set(); results = []; follow = null; pending = null;
+    // 사건이 나올 주차: 2~5주차 중 eventsPerGame 개를 무작위로 고른다 (나머지 주는 조용히 지나간다)
+    const weeks = [2, 3, 4, 5];
+    for (let i = weeks.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [weeks[i], weeks[j]] = [weeks[j], weeks[i]]; }
+    activeWeeks = new Set(weeks.slice(0, data.eventsPerGame ?? 4));
   }
   reset();
 
@@ -221,14 +225,15 @@ export function createEvents({ onChange = () => {} } = {}) {
     },
     /**
      * '다음 주로'를 누를 때 부른다: 아직 안 뜬 이번 주 사건이 있으면 지금 띄우고, 다음 주 사건과 터질 때를 뽑아 둔다.
-     * 한 주에 사건은 1개, secondChance 확률로 2개. 사건 창을 닫으면 끝나는 Promise
+     * 사건이 나오는 주(activeWeeks)에는 1개, secondChance 확률로 2개. 사건 창을 닫으면 끝나는 Promise
      */
     async endOfWeek(week, selection) {
       while (pending) { clearTimeout(pending.timer); const { promise } = pending; pending.run(); await promise; } // 곧 뜰 참이던 사건은 지금 띄운다
       for (const plan of scheduled[week]?.splice(0) ?? []) await play(byId[plan.id], week, selection);
       if (week >= LAST_WEEK) return;
       const moments = [...WEEKS[week].steps.map(step => step.id), ...(week + 1 < LAST_WEEK ? ['end'] : [])];
-      const count = 1 + (rand() < (data.secondChance ?? 0) ? 1 : 0);
+      // 후속 사건(follow)은 조용한 주에도 나온다
+      const count = activeWeeks.has(week + 1) || follow ? 1 + (rand() < (data.secondChance ?? 0) ? 1 : 0) : 0;
       scheduled[week + 1] = [];
       for (let k = 0; k < count && moments.length; k++) {
         const next = pickEvent(selection, used, seen, rand, follow);
