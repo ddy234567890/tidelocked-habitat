@@ -101,7 +101,7 @@ export function createHexBoard(root, { onPick, onDecide }) {
       <div class="hb-view"><svg class="hb-map" role="group" aria-label="선지 토큰" xmlns="${SVG}">
         <defs>
           <filter id="hb-glow" x="-10%" y="-60%" width="120%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
-          <linearGradient id="hb-chosen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E4DBD"/><stop offset="1" stop-color="#121F5C"/></linearGradient>
+          <linearGradient id="hb-chosen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--c-g2)"/><stop offset="1" style="stop-color:var(--c-g1)"/></linearGradient>
           ${Object.entries(ICONS).map(([id, d]) => `<symbol id="hb-ic-${id}" viewBox="0 0 24 24">${d}</symbol>`).join('')}
         </defs>
         <g class="hb-content"></g>

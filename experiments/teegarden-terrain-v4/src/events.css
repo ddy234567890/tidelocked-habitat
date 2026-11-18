@@ -1,54 +1,54 @@
-/* 돌발 사건 카드 (events.js, 체험판). 색은 화면 토큰만 쓴다: 카드 #03081A, 본문 #DCE6FF, 보조 #6A8CC8,
-   하이라이트 #8FC1FF, 버튼 테두리 #3D8BFF, 고른 카드 #0A1A44, 강조 크림 #E8DFC8, 결정 주황 #F2B84B (빨강 대신 주황) */
-.event-modal{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:rgba(2,4,12,.78);padding:16px;overflow:auto}
+/* 돌발 사건 카드 (events.js, 체험판). 색은 화면 토큰만 쓴다: 카드 var(--c-panel-solid), 본문 var(--c-text), 보조 var(--c-dim),
+   하이라이트 var(--c-hi), 버튼 테두리 var(--c-acc), 고른 카드 var(--c-pick), 강조 크림 var(--c-cream), 결정 주황 var(--c-gold) (빨강 대신 주황) */
+.event-modal{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:rgba(var(--c-bg-rgb),.78);padding:16px;overflow:auto}
 .event-modal[hidden]{display:none}
-.event-card{max-width:560px;width:100%;background:#03081A;border:1px solid #F2B84B;padding:24px;display:flex;flex-direction:column;gap:12px;color:#DCE6FF;
+.event-card{max-width:560px;width:100%;background:var(--c-panel-solid);border:1px solid var(--c-gold);padding:24px;display:flex;flex-direction:column;gap:12px;color:var(--c-text);
   font-size:var(--fs-m,18px);line-height:var(--lh-m,26px)}
-.event-card.good{border-color:#E8DFC8}
-.event-card.book{border-color:#3D8BFF}
-.event-card h2{margin:0;font-weight:400;font-size:28px;line-height:36px;color:#F2B84B}
-.event-card.good h2{color:#E8DFC8}
-.event-card.book h2{color:#8FC1FF}
+.event-card.good{border-color:var(--c-cream)}
+.event-card.book{border-color:var(--c-acc)}
+.event-card h2{margin:0;font-weight:400;font-size:28px;line-height:36px;color:var(--c-gold)}
+.event-card.good h2{color:var(--c-cream)}
+.event-card.book h2{color:var(--c-hi)}
 .event-card p{margin:0}
-.event-code{color:#6A8CC8;letter-spacing:.08em;font-size:var(--fs-s,16px)}
-.event-cause{color:#8FC1FF}
-.event-why{margin:0;padding-left:20px;color:#E8DFC8}
-.event-ask{margin-top:4px!important;color:#8FC1FF}
+.event-code{color:var(--c-dim);letter-spacing:.08em;font-size:var(--fs-s,16px)}
+.event-cause{color:var(--c-hi)}
+.event-why{margin:0;padding-left:20px;color:var(--c-cream)}
+.event-ask{margin-top:4px!important;color:var(--c-hi)}
 .event-options{display:flex;flex-direction:column;gap:8px}
-.event-option{display:flex;flex-direction:column;gap:2px;text-align:left;background:#0A1A44;border:1px solid #3D8BFF;color:#DCE6FF;padding:10px 14px;font:inherit;cursor:pointer}
-.event-option b{font-weight:400;color:#DCE6FF}
-.event-option span{color:#6A8CC8}
-.event-option small{color:#E8DFC8;font-size:var(--fs-s,16px)}
-.event-option.unlocked{border-color:#E8DFC8}
-.event-option:hover,.event-option:focus-visible{border-color:#8FC1FF;outline:none;background:#1450D8}
+.event-option{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--c-pick);border:1px solid var(--c-acc);color:var(--c-text);padding:10px 14px;font:inherit;cursor:pointer}
+.event-option b{font-weight:400;color:var(--c-text)}
+.event-option span{color:var(--c-dim)}
+.event-option small{color:var(--c-cream);font-size:var(--fs-s,16px)}
+.event-option.unlocked{border-color:var(--c-cream)}
+.event-option:hover,.event-option:focus-visible{border-color:var(--c-hi);outline:none;background:var(--c-acc)}
 .event-card .decide{align-self:flex-start}
-.event-foot{color:#6A8CC8;font-size:var(--fs-s,16px)}
-.event-book{background:none;border:0;padding:0;color:#8FC1FF;font:inherit;text-decoration:underline;cursor:pointer}
+.event-foot{color:var(--c-dim);font-size:var(--fs-s,16px)}
+.event-book{background:none;border:0;padding:0;color:var(--c-hi);font:inherit;text-decoration:underline;cursor:pointer}
 .event-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto}
-.event-list li{display:flex;flex-direction:column;border-left:2px solid #3D8BFF;padding-left:10px}
-.event-list li.bad{border-color:#F2B84B}
-.event-list li.good{border-color:#E8DFC8}
+.event-list li{display:flex;flex-direction:column;border-left:2px solid var(--c-acc);padding-left:10px}
+.event-list li.bad{border-color:var(--c-gold)}
+.event-list li.good{border-color:var(--c-cream)}
 .event-list li b{font-weight:400}
-.event-list li span{color:#6A8CC8;font-size:var(--fs-s,16px)}
-.event-list li.unknown b{color:#6A8CC8}
+.event-list li span{color:var(--c-dim);font-size:var(--fs-s,16px)}
+.event-list li.unknown b{color:var(--c-dim)}
 /* 사건이 뜨면 3D 화면 테두리가 주황으로 깜빡인다 */
 body.event-alert #stage{animation:event-pulse 1.2s ease-in-out 3}
-@keyframes event-pulse{50%{box-shadow:inset 0 0 0 3px #F2B84B}}
-@media (prefers-reduced-motion:reduce){body.event-alert #stage{animation:none;box-shadow:inset 0 0 0 3px #F2B84B}}
+@keyframes event-pulse{50%{box-shadow:inset 0 0 0 3px var(--c-gold)}}
+@media (prefers-reduced-motion:reduce){body.event-alert #stage{animation:none;box-shadow:inset 0 0 0 3px var(--c-gold)}}
 @media (max-width:560px){.event-card{padding:16px}.event-card h2{font-size:24px;line-height:32px}}
 /* 제한 시간 (나쁜 사건만): 주황 막대가 줄어들고, 5초 남으면 막대·숫자·카드 테두리가 깜빡인다 */
 .event-card.timed{animation:event-in .35s ease-out}
 @keyframes event-in{0%{transform:translateY(-6px) scale(.98);opacity:0}60%{transform:translateX(4px)}80%{transform:translateX(-3px)}100%{transform:none;opacity:1}}
-.event-card.timed .event-code{color:#F2B84B;animation:event-blink 1s steps(2,start) infinite}
-.event-timer{display:flex;align-items:center;gap:10px;font-size:var(--fs-s,16px);color:#6A8CC8}
-.event-timer-bar{flex:1;height:8px;background:#0A1A44;border:1px solid #3D8BFF;overflow:hidden}
-.event-timer-bar i{display:block;height:100%;width:100%;background:#F2B84B}
-.event-timer b{font-weight:400;min-width:3.2em;text-align:right;color:#F2B84B;font-size:var(--fs-l,22px)}
+.event-card.timed .event-code{color:var(--c-gold);animation:event-blink 1s steps(2,start) infinite}
+.event-timer{display:flex;align-items:center;gap:10px;font-size:var(--fs-s,16px);color:var(--c-dim)}
+.event-timer-bar{flex:1;height:8px;background:var(--c-pick);border:1px solid var(--c-acc);overflow:hidden}
+.event-timer-bar i{display:block;height:100%;width:100%;background:var(--c-gold)}
+.event-timer b{font-weight:400;min-width:3.2em;text-align:right;color:var(--c-gold);font-size:var(--fs-l,22px)}
 .event-timer.urgent b,.event-timer.urgent .event-timer-bar i{animation:event-blink .5s steps(2,start) infinite}
 .event-card.timed:has(.event-timer.urgent){animation:event-edge .5s steps(2,start) infinite}
 @keyframes event-blink{50%{opacity:.25}}
-@keyframes event-edge{50%{border-color:#E8DFC8;box-shadow:0 0 0 2px #F2B84B}}
-.event-card.timeout h2{color:#F2B84B}
+@keyframes event-edge{50%{border-color:var(--c-cream);box-shadow:0 0 0 2px var(--c-gold)}}
+.event-card.timeout h2{color:var(--c-gold)}
 @media (prefers-reduced-motion:reduce){
   .event-card.timed,.event-card.timed .event-code,.event-timer.urgent b,.event-timer.urgent .event-timer-bar i,.event-card.timed:has(.event-timer.urgent){animation:none}
   .event-timer.urgent b{text-decoration:underline}

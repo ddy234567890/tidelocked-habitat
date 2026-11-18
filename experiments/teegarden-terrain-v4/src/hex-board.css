@@ -2,8 +2,8 @@
    판이 켜지면(.p-decision.hex-mode) 기존 글 카드·결정 버튼은 숨기고, 판이 그 상태를 보여 주고 대신 누른다 */
 .p-decision.hex-mode>.step-title,.p-decision.hex-mode>nav.sites,.p-decision.hex-mode>.step,.p-decision.hex-mode>#next-week{display:none!important}
 
-.hexboard{--hb-ink:#03081A;--hb-sel:#0A1A44;--hb-line:#3D8BFF;--hb-card-line:#1E4FB0;--hb-hi:#8FC1FF;--hb-cream:#E8DFC8;--hb-lamp:#F2EBDB;
-  --hb-text:#DCE6FF;--hb-sub:#6A8CC8;--hb-b2:#73A8FF;--hb-b3:#D1E6FF;--hb-orange:#FF993D;
+.hexboard{--hb-ink:var(--c-panel-solid);--hb-sel:var(--c-pick);--hb-line:var(--c-acc);--hb-card-line:var(--c-line);--hb-hi:var(--c-hi);--hb-cream:var(--c-cream);--hb-lamp:var(--c-cream);
+  --hb-text:var(--c-text);--hb-sub:var(--c-dim);--hb-b2:var(--c-g4);--hb-b3:var(--c-g5);--hb-orange:var(--c-warn);
   position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;font-family:"Terrarum Sans Bitmap",monospace}
 .hexboard[hidden]{display:none}
 .hb-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -31,15 +31,15 @@
 .hb-view{flex:1 1 auto;min-width:0;display:flex;justify-content:center;overflow:hidden}
 .hb-map{display:block;flex:none;max-width:100%;height:auto;overflow:hidden;
   /* 잘린 느낌이 들지 않게 판 가장자리를 부드럽게 흐린다 (양옆은 넓게, 위아래는 살짝) */
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16%,#000 84%,transparent 100%),linear-gradient(180deg,transparent 0,#000 7%,#000 93%,transparent 100%);
-  -webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0,#000 16%,#000 84%,transparent 100%),linear-gradient(180deg,transparent 0,#000 7%,#000 93%,transparent 100%);mask-composite:intersect}
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,var(--c-black) 16%,var(--c-black) 84%,transparent 100%),linear-gradient(180deg,transparent 0,var(--c-black) 7%,var(--c-black) 93%,transparent 100%);
+  -webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent 0,var(--c-black) 16%,var(--c-black) 84%,transparent 100%),linear-gradient(180deg,transparent 0,var(--c-black) 7%,var(--c-black) 93%,transparent 100%);mask-composite:intersect}
 /* 한 주를 다 결정해 물러선 화면:  고른 길이 또렷하게, 나머지는 더 흐리게 */
 .hb-overview .s-done{opacity:.18;transition:opacity .6s}
-.hb-overview .hb-map{-webkit-mask-image:radial-gradient(ellipse 72% 80% at 50% 50%,#000 62%,transparent 100%);mask-image:radial-gradient(ellipse 72% 80% at 50% 50%,#000 62%,transparent 100%)}
+.hb-overview .hb-map{-webkit-mask-image:radial-gradient(ellipse 72% 80% at 50% 50%,var(--c-black) 62%,transparent 100%);mask-image:radial-gradient(ellipse 72% 80% at 50% 50%,var(--c-black) 62%,transparent 100%)}
 .hb-decide{flex:0 0 220px;margin-left:auto}
 @media(max-width:1100px){.hb-body{flex-wrap:wrap}.hb-decide{flex:1 1 100%}}
 
-.hb-lattice polygon{fill:none;stroke:rgba(61,139,255,.06);stroke-width:1}
+.hb-lattice polygon{fill:none;stroke:rgba(var(--c-acc-rgb),.06);stroke-width:1}
 .hb-head-t{font-size:14px;fill:var(--hb-line)}
 .hb-head-t.now{fill:var(--hb-cream)}
 .hb-head-t.ok{fill:var(--hb-b2)}
@@ -86,7 +86,7 @@
 .hb-node.reveal .body{animation:hb-in .5s cubic-bezier(.2,1.3,.4,1) backwards;animation-delay:calc(.85s + var(--j, 0) * 90ms)}
 @keyframes hb-in{0%{transform:scale(.4);opacity:0}40%{opacity:.3}55%{opacity:1}65%{opacity:.4}}
 
-.hb-tip{position:absolute;z-index:20;width:280px;padding:10px 12px;display:grid;gap:7px;background:rgba(10,20,52,.97);border:1px solid var(--hb-hi);color:var(--hb-text);font-size:14px;line-height:1.45;pointer-events:none;
+.hb-tip{position:absolute;z-index:20;width:280px;padding:10px 12px;display:grid;gap:7px;background:rgba(var(--c-panel-rgb),.97);border:1px solid var(--hb-hi);color:var(--hb-text);font-size:14px;line-height:1.45;pointer-events:none;
   opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
 .hb-tip.on{opacity:1;transform:none}
 .hb-tip p{margin:0}

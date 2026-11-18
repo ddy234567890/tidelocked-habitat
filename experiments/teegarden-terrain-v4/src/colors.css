@@ -1,0 +1,45 @@
+/* 화면 색 한 곳 (2026-11-18 사용자 요청: "쨍한 파랑 + 검정" 팔레트).
+   모든 css 는 색 값을 직접 적지 않고 여기 변수만 쓴다. 다른 테마 파일의 변수(--bg0 · --v-* · --k-* · --vv-*)도 이 변수를 가리킨다.
+   이름 앞 --c- 는 다른 파일의 옛 이름(--hi = 본문 글자 등)과 겹치지 않게 붙였다.
+   주황·크림은 사용자 결정으로 남긴다: 결정 버튼 주황 · 경고 주황 · 강조 크림. 빨강·초록·보라는 쓰지 않는다.
+   점(행성·건물·사람) 색은 src/palette.js 가 따로 정한다. */
+:root{
+  color-scheme:dark;
+  /* 바탕 */
+  --c-bg:#02040C; --c-black:#000000;
+  --c-panel:rgba(3,8,26,.88);            /* 창·카드 바탕: 거의 검정, 살짝 비침 */
+  --c-panel-solid:#03081A;               /* 비치면 안 되는 칸 */
+  --c-pick:#0A1A44;                      /* 고른 칸 바탕 */
+  /* 글자 */
+  --c-text:#DCEBFF;                      /* 본문 */
+  --c-dim:#6A8CC8;                       /* 짧은 보조 글 · 단위 · 비활성 */
+  --c-ph:#1A2E66;                        /* 입력칸 안내 글자 */
+  /* 파랑 */
+  --c-acc:#3D8BFF;                       /* 쨍한 파랑: 영어 제목 · 주 버튼 바탕 · 커서 · 선택 표시 */
+  --c-hi:#8CC4FF;                        /* 밝은 파랑: 마우스 올림 · 누른 입력칸 테두리 · 하이라이트 */
+  --c-line:rgba(61,139,255,.62);         /* 테두리 */
+  --c-line-dim:rgba(61,139,255,.25);     /* 옅은 구분선 */
+  --c-btn-hover:rgba(61,139,255,.2);     /* 일반 버튼에 마우스를 올렸을 때 바탕 */
+  /* 발광 (그림자는 검정 대신 파란 빛만) */
+  --c-glow:0 0 8px rgba(30,110,255,.85); /* 강하게: 제목 · 중요한 숫자 · 선택된 항목 */
+  --c-glow-s:0 0 4px rgba(30,110,255,.45);/* 약하게: 본문 기본 */
+  /* 그래픽·그림·그래프 명암 6단계 (어두움 → 밝음) */
+  --c-g0:#020309; --c-g1:#000F40; --c-g2:#0030BD; --c-g3:#0F66FF; --c-g4:#5CA8FF; --c-g5:#DBF0FF;
+  /* 남기는 색 (사용자 결정) */
+  --c-cream:#E8DFC8; --c-gold:#F2B84B; --c-warn:#FF993D;
+  /* 투명도를 바꿔 쓰는 곳: rgba(var(--c-…-rgb), 투명도) */
+  --c-bg-rgb:2,4,12; --c-black-rgb:0,0,0; --c-panel-rgb:3,8,26; --c-acc-rgb:61,139,255; --c-hi-rgb:140,196,255;
+  --c-glow-rgb:30,110,255; --c-cream-rgb:232,223,200; --c-gold-rgb:242,184,75; --c-warn-rgb:255,153,61;
+}
+html,body{background:var(--c-black)}
+body{color:var(--c-text);text-shadow:var(--c-glow-s)}
+::placeholder{color:var(--c-ph);opacity:1}
+input,textarea{caret-color:var(--c-acc)}
+input:focus,textarea:focus,select:focus{border-color:var(--c-hi);outline:none}
+/* 주 버튼 (주황 결정 버튼은 사용자 결정으로 그대로) */
+.btn-primary{background:var(--c-acc);color:var(--c-bg);box-shadow:var(--c-glow)}
+.btn-primary:hover{background:var(--c-hi)}
+/* 움직임 줄이기 설정이면 깜빡임·반짝임을 끈다 */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
