@@ -1,13 +1,50 @@
 /* 사람 배치 실험 단추 (src/people.js). 색은 CLAUDE.md 화면 토큰만 쓴다 (다크 테마, 빨강·초록·보라 없음). 쓰러짐은 주황 */
-.pp-tools{position:absolute;left:12px;top:38px;z-index:3;display:grid;gap:4px;max-width:calc(100% - 24px)}
+.pp-tools{position:absolute;left:50%;top:92px;transform:translateX(-50%);justify-items:center;z-index:3;display:grid;gap:4px;max-width:calc(100% - 24px)}
 .pp-tools[hidden]{display:none}
 .pp-row{display:flex;gap:6px;flex-wrap:wrap}
 .pp-tools button{font:inherit;font-size:var(--fs-m,16px);border:1px solid #2B47C4;background:#0A1434;color:#8FC1FF;padding:2px 10px;cursor:pointer}
 .pp-tools button:hover,.pp-tools button:focus-visible{border-color:#8FC1FF;outline:none}
 .pp-tools button[aria-pressed="true"]{background:#8FC1FF;color:#02040C;border-color:#8FC1FF}
-.pp-count{margin:0;padding:1px 6px;justify-self:start;background:#02040C;color:#8C9DD0;font-size:var(--fs-s,14px)}
+.pp-count{margin:0;padding:1px 8px;justify-self:center;white-space:nowrap;background:#02040C;color:#8C9DD0;font-size:var(--fs-s,14px)}
 .pp-count b{font-weight:400;color:#F2B84B}
 .pp-tools button:disabled{opacity:.45;cursor:wait}
 #canvas-host.pp-placing canvas{cursor:crosshair}
 .pp-tip{max-width:300px}
 @media (max-width:640px){.pp-tools{top:70px}}
+
+/* 얼굴로 보고 있는 대원의 머리 위 이름표 (people.js) */
+.pp-tag { position: absolute; z-index: 4; transform: translate(-50%, -100%); pointer-events: none; padding: 3px 8px; background: rgba(10, 20, 52, .88); border: 1px solid #8FC1FF; color: #E8DFC8; font-size: 12px; line-height: 1.3; text-align: center; white-space: nowrap; }
+.pp-tag b { display: block; font-weight: 600; }
+.pp-tag small { color: #8FC1FF; font-size: 10px; }
+.pp-tag::after { content: ''; position: absolute; left: 50%; bottom: -7px; width: 1px; height: 7px; background: #8FC1FF; }
+/* 이름표에서 얼굴 창까지 잠깐 이어지는 선 (crew.js) */
+.crew-link { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 40; pointer-events: none; opacity: 0; }
+.crew-link line { stroke: #8FC1FF; stroke-width: 1.5; stroke-dasharray: 4 4; }
+.crew-link circle { fill: #E8DFC8; }
+.crew-link.on { animation: crew-link 1.1s ease-out forwards; }
+@keyframes crew-link { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: .9; } 100% { opacity: 0; } }
+/* 얼굴 창 신호 전환: 밝은 가로 줄이 위에서 아래로 훑으며 다시 그려진다 */
+.crew-slot { position: relative; }
+.crew-slot.crew-switch::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 0%, rgba(143, 193, 255, .55) 48%, rgba(232, 223, 200, .8) 50%, transparent 52%) 0 0 / 100% 220% no-repeat, repeating-linear-gradient(0deg, rgba(143, 193, 255, .18) 0 1px, transparent 1px 3px); animation: crew-scan .7s ease-out forwards; }
+.crew-slot.crew-switch .face-stage { animation: crew-flicker .7s steps(6) forwards; }
+@keyframes crew-scan { from { background-position: 0 100%, 0 0; opacity: 1; } to { background-position: 0 -120%, 0 0; opacity: 0; } }
+@keyframes crew-flicker { 0% { opacity: .2; } 30% { opacity: .9; } 45% { opacity: .4; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .crew-link.on, .crew-slot.crew-switch::after, .crew-slot.crew-switch .face-stage { animation: none; } }
+
+/* 마우스가 대원 위에 없을 때: 마지막 대원 얼굴이 어둡고 흐리게 남는다 (crew.js) */
+.crew-slot .face-stage { transition: filter .35s ease, opacity .35s ease; }
+.crew-slot.crew-idle .face-stage { filter: brightness(.4) saturate(.5) blur(1px); opacity: .75; }
+.crew-hint-idle { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; padding: 3px 8px; background: rgba(10, 20, 52, .85); border: 1px solid #2B47C4; color: #E8DFC8; font-size: 11px; white-space: normal; width: 88%; text-align: center; line-height: 1.4; pointer-events: none; }
+
+/* 눌러서 고른 대원: 이름표 테두리가 크림색, 얼굴 창 테두리도 크림색 (people.js · crew.js) */
+.pp-tag.pp-pinned { border-color: #E8DFC8; box-shadow: 0 0 0 1px #E8DFC8, 0 0 12px rgba(232, 223, 200, .35); }
+.pp-tag.pp-pinned::after { background: #E8DFC8; }
+.crew-slot.crew-pinned { box-shadow: inset 0 0 0 2px #E8DFC8; }
+
+/* 마우스가 대원 위에 있으면 건물·장치(에셋) 정보창은 숨기고 대원 정보창만 보인다 */
+.pp-on-person #past-tip { display: none !important; }
+
+/* 얼굴 위 왼쪽 위: 고정 여부 · 상태 (crew.js). 힘들어함·쓰러짐은 주황 */
+.crew-caption { position: absolute; left: 8px; top: 8px; z-index: 2; padding: 2px 8px; background: rgba(2, 4, 12, .8); border: 1px solid #2B47C4; color: #DCE6FF; font-size: 12px; line-height: 1.4; white-space: nowrap; pointer-events: none; }
+.crew-caption[data-lv="1"], .crew-caption[data-lv="2"] { color: #F2B84B; border-color: #F2B84B; }
+.crew-caption[hidden] { display: none; }
