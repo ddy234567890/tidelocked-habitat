@@ -3,8 +3,8 @@
 @font-face{font-family:"Terrarum Sans Bitmap";src:url("./assets/fonts/terrarum-sans-bitmap.woff") format("woff");font-display:swap}
 :root{color-scheme:dark;
   /* 팀 화면 토큰 (저장소 CLAUDE.md '색') 으로 맞춤 — 2026-11-11 */
-  --bg0:#02040C;--bg1:#0A1434;--panel:#0A1434;--head:#1B2A9C;--soft:#0E1B48;
-  --line:#1A2B72;--deep:#2B47C4;--edge:#8FC1FF;--text:#8C9DD0;--mid:#8C9DD0;--hi:#DCE6FF;--hover:#8FC1FF;
+  --bg0:#02040C;--bg1:#03081A;--panel:#03081A;--head:#1450D8;--soft:#0A1A44;
+  --line:#1E4FB0;--deep:#3D8BFF;--edge:#8FC1FF;--text:#6A8CC8;--mid:#6A8CC8;--hi:#DCE6FF;--hover:#8FC1FF;
   --cream:#E8DFC8;--orange:#F2B84B;
   --font:"Terrarum Sans Bitmap","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 *{box-sizing:border-box}

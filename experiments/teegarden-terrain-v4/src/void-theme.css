@@ -6,10 +6,10 @@
 @font-face{font-family:"HBIOS-SYS";src:url("./assets/fonts/hbios-sys.ttf") format("truetype");font-display:swap}
 :root{
   --font:"HBIOS-SYS","Terrarum Sans Bitmap","Apple SD Gothic Neo","Malgun Gothic",monospace;
-  --v-bg:#02040C;--v-black:#000000;--v-card:#0A1434;--v-pick:#0E1B48;--v-btn-line:#2B47C4;--v-card-line:#1A2B72;--v-btn:#1B2A9C;
-  --v-hi:#8FC1FF;--v-cream:#E8DFC8;--v-text:#DCE6FF;--v-sub:#8C9DD0;--v-amber:#F2B84B;
+  --v-bg:#02040C;--v-black:#000000;--v-card:#03081A;--v-pick:#0A1A44;--v-btn-line:#3D8BFF;--v-card-line:#1E4FB0;--v-btn:#1450D8;
+  --v-hi:#8FC1FF;--v-cream:#E8DFC8;--v-text:#DCE6FF;--v-sub:#6A8CC8;--v-amber:#F2B84B;
   --v-glass:rgba(2,4,12,.66);                 /* 떠 있는 창 바탕: 거의 검정, 뒤 행성이 비침 */
-  --v-edge:rgba(143,193,255,.26);             /* 창 테두리: 아주 가는 선 */
+  --v-edge:rgba(61,139,255,.26);             /* 창 테두리: 아주 가는 선 */
   --v-m:20px;--v-side:300px;--v-foot:30px;
   /* 망점 결 (레퍼런스의 거친 1비트 점) */
   --v-dots:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='1' height='1' fill='%238FC1FF' fill-opacity='.10'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%238FC1FF' fill-opacity='.05'/%3E%3C/svg%3E");
@@ -18,9 +18,9 @@ body,.hexboard,.field-notes,.fn-card{font-family:var(--font)}
 body{background:var(--v-black)}
 
 /* ── 전체 화면 위 효과: 가장자리 어둠 · 입자 · 주사선 · 가끔 지나가는 글리치 줄 ── */
-.scanlines{z-index:60;background:repeating-linear-gradient(0deg,rgba(143,193,255,.045) 0 1px,transparent 1px 3px)}
+.scanlines{z-index:60;background:repeating-linear-gradient(0deg,rgba(61,139,255,.045) 0 1px,transparent 1px 3px)}
 .scanlines::before{content:"";position:absolute;inset:0;background:var(--v-grain);opacity:.35;mix-blend-mode:screen;animation:v-grain .9s steps(3) infinite}
-.scanlines::after{content:"";position:absolute;left:0;right:0;height:3px;top:-10px;background:linear-gradient(90deg,transparent,rgba(143,193,255,.5) 18%,rgba(232,223,200,.65) 50%,rgba(143,193,255,.4) 70%,transparent);opacity:0;animation:v-tear 11s linear infinite}
+.scanlines::after{content:"";position:absolute;left:0;right:0;height:3px;top:-10px;background:linear-gradient(90deg,transparent,rgba(61,139,255,.5) 18%,rgba(232,223,200,.65) 50%,rgba(61,139,255,.4) 70%,transparent);opacity:0;animation:v-tear 11s linear infinite}
 @keyframes v-grain{0%{background-position:0 0}33%{background-position:-60px 40px}66%{background-position:50px -70px}100%{background-position:0 0}}
 @keyframes v-tear{0%,86%{top:-10px;opacity:0}87%{top:22%;opacity:.9}88%{top:23%;opacity:0}93%{top:61%;opacity:0}93.5%{top:61%;opacity:.7}94.5%{top:62%;opacity:0}100%{top:110%;opacity:0}}
 @media (prefers-reduced-motion:reduce){.scanlines::before,.scanlines::after{animation:none}}
@@ -50,7 +50,7 @@ body{background:var(--v-black)}
 
 /* 행성 정보의 둥근 지구 그림·고리 장식은 감춤 (행성은 뒤 화면에 이미 있음) */
 .p-right .globe{display:none}
-.facts li::before{content:"·";color:var(--v-hi)}.facts li{border-bottom-color:rgba(143,193,255,.1)!important}
+.facts li::before{content:"·";color:var(--v-hi)}.facts li{border-bottom-color:rgba(61,139,255,.1)!important}
 
 /* 결정 버튼 · 카드: 둥근/깎인 틀 대신 가는 선, 고르면 크림 */
 .site,.decide{border:1px solid var(--v-edge)!important;border-image:none!important;background:rgba(2,4,12,.55)!important}
