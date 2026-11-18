@@ -204,7 +204,7 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     for (const p of people) n[p.status]++;
     tools.querySelector('.pp-count').innerHTML = !model ? '사람 모델을 불러오는 중…' : people.length
       ? `${people.length}명 · ${STATUS_NAMES.ok} ${n.ok} · ${STATUS_NAMES.tired} ${n.tired} · <b>${STATUS_NAMES.down} ${n.down}</b>`
-      : '대원들이 오는 중…';
+      : '기지를 지으면 대원 10명이 들어와요';
   }
 
   // ---- 동작 재생: 앞 동작에서 부드럽게 넘어간다. once 는 한 번만 하고 마지막 자세로 멈춘다 ----
@@ -547,7 +547,8 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     const now = time / 1000, dt = Math.min(0.1, now - (lastFrame ?? now)); lastFrame = now;
     if (!model) return;
     // 짓는 방식을 결정했으면 집 자리가 들어온 뒤에 세운다 (그래야 집 안에 선다)
-    if (!people.length && (s.homes?.length || !s.decided?.module)) spawnCrew(s.homes ?? []);
+    // 대원은 기지(집)가 생긴 뒤에 집 안으로 들어온다: 기지 없이 바깥(55~66°C, 산소 14%)에 세우면 몇 초 만에 모두 쓰러진다 (2026-11-18 사용자: 처음부터 안 됨)
+    if (!people.length && s.homes?.length) spawnCrew(s.homes);
     for (const p of people) think(p, dt);
     // 부축받는 사람은 데려가는 사람 오른쪽에 붙어 같은 쪽을 본다
     for (const p of people) if (p.carrying) {
