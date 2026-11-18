@@ -2,8 +2,8 @@
    판이 켜지면(.p-decision.hex-mode) 기존 글 카드·결정 버튼은 숨기고, 판이 그 상태를 보여 주고 대신 누른다 */
 .p-decision.hex-mode>.step-title,.p-decision.hex-mode>nav.sites,.p-decision.hex-mode>.step,.p-decision.hex-mode>#next-week{display:none!important}
 
-.hexboard{--hb-ink:#0A1434;--hb-sel:#0E1B48;--hb-line:#2B47C4;--hb-card-line:#1A2B72;--hb-hi:#8FC1FF;--hb-cream:#E8DFC8;--hb-lamp:#F2EBDB;
-  --hb-text:#DCE6FF;--hb-sub:#8C9DD0;--hb-b2:#73A8FF;--hb-b3:#D1E6FF;--hb-orange:#FF993D;
+.hexboard{--hb-ink:#03081A;--hb-sel:#0A1A44;--hb-line:#3D8BFF;--hb-card-line:#1E4FB0;--hb-hi:#8FC1FF;--hb-cream:#E8DFC8;--hb-lamp:#F2EBDB;
+  --hb-text:#DCE6FF;--hb-sub:#6A8CC8;--hb-b2:#73A8FF;--hb-b3:#D1E6FF;--hb-orange:#FF993D;
   position:relative;display:flex;flex-direction:column;gap:6px;min-width:0;font-family:"Terrarum Sans Bitmap",monospace}
 .hexboard[hidden]{display:none}
 .hb-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -39,7 +39,7 @@
 .hb-decide{flex:0 0 220px;margin-left:auto}
 @media(max-width:1100px){.hb-body{flex-wrap:wrap}.hb-decide{flex:1 1 100%}}
 
-.hb-lattice polygon{fill:none;stroke:rgba(143,193,255,.06);stroke-width:1}
+.hb-lattice polygon{fill:none;stroke:rgba(61,139,255,.06);stroke-width:1}
 .hb-head-t{font-size:14px;fill:var(--hb-line)}
 .hb-head-t.now{fill:var(--hb-cream)}
 .hb-head-t.ok{fill:var(--hb-b2)}

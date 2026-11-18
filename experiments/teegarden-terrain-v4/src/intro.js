@@ -1,6 +1,7 @@
 import hud from './hud.json' with { type: 'json' };
 import { WEEKS } from './choices.js';
 import { lecture, showPlanetMarks, resetPlanetMarks } from './planet-brief.js';
+import { openPrologue } from './prologue.js';
 
 // 시작 화면: ⓪ 이동 중 → ① 브리핑(탐사 로봇 보고) → 결정 화면. 팀 디자인 캔버스 「1주차 화면 3종」을 따른다.
 // 브리핑은 주차마다 다시 뜨고, 주차 탭으로 지난 주 브리핑을 다시 본다 (openBriefing).
@@ -172,6 +173,10 @@ nextButton.addEventListener('click', forward);
 if (new URLSearchParams(window.startParams ?? location.search).get('intro') === '0') {
   intro.hidden = true;
 } else {
+  // 맨 처음은 접속 화면(로그인 → 행성 선택). prologue:done 이면 로켓 이동 화면 → 1주차 브리핑
+  openPrologue(startTravel);
+}
+function startTravel() {
   const fill = $('#travel-fill'), rocket = $('#travel-rocket'), pct = $('#travel-pct'), bar = $('#travel-bar');
   const start = performance.now();
   const step = time => {

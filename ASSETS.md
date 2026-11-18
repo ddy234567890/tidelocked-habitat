@@ -196,3 +196,12 @@
 | human.glb | Universal Animation Library [Standard] 의 UAL1_Standard.glb (Mannequin, 뼈대 65개) | https://quaternius.itch.io/universal-animation-library (https://quaternius.com/packs/universalanimationlibrary.html) | Quaternius | CC0 | 지역 화면에 놓는 사람 (src/people.js) |
 
 - 받은 날: 2026-11-14 (묶음 v3.0). 동작 43개 중 12개만 남겼어요: Idle_Loop · Idle_Talking_Loop · Walk_Loop · Jog_Fwd_Loop · Sprint_Loop · Crouch_Fwd_Loop · Crouch_Idle_Loop · Death01 · Interact · Fixing_Kneeling · Hit_Chest · Push_Loop (7.6 MB → 3.0 MB). 다시 만들 때는 `node scripts/trim-glb.mjs 원본.glb src/models/human.glb 동작이름,…`.
+
+## 프롤로그 접속 화면 (experiments/teegarden-terrain-v4/public/web/prologue-access.html)
+
+| 자료 | 출처 | 라이선스 | 쓰는 곳 |
+|---|---|---|---|
+| 글꼴 GNU Unifont (한국어·영문 글자만 추려 파일 안에 넣음) | https://unifoundry.com/unifont/ | SIL Open Font License 1.1 | 접속·관측 화면 글씨 |
+
+- 별 방향·거리: 공개 천문 자료의 대략값. ESI·받는 빛·온도: 팀 문서 「외계행성_후보_정리」. 인구·남은 땅·난이도: 게임 설정값.
+
