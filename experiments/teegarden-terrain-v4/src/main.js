@@ -686,8 +686,9 @@ try {
   function overviewPose() {
     const mobile = host.clientWidth < 600;
     return {
-      position: new THREE.Vector3(0, mobile ? 3 : 2, mobile ? 36 : 29),
-      target: new THREE.Vector3(mobile ? 0 : -3.2, mobile ? 2.7 : 0, 0),
+      // 2026-11-18 사용자 요청: 데스크톱은 행성을 화면 가운데에, 이전(29)보다 살짝 크게 (전체 화면 배치)
+      position: new THREE.Vector3(0, mobile ? 3 : 2, mobile ? 36 : 28),
+      target: new THREE.Vector3(0, mobile ? 2.7 : -0.7, 0),
       up: new THREE.Vector3(0, 1, 0)
     };
   }
