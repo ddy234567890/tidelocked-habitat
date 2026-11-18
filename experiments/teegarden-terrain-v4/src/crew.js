@@ -43,7 +43,10 @@ let hovering = false, everHovered = false, pinned = null;
 const hint = document.createElement('span'); hint.className = 'crew-hint-idle'; hint.textContent = '▲ 가운데 화면에서 걸어다니는 대원에게 마우스를 올려 보세요. 누르면 그 대원으로 고정돼요';
 addEventListener('crew-pin', e => { pinned = e.detail.person; everHovered = true; renderIdle(); renderDetails(); });
 addEventListener('crew-hover', e => { hovering = e.detail.on; if (hovering) everHovered = true; renderIdle(); renderDetails(); });
+// 얼굴 위 왼쪽 위 글씨: 고정 여부와 상태 (제목줄은 좁아서 대원 이름만 둔다)
+const caption = document.createElement('span'); caption.className = 'crew-caption'; caption.hidden = true;
 function renderIdle() {
+  if (!caption.isConnected) $('#crew-slot').append(caption);
   const slot = $('#crew-slot'); if (!hint.isConnected) slot.append(hint);
   const live = hovering || (pinned && person === pinned);   // 마우스를 올렸거나, 고른 대원이면 밝게
   slot.classList.toggle('crew-idle', Boolean(person) && !live);
@@ -133,7 +136,10 @@ function renderDetails() {
   const text = person ? STATUS_NAMES[person.status] + (person.status !== 'ok' && person.cause ? ` · ${person.cause}` : '')
     : level ? `${name} · ${LEVEL_NAMES[level]}` : '정상';
   const live = hovering || (pinned && person === pinned);
-  $('#crew-state').textContent = person ? `${person.name}${pinned === person ? ' (고정)' : ''} · ${live ? text : '대기'}` : text;
+  $('#crew-state').textContent = person ? person.name : text;
+  caption.hidden = !person;
+  if (person) caption.textContent = (pinned === person ? '고정 · ' : '') + (live ? text : '대기');
+  caption.dataset.lv = person ? { ok: 0, tired: 1, down: 2 }[person.status] : 0;
   $('#crew-title').textContent = person ? `${person.name} 상태` : '대원 상태';
   for (const el of [$('#crew-status')]) { el.textContent = text; el.dataset.lv = person ? { ok: 0, tired: 1, down: 2 }[person.status] : level; }
   $('#c-spo2').textContent = `${s.spo2Pct.toFixed(0)}%`;
