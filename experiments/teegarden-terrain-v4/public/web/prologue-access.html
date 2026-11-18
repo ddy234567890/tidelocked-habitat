@@ -65,6 +65,8 @@ body.explore .hud{visibility:visible;opacity:1}
 #ctl{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);display:flex;gap:2px;pointer-events:auto}
 #ctl button{border-color:transparent;color:var(--dim)}
 #ctl button:hover{color:var(--text)}
+#ctl #coast{border-color:var(--line-dim);margin-left:8px}
+#ctl #coast[aria-pressed="true"]{color:var(--bg);background:var(--hi);border-color:var(--hi);text-shadow:none}
 #hint{position:absolute;left:14px;bottom:8px;color:var(--dim)}
 #warp{position:absolute;left:0;right:0;top:50%;margin-top:-12px;text-align:center;color:var(--hi);text-shadow:var(--glow);letter-spacing:1px;opacity:0;transition:opacity .3s steps(3)}
 #warp.on{opacity:1}
@@ -180,12 +182,11 @@ body.explore #info.open{transform:none;opacity:1}
     <form id="form" autocomplete="off" novalidate>
       <label for="nick"><span class="en">OBSERVER ID</span> · 연구원 이름</label>
       <div class="inrow">
-        <input id="nick" maxlength="10" spellcheck="false" placeholder="이름 입력" aria-describedby="err demo">
+        <input id="nick" maxlength="10" spellcheck="false" placeholder="이름 입력" aria-describedby="err">
         <button id="go" class="main" type="submit">접속</button>
       </div>
       <div id="err" role="alert"></div>
       <button id="guest" type="button">게스트 열람</button>
-      <div class="demo" id="demo">데모 접속. 비밀번호 없음, 입력한 이름은 저장되지 않는다. (2~10자 · 한글, 영문, 숫자)</div>
     </form>
     <div id="seq" aria-live="polite" hidden></div>
   </div>
@@ -200,6 +201,7 @@ body.explore #info.open{transform:none;opacity:1}
     <button id="zOut" type="button" aria-label="거리 늘리기">－</button>
     <button id="zIn" type="button" aria-label="거리 좁히기">＋</button>
     <button id="home" type="button">행성 보기</button>
+    <button id="coast" type="button" aria-pressed="false">옛 해안선</button>
   </div>
 </div>
 <div id="nogl">이 브라우저에서는 관측 영상을 표시할 수 없다.<br>기록과 경로 기능은 계속 사용할 수 있다.</div>
@@ -208,7 +210,6 @@ body.explore #info.open{transform:none;opacity:1}
 
 <nav id="route" class="hud" aria-label="이주 경로">
   <span class="cap en">ROUTE · 이주 경로</span>
-  <span class="note">천체 간 거리는 축척을 따르지 않음</span>
   <div id="track2">
     <button class="stop" type="button" data-b="earth" style="left:0%"><i></i>지구</button>
     <button class="stop" type="button" data-b="b" style="left:84%"><i></i><span class="lg">티가든 </span>b</button>
@@ -217,7 +218,7 @@ body.explore #info.open{transform:none;opacity:1}
   </div>
 </nav>
 
-<div id="endv"><h2 id="endT"></h2><p class="dim">본편(1주차) 연결 지점.</p><button id="endBack" type="button">경로로 복귀</button></div>
+<div id="endv"><h2 id="endT"></h2><button id="endBack" type="button">경로로 복귀</button></div>
 <div id="black" class="on"></div>
 <div class="vig"></div><div class="crt"></div>
 
@@ -305,7 +306,7 @@ function buildTexture(){
       let h=0;for(const [la,lo,sa,so,amp] of HIGH){let dl=lon-lo;if(dl>180)dl-=360;if(dl<-180)dl+=360;const dd=((lat-la)/sa)**2+(dl/so)**2;if(dd<12)h+=amp*Math.exp(-dd/2);}
       const n=fbm(x/TW*64,y/TH*32), n2=fbm(x/TW*192+7.3,y/TH*96+1.7);
       const v=h*(0.35+0.65*soft[i])*(0.45+1.1*n)+(n2-.5)*.24;
-      const r=clamp((v-.5)/.3,0,1);remain[i]=r;
+      const r=clamp((v-.68)/.22,0,1);remain[i]=r;
       out[i*4]=Math.round(Math.min(1,shelf[i]*1.15)*255);
       out[i*4+1]=Math.round(r*255);
     }}
@@ -352,10 +353,10 @@ const NEAR=[
  {id:'sirius',ko:'시리우스',en:'SIRIUS',ra:101.29,dec:-16.72,ly:8.6,mag:1,note:'지구 밤하늘에서 가장 밝은 항성.'},
  {id:'tauceti',ko:'타우 세티',en:'TAU CETI',ra:26.02,dec:-15.94,ly:11.9,mag:.7,note:'태양과 유사한 분광형의 항성.'},
  {id:'procyon',ko:'프로키온',en:'PROCYON',ra:114.83,dec:5.22,ly:11.46,mag:.9,note:'지구 겨울 하늘의 주요 항성.'},
- {id:'trappist',ko:'트라피스트-1',en:'TRAPPIST-1',ra:346.62,dec:-5.04,ly:40.7,mag:.55,note:'행성 7개를 거느린 초저온 왜성. 대안 이주 후보로 검토된 항성계다.'}
+ {id:'trappist',ko:'트라피스트-1',en:'TRAPPIST-1',ra:346.62,dec:-5.04,ly:40.7,mag:.55,note:'행성 7개를 거느린 초저온 왜성.'}
 ];
 const nearFrom=origin=>NEAR.map(s=>{const P=mul(dirRD(s.ra,s.dec),s.ly);return {id:s.id,ko:s.ko,en:s.en,kind:'star',dir:norm(sub(P,origin)),mag:s.mag,
-  rows:[['TYPE','종류','항성']],note:s.note};});
+  rows:[['TYPE','종류','항성'],['MIGRATION','이주','불가']],note:s.note+' 이주 후보로 거론되지 않은 이주 불가 항성계다.'};});
 const GAL=dirRD(192.86,27.13); // 은하수 띠의 기준 방향
 
 const EARTH_L=norm([-.7,.12,.7]), TEEG_L=norm([.25,.42,-.87]);
@@ -363,26 +364,26 @@ const cFromB=mul(norm(add(mul(TEEG_L,-1),[.95,.15,0])),10), bFromC=mul(norm(add(
 const SCN={
  earth:{type:0,pos:0,en:'EARTH · 7777',ko:'지구',L:EARTH_L,sunR:.022,
   sph:[{p:[0,0,0],r:1,t:0},{p:mul(norm([.35,.32,.88]),7),r:.27,t:3,id:'moon'}],
-  rows:[['FROM','출발지','지구'],['POPULATION','세계 인구','약 1억 명','게임 설정'],['LAND','남은 땅','약 0.4%','게임 설정'],['STATUS','상태','육지 대부분 수몰','게임 설정']],
-  text:'해수면 상승으로 육지 대부분이 수몰되었다. 시점을 돌리면 태양, 달, 그리고 후보 행성의 주성인 티가든 별을 관측할 수 있다.',
+  rows:[['FROM','출발지','지구'],['POPULATION','세계 인구','약 1억 명'],['LAND','남은 땅','약 0.4%'],['STATUS','상태','육지 대부분 수몰']],
+  text:'해수면 상승으로 육지 대부분이 수몰되었다. 남은 땅은 높은 산지뿐이다.',
   objs:()=>[
-   {id:'sun',ko:'태양',en:'SUN',kind:'sys',dir:EARTH_L,rows:[['TYPE','종류','항성 (지구의 주성)']],note:'지구의 주성. 관측 화면에서는 크기를 과장해 표시했다.'},
-   {id:'moon',ko:'달',en:'MOON',kind:'local',sph:1,rows:[['TYPE','종류','자연 위성']],note:'지구의 유일한 자연 위성. 지구와의 거리는 축척을 따르지 않는다.'},
-   {id:'teeg',ko:'티가든 별',en:"TEEGARDEN'S STAR",kind:'star',dir:dT,mag:.85,dest:'b',goal:true,sub:'이주 목적지 · 12.5광년',
-    rows:[['TYPE','종류','적색왜성']],note:'후보 행성 b와 c의 주성. 실제로는 맨눈 관측이 불가능할 만큼 어둡다. 관측 화면에서는 밝기를 보정해 표시했다.'},
+   {id:'sun',ko:'태양',en:'SUN',kind:'sys',dir:EARTH_L,rows:[['TYPE','종류','항성 (지구의 주성)']],note:'지구의 주성. 이주 대상이 아니다.'},
+   {id:'moon',ko:'달',en:'MOON',kind:'local',sph:1,rows:[['TYPE','종류','자연 위성'],['MIGRATION','이주','불가']],note:'지구의 유일한 자연 위성. 대기와 물이 없어 이주 불가 천체다.'},
+   {id:'teeg',ko:'티가든 별',en:"TEEGARDEN'S STAR",kind:'star',dir:dT,mag:.85,dest:'b',goal:true,sub:'이주 목적지',
+    rows:[['TYPE','종류','적색왜성']],note:'이주 후보 행성 b와 c의 주성.'},
    ...nearFrom([0,0,0])]},
  b:{type:1,pos:84,en:"TEEGARDEN'S STAR b",ko:'티가든 b',level:'쉬움',L:TEEG_L,sunR:.075,
   sph:[{p:[0,0,0],r:1,t:1},{p:cFromB,r:.9,t:2,id:'c'}],
-  rows:[['ESI','지구와 닮은 정도 (0~1)','0.97'],['LIGHT','받는 빛 (지구 = 1)','1.08'],['TEMP','온도','약 20°C','추정'],['LEVEL','난이도','쉬움','게임 설정']],
-  text:'현재 후보 중 지구와 가장 유사한 행성. 받는 빛도 지구 수준이다. 표면 영상은 추정 복원도이며, 실제 지표는 아직 확인되지 않았다.'},
+  rows:[['ESI','지구와 닮은 정도 (0~1)','0.97'],['LIGHT','받는 빛 (지구 = 1)','1.08'],['TEMP','온도','약 20°C'],['LEVEL','난이도','쉬움']],
+  text:'현재 후보 중 지구와 가장 유사한 행성. 받는 빛도 지구 수준이다.'},
  c:{type:2,pos:100,en:"TEEGARDEN'S STAR c",ko:'티가든 c',level:'어려움',L:TEEG_L,sunR:.045,
   sph:[{p:[0,0,0],r:1,t:2},{p:bFromC,r:1,t:1,id:'b'}],
-  rows:[['ESI','지구와 닮은 정도 (0~1)','0.66'],['LIGHT','받는 빛 (지구 = 1)','0.35'],['TEMP','온도','약 -52°C','추정'],['LEVEL','난이도','어려움','게임 설정']],
-  text:'b와 같은 주성을 공전하는 외곽 행성. 받는 빛이 지구의 약 3분의 1에 그쳐 혹한이 예상된다. 표면 영상은 추정 복원도다.'}
+  rows:[['ESI','지구와 닮은 정도 (0~1)','0.66'],['LIGHT','받는 빛 (지구 = 1)','0.35'],['TEMP','온도','약 -52°C'],['LEVEL','난이도','어려움']],
+  text:'b와 같은 주성을 공전하는 외곽 행성. 받는 빛이 지구의 약 3분의 1에 그쳐 혹한이 예상된다.'}
 };
 const teegObjs=other=>()=>[
- {id:'teegL',ko:'티가든 별',en:"TEEGARDEN'S STAR",kind:'sys',dir:TEEG_L,rows:[['TYPE','종류','적색왜성']],note:'b와 c의 주성(主星). 근거리이므로 크게 관측된다. 표시 색은 관측 화면 기준으로 보정했다.'},
- {id:other,ko:'티가든 '+other,en:"TEEGARDEN'S STAR "+other,kind:'local',sph:1,dest:other,rows:[['TYPE','종류','인접 후보 행성']],note:'같은 주성을 공전하는 인접 행성. 두 행성 간 거리는 축척을 따르지 않는다.'},
+ {id:'teegL',ko:'티가든 별',en:"TEEGARDEN'S STAR",kind:'sys',dir:TEEG_L,rows:[['TYPE','종류','적색왜성']],note:'b와 c의 주성(主星). 붉고 어두운 적색왜성이다.'},
+ {id:other,ko:'티가든 '+other,en:"TEEGARDEN'S STAR "+other,kind:'local',sph:1,dest:other,rows:[['TYPE','종류','인접 후보 행성']],note:'같은 주성을 공전하는 인접 후보 행성.'},
  {id:'sunF',ko:'태양 (모항성)',en:'SUN · HOME',kind:'star',dir:norm(mul(Tpos,-1)),mag:.9,dest:'earth',
   rows:[['TYPE','종류','항성 (지구의 주성)']],note:'출발지인 지구의 주성. 이 거리에서는 희미한 점 하나로 관측된다.'},
  ...nearFrom(Tpos)];
@@ -393,7 +394,7 @@ for(const k in SCN){const s=SCN[k],sd=sideOf(s.L);s.home=norm(add(add(mul(s.L,.5
 const cv=$('#gl');let gl=null,U={};
 const VS=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
 const FS=`precision highp float;
-uniform vec2 uRes,uCtr;uniform float uF,uT,uDim,uRev,uWarp;
+uniform vec2 uRes,uCtr;uniform float uF,uT,uDim,uRev,uWarp,uCoast;
 uniform vec3 uCam,uL,uGal;uniform mat3 uB,uSpin;
 uniform vec4 uSph[3];uniform float uTy[3];uniform vec4 uSun;uniform vec4 uNS[8];
 uniform sampler2D uTex;
@@ -414,16 +415,16 @@ vec3 ramp(float i){
 vec3 rayAt(vec2 fc){return normalize(uB*vec3((fc-uCtr)/uF,1.));}
 float field(vec3 d,float pix){float v=0.;
  for(int k=0;k<2;k++){float sc=k==0?48.:110.;vec3 c=floor(d*sc);vec3 h=h33(c);
-  if(h.x<(k==0?.09:.07)){vec3 s=normalize(c+.5+(h-.5)*.7);float a=length(d-s);
+  if(h.x<(k==0?.045:.03)){vec3 s=normalize(c+.5+(h-.5)*.7);float a=length(d-s);
    float sz=pix*(k==0?(h.y>.85?1.6:1.):.75);
-   if(a<sz)v=max(v,(k==0?.42+.5*h.z:.22+.16*h.z)*(.8+.2*sin(uT*1.3+h.y*60.)));}}
+   if(a<sz)v=max(v,(k==0?.3+.4*h.z:.16+.12*h.z)*(.8+.2*sin(uT*1.3+h.y*60.)));}}
  for(int i=0;i<8;i++){vec4 s=uNS[i];if(s.w<=0.)continue;float a=length(d-s.xyz);
   v=max(v,s.w*(a<pix*1.5?1.:smoothstep(pix*5.,pix*1.5,a)*.5));}
  return v;}
 void main(){
  vec2 fc=gl_FragCoord.xy;vec3 rd=rayAt(fc);float pix=1./uF;
  float g=dot(rd,uGal);
- float v=exp(-g*g/.025)*.13*(.35+fbm(rd*5.))+.035*fbm(rd*2.3+7.);
+ float v=exp(-g*g/.025)*.07*(.35+fbm(rd*5.))+.02*fbm(rd*2.3+7.);
  if(uWarp>.01){for(int i=0;i<12;i++){float fi=float(i);vec2 q=uCtr+(fc-uCtr)*(1.-uWarp*.03*fi);v=max(v,field(rayAt(q),pix)*(1.-fi/12.));}}
  else v=max(v,field(rd,pix));
  if(uSun.w>0.){float sa=acos(clamp(dot(rd,uSun.xyz),-1.,1.));
@@ -432,7 +433,7 @@ void main(){
  for(int i=0;i<3;i++){if(uTy[i]<-.5)continue;vec3 oc=uCam-uSph[i].xyz;float r=uSph[i].w;
   float b=dot(oc,rd),c=dot(oc,oc)-r*r,h=b*b-c;
   if(h>0.){float t=-b-sqrt(h);if(t>0.&&t<tb){tb=t;C=uSph[i].xyz;R=r;ty=uTy[i];}}
-  if(uTy[i]<.5&&b<0.){vec3 q=oc-rd*b;float m=length(q);if(m>r&&m<r*1.08){float gg=1.-(m-r)/(r*.08);glow=max(glow,gg*gg*.55*clamp(dot(q/m,uL)+.35,0.,1.));}}}
+  if(uTy[i]<.5&&b<0.){vec3 q=oc-rd*b;float m=length(q);if(m>r&&m<r*1.12){float gg=1.-(m-r)/(r*.12);glow=max(glow,gg*gg*.85*clamp(dot(q/m,uL)+.55,0.,1.));}}}
  if(ty>-.5){
   vec3 P=uCam+rd*tb,n=(P-C)/R,w=uSpin*n;
   float dif=dot(n,uL),day=smoothstep(-.1,.22,dif),z=max(dot(n,-rd),0.),fr=pow(1.-z,2.6),pv;
@@ -442,17 +443,18 @@ void main(){
    vec2 e=vec2(1./1024.,1./512.);
    float hx=texture2D(uTex,uv+vec2(e.x,0.)).g-texture2D(uTex,uv-vec2(e.x,0.)).g;
    float hy=texture2D(uTex,uv-vec2(0.,e.y)).g-texture2D(uTex,uv+vec2(0.,e.y)).g;
-   float sea=mix(.05+.04*tx.r,(.2+.18*tx.r)*(.3+.8*max(dif,0.)),day);
-   float land=mix(.18,(.74+.24*tx.g)*clamp(.45+.6*dif+(hx*1.4-hy*1.1)*3.,.3,1.),day);
+   float sh=tx.r*(.15+.85*uCoast);
+   float sea=mix(.11+.04*sh,(.3+.2*sh)*(.4+.75*max(dif,0.)),day);
+   float land=mix(.3,(.74+.24*tx.g)*clamp(.45+.6*dif+(hx*1.4-hy*1.1)*3.,.3,1.),day);
    pv=mix(sea,land,smoothstep(.03,.09,tx.g));
    float cl=smoothstep(.6,.8,fbm(w*3.2+vec3(uT*.01,0.,0.)))*(1.-.5*smoothstep(.75,1.,abs(w.y)));
    pv=mix(pv,.12+.5*max(dif,0.),cl*.6);
-   if(tx.a>.35&&b4(fc)<.5)pv=max(pv,.24+.2*day);
+   if(tx.a>.35&&b4(fc)<.5)pv=max(pv,(.5+.35*day)*uCoast);
    pv=max(pv,tx.b*(1.-day)*(1.-cl*.6)*.95);
    pv+=fr*.3*clamp(dif+.3,0.,1.);
    float gx=abs(fract(lat/(PI/12.)+.5)-.5)*(PI/12.),gy=abs(fract(lon/(PI/12.)+.5)-.5)*(PI/12.)*cos(lat);
    float lw=tb*pix/R*.6;
-   float wire=step(min(gx,gy),lw)*(.25+.35*z)+tx.a*.25*(.4+.6*z)+fr*.25;
+   float wire=step(min(gx,gy),lw)*(.25+.35*z)+tx.a*.25*(.4+.6*z)*uCoast+fr*.25;
    pv=mix(wire,pv,step(b8(fc),uRev-.0001));
   }else if(ty<2.5){
    float n1=fbm(w*2.3+ty*7.),m=fbm(w*6.+3.);
@@ -472,7 +474,7 @@ function initGL(){
   if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error('link');gl.useProgram(pr);
   const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   const ap=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(ap);gl.vertexAttribPointer(ap,2,gl.FLOAT,false,0,0);
-  ['uRes','uCtr','uF','uT','uDim','uRev','uWarp','uCam','uL','uGal','uB','uSpin','uSph','uTy','uSun','uNS','uTex'].forEach(n=>U[n]=gl.getUniformLocation(pr,n));
+  ['uRes','uCtr','uF','uT','uDim','uRev','uWarp','uCam','uL','uGal','uB','uSpin','uSph','uTy','uSun','uNS','uTex','uCoast'].forEach(n=>U[n]=gl.getUniformLocation(pr,n));
   const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,TW,TH,0,gl.RGBA,gl.UNSIGNED_BYTE,buildTexture());
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
@@ -489,7 +491,7 @@ addEventListener('resize',resize);
 
 /* ───────── 5. 상태 ───────── */
 const st={tour:null,phase:'idle',scene:'earth',yaw:0,pitch:0,dist:4.3,vy:0,vp:0,look:null,anim:null,travel:null,sel:null,
-  dim:.6,rev:0,trev:0,cx:null,cy:0,F:0,ship:0,name:'',spin0:2.2};
+  dim:.6,rev:0,trev:0,cx:null,cy:0,F:0,ship:0,name:'',spin0:2.2,coast:0,tcoast:0};
 {const h=ypOf(SCN.earth.home);st.yaw=h.yaw;st.pitch=h.pitch;}
 const DMIN=1.9,DMAX=40,DHOME=3.4;
 function stopTour(){if(st.tour){st.tour=null;$('#hint').textContent='드래그: 시점 회전 · 휠: 거리 조절';}}
@@ -583,6 +585,7 @@ function renderInfo(){const sc=SCN[st.scene],o=st.sel;
   }
   $('#info .x').onclick=()=>{st.sel=null;openInfo(false);for(const x of SCN[st.scene].list)x.el&&x.el.classList.remove('sel');};
   $('#infoBtn').textContent=sc.ko+' 기록 ▸';
+  $('#coast').hidden=st.scene!=='earth';if(st.scene!=='earth'){st.tcoast=0;$('#coast').setAttribute('aria-pressed','false');}
   $$('.stop').forEach(s=>{s.setAttribute('aria-current',s.dataset.b===st.scene);s.classList.toggle('next',st.scene==='earth'&&s.dataset.b==='b');});
   for(const x of SCN[st.scene].list)x.el&&x.el.classList.toggle('sel',x===o);}
 const objDir=o=>o.kind==='local'?norm(SCN[st.scene].sph[o.sph].p):o.dir;
@@ -624,7 +627,7 @@ function stepTravel(now){
     if(u>.74)$('#warp').classList.remove('on');}
   if(u>=1){st.travel=null;st.look=null;st.ship=shipB;$$('.stop').forEach(s=>s.disabled=false);
     setTimeout(()=>{if(!st.travel&&st.phase==='explore'&&!isMobile())openInfo(true);},1200);
-    if(!RM){st.tour={t:now,dur:15000,y0:st.yaw,p0:st.pitch};$('#hint').textContent='궤도 선회 관측 중 · 드래그 시 중단';}}
+    if(!RM){st.tour={t:now,dur:24000,y0:st.yaw,p0:st.pitch};$('#hint').textContent='궤도 선회 관측 중 · 드래그 시 중단';}}
   return [warp,fade];}
 
 /* ───────── 9. 조작 ───────── */
@@ -635,7 +638,7 @@ cv.addEventListener('pointerdown',e=>{if(st.phase!=='explore'||st.travel)return;
   if(ptr.size===2){const [a,b]=[...ptr.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),z:st.dist};}});
 cv.addEventListener('pointermove',e=>{const p=ptr.get(e.pointerId);if(!p)return;
   if(ptr.size>=2&&pinch){ptr.set(e.pointerId,[e.clientX,e.clientY,0]);const [a,b]=[...ptr.values()];st.dist=clamp(pinch.z*pinch.d/Math.max(10,Math.hypot(a[0]-b[0],a[1]-b[1])),DMIN,DMAX);return;}
-  const dx=e.clientX-p[0],dy=e.clientY-p[1],now=performance.now(),dt=Math.max(1,now-p[2]),k=2.1/viewMin();
+  const dx=e.clientX-p[0],dy=e.clientY-p[1],now=performance.now(),dt=Math.max(1,now-p[2]),k=1.15/viewMin();
   st.yaw-=dx*k;st.pitch=clamp(st.pitch+dy*k,-1.35,1.35);st.vy=-dx*k/dt*1000;st.vp=dy*k/dt*1000;ptr.set(e.pointerId,[e.clientX,e.clientY,now]);});
 let down=null;
 cv.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY,performance.now()];});
@@ -648,12 +651,13 @@ cv.addEventListener('pointerup',e=>{if(!down||st.phase!=='explore'||st.travel)re
   else if(best!==null){const o=sc.list.find(x=>x.kind==='local'&&x.sph===best);if(o)select(o);}});
 const pup=e=>{ptr.delete(e.pointerId);if(ptr.size<2)pinch=null;if(!ptr.size)document.body.classList.remove('dragging');};
 cv.addEventListener('pointerup',pup);cv.addEventListener('pointercancel',pup);
-cv.addEventListener('wheel',e=>{if(st.phase!=='explore'||st.travel)return;e.preventDefault();st.anim=null;stopTour();st.dist=clamp(st.dist*Math.exp(e.deltaY*.0012),DMIN,DMAX);},{passive:false});
+cv.addEventListener('wheel',e=>{if(st.phase!=='explore'||st.travel)return;e.preventDefault();st.anim=null;stopTour();st.dist=clamp(st.dist*Math.exp(e.deltaY*.0006),DMIN,DMAX);},{passive:false});
 const zoomBy=f=>{if(st.travel)return;animCam(orbit(st.yaw,st.pitch),clamp(st.dist*f,DMIN,DMAX),550);};
+$('#coast').onclick=()=>{st.tcoast=st.tcoast?0:1;$('#coast').setAttribute('aria-pressed',String(!!st.tcoast));};
 $('#zIn').onclick=()=>zoomBy(.72);$('#zOut').onclick=()=>zoomBy(1.4);
 $('#home').onclick=()=>{if(st.travel)return;deselect();animCam(SCN[st.scene].home,DHOME,1900);};
 addEventListener('keydown',e=>{if(st.phase!=='explore'||st.travel||e.target.tagName==='INPUT')return;
-  const m={ArrowLeft:[.15,0],ArrowRight:[-.15,0],ArrowUp:[0,-.12],ArrowDown:[0,.12]}[e.key];
+  const m={ArrowLeft:[.08,0],ArrowRight:[-.08,0],ArrowUp:[0,-.06],ArrowDown:[0,.06]}[e.key];
   if(m&&!(e.target.closest&&e.target.closest('#route,#info'))){e.preventDefault();st.anim=null;stopTour();st.yaw+=m[0];st.pitch=clamp(st.pitch+m[1],-1.35,1.35);}
   else if(e.key==='Escape')deselect();else if(e.key==='+'||e.key==='=')zoomBy(.72);else if(e.key==='-')zoomBy(1.4);});
 
@@ -668,6 +672,7 @@ function frame(now){
   const on=st.phase==='explore'||st.phase==='open';
   st.dim=ease(st.dim,on?1:(st.phase==='auth'?.9:.6),k);
   if(st.rev<st.trev)st.rev=Math.min(st.trev,st.rev+dt*.7);else st.rev=st.trev;
+  st.coast=RM?st.tcoast:ease(st.coast,st.tcoast,1-Math.pow(.004,dt));
   let tg;if(on){const r=$('#view').getBoundingClientRect();tg={cx:r.left+r.width/2,cy:r.top+r.height/2,F:(isMobile()?.85:1.15)*Math.min(r.width,r.height)};}
   else tg=isMobile()?{cx:CW*.5,cy:CH*.27,F:CW*.95}:{cx:CW*.72,cy:CH*.5,F:CH*1.15};
   if(st.cx===null){st.cx=tg.cx;st.cy=tg.cy;st.F=tg.F;}
@@ -675,19 +680,19 @@ function frame(now){
   let warp=0;
   let fade=1;if(st.travel)[warp,fade]=stepTravel(now);
   else if(st.tour){const a=st.tour,u=clamp((now-a.t)/a.dur,0,1),e=eio(u);
-    st.yaw=a.y0-e*Math.PI*1.4;st.pitch=clamp(a.p0+Math.sin(u*Math.PI*2)*Math.sin(u*Math.PI)*.3,-1.35,1.35);st.dist=DHOME*(1-.16*Math.pow(Math.sin(u*Math.PI),2));
+    st.yaw=a.y0-e*Math.PI*.7;st.pitch=clamp(a.p0+Math.sin(u*Math.PI*2)*Math.sin(u*Math.PI)*.15,-1.35,1.35);st.dist=DHOME*(1-.08*Math.pow(Math.sin(u*Math.PI),2));
     if(u>=1){st.tour=null;$('#hint').textContent='드래그: 시점 회전 · 휠: 거리 조절';}}
   else{st.ship=SCN[st.scene].pos;
     if(st.anim){const a=st.anim,u=clamp((now-a.t)/a.dur,0,1),e=eio(u);st.yaw=ease(a.y0,a.y1,e);st.pitch=ease(a.p0,a.p1,e);
       st.dist=Math.exp(ease(Math.log(a.d0),Math.log(a.d1),e));if(u>=1)st.anim=null;}
-    else if(!ptr.size){st.yaw+=st.vy*dt;st.pitch=clamp(st.pitch+st.vp*dt,-1.35,1.35);st.vy*=Math.pow(.03,dt);st.vp*=Math.pow(.03,dt);
-      if(!on&&!RM)st.yaw+=dt*.03;}}
+    else if(!ptr.size){st.yaw+=st.vy*dt;st.pitch=clamp(st.pitch+st.vp*dt,-1.35,1.35);st.vy*=Math.pow(.004,dt);st.vp*=Math.pow(.004,dt);
+      if(!on&&!RM)st.yaw+=dt*.015;}}
   $('#ship').style.left=st.ship+'%';
   const sc=SCN[st.scene],cam=camPos(),f=st.look||norm(mul(cam,-1)),r=sideOf(f),u=cross(r,f);
   const sph=on?sc.sph:[sc.sph[0]];
   if(gl){
     gl.uniform2f(U.uRes,W,H);gl.uniform2f(U.uCtr,st.cx/S,H-st.cy/S);gl.uniform1f(U.uF,st.F/S);
-    gl.uniform1f(U.uT,T);gl.uniform1f(U.uDim,st.dim*fade);gl.uniform1f(U.uRev,st.rev);gl.uniform1f(U.uWarp,warp);
+    gl.uniform1f(U.uT,T);gl.uniform1f(U.uDim,st.dim*fade);gl.uniform1f(U.uRev,st.rev);gl.uniform1f(U.uWarp,warp);gl.uniform1f(U.uCoast,st.coast);
     gl.uniform3fv(U.uCam,cam);gl.uniform3fv(U.uL,sc.L);gl.uniformMatrix3fv(U.uB,false,new Float32Array([...r,...u,...f]));
     const a=st.spin0+T*(RM?0:.035),c=Math.cos(a),s=Math.sin(a);gl.uniformMatrix3fv(U.uSpin,false,new Float32Array([c,0,-s,0,1,0,s,0,c]));
     const sp=new Float32Array(12),ty=new Float32Array([-1,-1,-1]);sph.forEach((o,i)=>{sp.set([...o.p,o.r],i*4);ty[i]=o.t;});
