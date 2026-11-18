@@ -1,17 +1,17 @@
 /* 화면 스타일: SF 우주적 공포 · 전체 화면 HUD (2026-11-18, 사용자 요청)
    참고: AAA SF 게임 메인 화면 — 상자에 가두지 않고 장면 위에 글·선·눈금이 떠 있는 방식
         (큰 제목 블록, 테두리 없는 목록, 모서리가 깎인 반투명 카드, 기울어진 칸 막대, 화살표 진행 표시, 화면 모서리 꺾쇠).
-   색은 CLAUDE.md 화면 토큰(쨍한 파랑)으로 되돌림: 하이라이트 #8FC1FF · 버튼 테두리 #2B47C4 · 카드 #0A1434 · 고른 카드 #0E1B48 ·
-   본문 #DCE6FF · 보조 #8C9DD0 · 강조 크림 #E8DFC8 · 결정 주황 #F2B84B · 경고 주황 #FF993D.
+   색은 CLAUDE.md 화면 토큰 = 프롤로그 접속 화면과 같은 쨍한 파랑 + 검정 (2026-11-18 사용자: 처음 파랑으로 전체 톤 통일): 하이라이트 #8FC1FF · 버튼 테두리 #3D8BFF · 카드 #03081A · 고른 카드 #0A1A44 ·
+   본문 #DCE6FF · 보조 #6A8CC8 · 강조 크림 #E8DFC8 · 결정 주황 #F2B84B · 경고 주황 #FF993D.
    void-theme.css(전체 화면) 위에 덮는다. 글·칸·순서는 그대로, 겉모습만 바꾼다. */
 @font-face{font-family:"NeoDunggeunmo";src:url("./assets/fonts/neodgm.ttf") format("truetype");font-display:swap}
 :root{
   --font:"NeoDunggeunmo","HBIOS-SYS","Terrarum Sans Bitmap","Apple SD Gothic Neo","Malgun Gothic",monospace;
-  --k-bg:#02040C;--k-card:#0A1434;--k-pick:#0E1B48;--k-line:#2B47C4;--k-line2:#1A2B72;--k-btn:#1B2A9C;
-  --k-hi:#8FC1FF;--k-cream:#E8DFC8;--k-text:#DCE6FF;--k-sub:#8C9DD0;--k-gold:#F2B84B;--k-warn:#FF993D;
+  --k-bg:#02040C;--k-card:#03081A;--k-pick:#0A1A44;--k-line:#3D8BFF;--k-line2:#1E4FB0;--k-btn:#1450D8;
+  --k-hi:#8FC1FF;--k-cream:#E8DFC8;--k-text:#DCE6FF;--k-sub:#6A8CC8;--k-gold:#F2B84B;--k-warn:#FF993D;
   --k-b2:#2E4DBD;--k-b3:#73A8FF;
-  --k-hair:rgba(143,193,255,.28);--k-hair2:rgba(143,193,255,.12);
-  --k-glow:0 0 8px rgba(143,193,255,.55);
+  --k-hair:rgba(61,139,255,.32);--k-hair2:rgba(61,139,255,.14);
+  --k-glow:0 0 8px rgba(30,110,255,.85);
   --k-m:24px;--k-foot:34px;--k-side:300px;--k-bottom:214px;
   --k-cut:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));
   --v-bg:var(--k-bg);--v-hi:var(--k-hi);--v-cream:var(--k-cream);--v-text:var(--k-text);--v-sub:var(--k-sub);--v-edge:var(--k-hair);--v-glass:transparent;--v-dots:none;
@@ -106,7 +106,7 @@ body::before,body::after{display:none}
 .stat b{color:var(--k-text)!important;font-size:20px}
 
 /* ── 오른쪽: 행성 정보 (모서리가 깎인 반투명 카드) ── */
-.p-right{clip-path:var(--k-cut);background:linear-gradient(160deg,rgba(14,27,72,.78),rgba(2,4,12,.5) 70%)!important;padding:12px 16px 14px 18px!important}
+.p-right{clip-path:var(--k-cut);background:linear-gradient(160deg,rgba(10,26,68,.78),rgba(2,4,12,.5) 70%)!important;padding:12px 16px 14px 18px!important}
 .p-right::before{content:""!important;display:block!important;position:absolute;left:0;top:16px;bottom:16px;width:3px;background:linear-gradient(var(--k-hi),transparent);border:0;opacity:1}
 .p-right .panel-body{padding:4px 0 0!important}
 .p-right .globe{display:none}
@@ -129,8 +129,8 @@ body::before,body::after{display:none}
 
 /* ── 아래: 선지판 (상자 없음, 위쪽 계기선 · 큰 단계 제목) ── */
 .p-decision{background:linear-gradient(90deg,var(--k-hair),transparent 70%) 0 0/100% 1px no-repeat!important;padding-top:10px!important}
-.hexboard{--hb-ink:rgba(2,4,12,.82);--hb-sel:rgba(14,27,72,.85);--hb-line:#2B47C4;--hb-card-line:rgba(143,193,255,.16);--hb-hi:#8FC1FF;--hb-cream:#E8DFC8;--hb-lamp:#F2EBDB;
-  --hb-text:#DCE6FF;--hb-sub:#8C9DD0;--hb-b2:#73A8FF;--hb-b3:#D1E6FF;--hb-orange:#FF993D}
+.hexboard{--hb-ink:rgba(2,4,12,.82);--hb-sel:rgba(10,26,68,.85);--hb-line:#3D8BFF;--hb-card-line:rgba(143,193,255,.16);--hb-hi:#8FC1FF;--hb-cream:#E8DFC8;--hb-lamp:#F2EBDB;
+  --hb-text:#DCE6FF;--hb-sub:#6A8CC8;--hb-b2:#73A8FF;--hb-b3:#D1E6FF;--hb-orange:#FF993D}
 .hb-prompt{font-size:20px;color:var(--k-text)!important;letter-spacing:.04em}
 .hb-prompt b{background:none!important;color:var(--k-hi)!important;clip-path:none!important;padding:0!important;font-size:12px;letter-spacing:.3em;border:0}
 .hb-prompt b::before{content:"STEP 0"}
@@ -172,7 +172,7 @@ body::before,body::after{display:none}
 .p-foot{background:linear-gradient(90deg,rgba(2,4,12,.9),rgba(2,4,12,.6))!important;border-top:1px solid var(--k-hair2)!important;color:var(--k-sub)!important;align-items:center;letter-spacing:.12em}
 .p-foot .brand{color:var(--k-sub)!important;letter-spacing:.3em}
 .p-foot .brand::before{content:"◢ ";color:var(--k-hi)}
-kbd{border:1px solid var(--k-hair)!important;background:rgba(14,27,72,.6)!important;color:var(--k-text)!important;padding:0 6px}
+kbd{border:1px solid var(--k-hair)!important;background:rgba(10,26,68,.6)!important;color:var(--k-text)!important;padding:0 6px}
 
 /* 레이더 고리 (src/cosmic-fx.js) */
 .k-radar{position:absolute;inset:0;pointer-events:none;z-index:1}
@@ -188,7 +188,7 @@ kbd{border:1px solid var(--k-hair)!important;background:rgba(14,27,72,.6)!import
 /* ── 상세창: 가는 빛줄에서 펼쳐짐, 모서리 깎인 카드 ── */
 @keyframes k-unfold{0%{opacity:0;clip-path:inset(50% 0 50% 0)}25%{opacity:1;clip-path:inset(49% 0 49% 0)}100%{opacity:1;clip-path:inset(0 0 0 0)}}
 .crew-modal:not([hidden]) .crew-card,.fail-modal:not([hidden]) .fail-card,.event-modal:not([hidden]) .event-card{animation:k-unfold .45s cubic-bezier(.2,.7,.2,1) both}
-.crew-card,.fail-card,.event-card{background:linear-gradient(160deg,rgba(14,27,72,.97),rgba(4,8,26,.97))!important;border:0!important;border-image:none!important;box-shadow:inset 0 0 0 1px var(--k-hair)!important;position:relative}
+.crew-card,.fail-card,.event-card{background:linear-gradient(160deg,rgba(10,26,68,.97),rgba(4,8,26,.97))!important;border:0!important;border-image:none!important;box-shadow:inset 0 0 0 1px var(--k-hair)!important;position:relative}
 .crew-card::before,.fail-card::before,.event-card::before{content:"";position:absolute;left:0;top:0;width:120px;height:2px;background:var(--k-hi);box-shadow:var(--k-glow)}
 .crew-modal,.fail-modal,.event-modal{background:rgba(2,4,12,.82)!important;backdrop-filter:blur(3px)}
 .crew-card .titlebar{background:none!important;border-bottom:1px solid var(--k-hair2)!important;color:var(--k-hi)!important;letter-spacing:.2em}
@@ -198,7 +198,7 @@ kbd{border:1px solid var(--k-hair)!important;background:rgba(14,27,72,.6)!import
 
 /* ── 이동·브리핑 화면 ── */
 .intro{background:var(--k-bg)!important}
-.brief-box{border:0!important;box-shadow:inset 0 0 0 1px var(--k-hair)!important;background:linear-gradient(160deg,rgba(14,27,72,.6),rgba(2,4,12,.7))!important}
+.brief-box{border:0!important;box-shadow:inset 0 0 0 1px var(--k-hair)!important;background:linear-gradient(160deg,rgba(10,26,68,.6),rgba(2,4,12,.7))!important}
 .next{clip-path:none!important;border:0!important;box-shadow:inset 0 0 0 1px var(--k-gold)!important;color:var(--k-gold)!important;background:none!important}
 .next:hover{background:var(--k-gold)!important;color:var(--k-bg)!important}
 
