@@ -96,7 +96,7 @@ function patchSkin(mat, U) {
  * @param {{container:HTMLElement, getBody:()=>object|null, modelUrl?:string, style?:'surface'|'hologram',
  *          onModel?:(info:object)=>void, reducedMotion?:boolean}} o
  */
-export function createFacePanel({ container, getBody, modelUrl = 'models/face/face.glb', modelOptions = {}, style = 'surface', onModel, reducedMotion,
+export function createFacePanel({ container, getBody, modelUrl = 'models/face/face.glb', modelOptions = {}, style = 'surface', onModel, reducedMotion, getBias,
   points: pointOpts = {}, holoPose = { yaw: 0, pitch: 0 } } = {}) {
   pointOpts = { density: 1, size: 1.6, color: 0xe8eeff, ...pointOpts };
   if (reducedMotion === undefined) { try { reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { reducedMotion = false; } }
@@ -304,6 +304,12 @@ export function createFacePanel({ container, getBody, modelUrl = 'models/face/fa
     if (!model) return;
     const body = getBody ? getBody() : null;
     const f = ctrl.update(dt, body); lastFace = f;
+    // 사람마다 다른 기본 표정 (게임 연결부가 주면): 표정 값에 조금 더한다 (2026-11-18 사용자 요청)
+    const bias = getBias ? getBias() : null;
+    if (bias) for (const k in bias.weights ?? {}) f.weights[k] = clamp((f.weights[k] ?? 0) + bias.weights[k]);
+    // 쓰러짐 같은 상태(게임 연결부가 주면): 고개가 숙여지고(pitch) 창백해지고(pallor) 기운이 없어 보인다(tired)
+    if (bias?.pitch) f.head = { ...f.head, pitch: f.head.pitch + bias.pitch };
+    if (bias?.fx) for (const k in bias.fx) f.fx[k] = clamp(Math.max(f.fx[k] ?? 0, bias.fx[k]));
     if (!map.nostrilDilate && f.weights.nostrilDilate) {   // 콧구멍 벌림(AU38)이 없는 모델은 코 찡그림을 조금 빌려 써요
       const k = 0.35 * f.weights.nostrilDilate;
       f.weights.noseSneerLeft = clamp(f.weights.noseSneerLeft + k); f.weights.noseSneerRight = clamp(f.weights.noseSneerRight + k);

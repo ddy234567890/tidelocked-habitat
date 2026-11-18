@@ -26,6 +26,21 @@ const GLOW = 0.3;           // 점 하나의 밝기. 점이 촘촘해 겹쳐 더
 const RING = 0.19;           // 발밑 고리 반지름: 멀리서도 사람 자리를 찾게 한다
 const GROUP_R = 0.8;         // 무리로 놓을 때 원 반지름
 const MAX_PEOPLE = 30;
+const CREW = 10;            // 지역에 들어가면 처음부터 대원 10명이 있다 (2026-11-18 사용자: 10명 고정, 더하기·치우기 단추 없음)
+const CREW_R = [1.6, 3.6];
+// 대원마다 기본 표정 (얼굴 모델은 하나라서 눈썹·눈·입꼬리 기본값으로 사람을 구별한다)
+const FACES = [
+  { weights: { browDownLeft: 0.25, browDownRight: 0.25, mouthPressLeft: 0.3, mouthPressRight: 0.3 } },
+  { weights: { browOuterUpLeft: 0.35, eyeSquintRight: 0.2, mouthSmileLeft: 0.15 } },
+  { weights: { mouthSmileLeft: 0.35, mouthSmileRight: 0.35, cheekSquintLeft: 0.2, cheekSquintRight: 0.2 } },
+  { weights: { browInnerUp: 0.3, eyeWideLeft: 0.15, eyeWideRight: 0.15 } },
+  { weights: { eyeSquintLeft: 0.35, eyeSquintRight: 0.35, mouthStretchLeft: 0.15 } },
+  { weights: { mouthFrownLeft: 0.3, mouthFrownRight: 0.3, browInnerUp: 0.15 } },
+  { weights: { mouthDimpleLeft: 0.3, mouthDimpleRight: 0.3, browOuterUpRight: 0.25 } },
+  { weights: { noseSneerLeft: 0.2, browDownLeft: 0.3, mouthPressRight: 0.25 } },
+  { weights: { mouthSmileRight: 0.3, eyeWideLeft: 0.2, browOuterUpLeft: 0.2 } },
+  { weights: { eyeSquintLeft: 0.2, mouthFrownRight: 0.2, browDownRight: 0.25 } },
+];   // 대원들이 처음 서는 거리 (기지 가운데에서)
 const LIMIT = 14;            // 이 범위(|x|, |z|) 안에서만 놓고 걷는다
 const SPEED = { walk: 0.7, run: 1.9, sprint: 2.6, crawl: 0.32, carry: 0.5 };   // 지역 단위/초 (걷기 약 1.4 m/s)
 const TIRED_PACE = 0.6;      // 힘들 때 걸음 배율
@@ -65,6 +80,30 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
   const tip = document.createElement('div');
   tip.className = 'past-tip pp-tip'; tip.hidden = true; tip.setAttribute('role', 'status');
   box.append(tools, tip);
+  tools.querySelector('.pp-row').hidden = true;   // 10명 고정: 더하기·치우기 단추는 숨긴다
+  let focused = null;   // 마우스를 올린(또는 가장 최근에 올렸던) 대원 = 왼쪽 아래 얼굴의 주인
+  // 이름표: 얼굴로 보고 있는 대원의 머리 위에 늘 떠 있다
+  const tag = document.createElement('div'); tag.className = 'pp-tag'; tag.hidden = true; tag.setAttribute('aria-hidden', 'true'); box.append(tag);
+  // hover = 마우스를 올려서 바뀐 것 (이때만 얼굴 창까지 선을 잇고 신호 전환 효과를 낸다)
+  // 지금 마우스가 대원 위에 있는지: 바뀔 때만 알린다 (얼굴 창은 위에 있을 때 밝게, 떼면 흐리게)
+  let hovering = false, pinned = null;   // pinned = 눌러서 고른 대원: 마우스를 떼도 얼굴이 이 사람에게 돌아온다
+  function setHover(on) {
+    if (on === hovering) return; hovering = on;
+    box.classList.toggle('pp-on-person', on);   // 사람 위에서는 건물·장치(에셋) 정보창을 숨긴다 (people.css)
+    if (!on && pinned && focused !== pinned) focus(pinned);   // 다른 사람을 잠깐 보고 떼면 고른 사람에게 돌아온다
+    dispatchEvent(new CustomEvent('crew-hover', { detail: { on } }));
+  }
+  function pin(p) {
+    pinned = p; focus(p, true);
+    tag.classList.toggle('pp-pinned', Boolean(p));
+    dispatchEvent(new CustomEvent('crew-pin', { detail: { person: p } }));
+  }
+  function focus(p, hover = false) {
+    if (p === focused) return; focused = p;
+    if (p) tag.innerHTML = `<b>${p.name}</b>`;
+    tag.classList.toggle('pp-pinned', Boolean(p) && p === pinned);
+    dispatchEvent(new CustomEvent('crew-focus', { detail: { person: p, at: hover && p ? screenOf(p) : null } }));
+  }
   const modeButtons = [...tools.querySelectorAll('[data-mode]')];
   function setMode(next) {
     mode = next;
@@ -77,7 +116,7 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
   addEventListener('keydown', e => { if (e.key === 'Escape' && mode) setMode(null); });
 
   // ---- 모델 불러오기: 겉면 점 자리를 고르고, 상태마다 점 색을 미리 만든다 ----
-  const RINGS = { ok: geometryFrom(ringData(RING, blueStep(0.6)), WEIGHT), tired: geometryFrom(ringData(RING, orange(0.7)), WEIGHT), down: geometryFrom(ringData(RING, orange(1)), WEIGHT) };
+  const RINGS = { pick: geometryFrom(ringData(RING * 1.6, cream(1), 48), WEIGHT), focus: geometryFrom(ringData(RING * 1.25, cream(1)), WEIGHT), ok: geometryFrom(ringData(RING, blueStep(0.6)), WEIGHT), tired: geometryFrom(ringData(RING, orange(0.7)), WEIGHT), down: geometryFrom(ringData(RING, orange(1)), WEIGHT) };
   const preview = new THREE.Points(geometryFrom(ringData(GROUP_R, cream(0.9), 64), WEIGHT), material);
   preview.visible = false; group.add(preview);
   new GLTFLoader().load(humanUrl, gltf => {
@@ -89,7 +128,8 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
       for (let k = 0; k < SAMPLES; k++) {
         const h = (prep.restY[k] - prep.bottom) / prep.height, lit = 0.5 + 0.5 * Math.max(0, prep.normalY[k]);
         const head = h > 0.86;
-        const col = state === 'down' ? orange(0.6 + 0.4 * lit)
+        const col = state === 'pick' ? (head ? cream(1) : cream(0.45 + 0.5 * lit))
+          : state === 'down' ? orange(0.6 + 0.4 * lit)
           : state === 'blink' ? orange(0.5 + 0.5 * lit)
           : head ? (state === 'tired' ? orange(1) : cream(0.9)) : blueStep(0.5 + 0.45 * lit);
         out.set(col.map(c => c * GLOW), k * 3);
@@ -97,7 +137,7 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
       return out;
     };
     const blank = new Float32Array(SAMPLES * 3);
-    const tones = Object.fromEntries(['ok', 'tired', 'blink', 'down'].map(s => [s, geometryFrom({ positions: blank, colors: colorsFor(s) }).getAttribute('color').array]));
+    const tones = Object.fromEntries(['ok', 'tired', 'blink', 'down', 'pick'].map(s => [s, geometryFrom({ positions: blank, colors: colorsFor(s) }).getAttribute('color').array]));
     model = { scene: gltf.scene, prep, clips: gltf.animations, scale: HEIGHT / prep.height, tones };
     tools.classList.remove('pp-loading');
     for (const b of tools.querySelectorAll('button')) b.disabled = false;
@@ -121,6 +161,8 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     p.view = { holder, points, mark, rig, mixer, skin: createSkinner(rig, model.prep), action: null, tone: null, heading: rand() * Math.PI * 2, phase: rand() * 10 };
     p.act = 'idle'; p.timer = 0.5 + rand() * 2; p.target = null; p.notice = null; p.helping = null;
     p.selfish = rand() < SELFISH; p.carrying = null; p.carriedBy = null; p.pause = null; p.knock = null;
+    p.name = `대원 ${String(people.length + 1).padStart(2, '0')}`;
+    p.face = FACES[people.length % FACES.length];
     play(p, 'Idle_Loop');
     people.push(p); count();
     return p;
@@ -131,6 +173,8 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     for (const o of people) if (o.helping === p) { o.helping = null; o.target = null; o.timer = 0; }
     group.remove(p.view.holder); p.view.points.geometry.dispose(); p.view.mixer.stopAllAction();
     people.splice(people.indexOf(p), 1); count();
+    if (pinned === p) pinned = null;
+    if (focused === p) focus(people[0] ?? null);
   }
   function clear() { while (people.length) remove(people[0]); hideTip(); }
   // 무리: 원 안에 3~4명을 서로 조금 떨어뜨려 놓는다
@@ -143,12 +187,24 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     }
     return spots.map(s => add(s.x, s.z)).filter(Boolean);
   }
+  // 지역에 들어가면 대원 10명을 기지 둘레에 고르게 세운다 (자리는 고정 씨앗으로 매번 같다)
+  function spawnCrew(homes) {
+    const r = mulberry32(4242);
+    for (let i = 0; i < CREW; i++) {
+      // 기지가 있으면 집 안에 나눠 세운다 (바깥은 덥거나 숨이 차서 금방 쓰러진다). 기지가 없으면 가운데 둘레에
+      const h = homes[i % homes.length];
+      if (h) { const a = r() * Math.PI * 2, d = h.r * 0.7 * Math.sqrt(r()); add(h.at[0] + Math.cos(a) * d, h.at[2] + Math.sin(a) * d); continue; }
+      const a = i / CREW * Math.PI * 2 + (r() - 0.5) * 0.5, d = CREW_R[0] + r() * (CREW_R[1] - CREW_R[0]);
+      add(Math.cos(a) * d, Math.sin(a) * d);
+    }
+    focus(people[0] ?? null);
+  }
   function count() {
     const n = { ok: 0, tired: 0, down: 0 };
     for (const p of people) n[p.status]++;
     tools.querySelector('.pp-count').innerHTML = !model ? '사람 모델을 불러오는 중…' : people.length
       ? `${people.length}명 · ${STATUS_NAMES.ok} ${n.ok} · ${STATUS_NAMES.tired} ${n.tired} · <b>${STATUS_NAMES.down} ${n.down}</b>`
-      : '단추를 켜고 땅을 누르면 사람이 생겨요';
+      : '대원들이 오는 중…';
   }
 
   // ---- 동작 재생: 앞 동작에서 부드럽게 넘어간다. once 는 한 번만 하고 마지막 자세로 멈춘다 ----
@@ -194,7 +250,8 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
   let down = null;
   host.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; });
   host.addEventListener('pointerup', e => {
-    if (!mode || !down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) return;
+    if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) return;
+    if (!mode) { const p = nearest(e.clientX, e.clientY); if (p) pin(p); return; }   // 대원을 누르면 고른다 (빈 땅을 누르면 그대로)
     const hit = nearest(e.clientX, e.clientY);
     if (hit) { remove(hit); hideTip(); return; }
     const g = groundUnder(e.clientX, e.clientY);
@@ -220,25 +277,32 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
   host.addEventListener('pointermove', e => {
     hoverAt = e.buttons ? null : { x: e.clientX, y: e.clientY };
     const p = hoverAt && nearest(hoverAt.x, hoverAt.y);
-    if (p) showTip(p); else hideTip();
+    if (p) { showTip(p); focus(p, true); } else hideTip();
+    setHover(Boolean(p));
     if (mode === 'group' && hoverAt) {
       const g = groundUnder(hoverAt.x, hoverAt.y);
       preview.visible = Boolean(g);
       if (g) preview.position.set(g.x, floorAt(site, g.x, g.z), g.z);
     }
   });
-  host.addEventListener('pointerleave', () => { hoverAt = null; hideTip(); preview.visible = false; });
+  host.addEventListener('pointerleave', () => { hoverAt = null; hideTip(); setHover(false); preview.visible = false; });
   function hideTip() { tip.hidden = true; shown = null; }
   function showTip(p) {
     const e = p.env, s = p.state;
     if (!e || !s) return hideTip();
     const where = p.place === 'home' ? '집 안' : '바깥';
     const status = STATUS_NAMES[p.status] + (p.cause && p.status !== 'ok' ? ` · ${p.cause}` : '');
-    tip.innerHTML = `<small>${where} · ${e.tempC.toFixed(1)}°C · 산소 ${e.oxygenPct.toFixed(1)}%</small><b>${status}</b><span>${ACT_NAMES[p.act] ?? ''}${DEVICE_ACTS.has(p.act) && p.device ? ` · ${p.device.name}` : ''}</span><span>산소포화도 ${s.spo2Pct.toFixed(0)}% · 체온 ${s.coreC.toFixed(1)}° · 버티는 힘 ${p.fit.toFixed(1)}${p.selfish ? ' · 급한 성격' : ''}</span>`;
+    tip.innerHTML = `<small>${p.name} · ${where} · ${e.tempC.toFixed(1)}°C · 산소 ${e.oxygenPct.toFixed(1)}%</small><b>${status}</b><span>${ACT_NAMES[p.act] ?? ''}${DEVICE_ACTS.has(p.act) && p.device ? ` · ${p.device.name}` : ''}</span><span>산소포화도 ${s.spo2Pct.toFixed(0)}% · 체온 ${s.coreC.toFixed(1)}° · 버티는 힘 ${p.fit.toFixed(1)}${p.selfish ? ' · 급한 성격' : ''}</span>`;
     tip.hidden = false; shown = p;
     const r = box.getBoundingClientRect(), at = screenOf(p);
-    tip.style.left = `${Math.min(r.width - tip.offsetWidth - 8, Math.max(8, at.x - r.left + 16))}px`;
-    tip.style.top = `${Math.min(r.height - tip.offsetHeight - 8, Math.max(8, at.y - r.top - tip.offsetHeight / 2))}px`;
+    // 정보창이 마우스 자리를 가리지 않게: 마우스(없으면 그 사람) 오른쪽 아래에 두고, 칸이 모자라면 왼쪽·위로 뒤집는다
+    const GAP = 18, w = tip.offsetWidth, h = tip.offsetHeight;
+    const cx = (hoverAt ? hoverAt.x : at.x) - r.left, cy = (hoverAt ? hoverAt.y : at.y) - r.top;
+    let x = cx + GAP, y = cy + GAP;
+    if (x + w > r.width - 8) x = cx - GAP - w;
+    if (y + h > r.height - 8) y = cy - GAP - h;
+    tip.style.left = `${Math.max(8, Math.min(r.width - w - 8, x))}px`;
+    tip.style.top = `${Math.max(8, Math.min(r.height - h - 8, y))}px`;
   }
 
   // ---- 몸 상태: 화면과 따로 고정 간격(0.1초)으로 계산한다 (대원 얼굴 bodyLoop 와 같은 방식). 화면이 가려져 그리기가 멈춰도 계산은 이어진다 ----
@@ -479,9 +543,11 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     const s = getState();
     tools.hidden = !s.active || !site || s.site !== site;
     group.visible = !tools.hidden;
-    if (tools.hidden) { hideTip(); if (mode) setMode(null); lastFrame = null; return; }
+    if (tools.hidden) { hideTip(); setHover(false); tag.hidden = true; if (mode) setMode(null); lastFrame = null; return; }
     const now = time / 1000, dt = Math.min(0.1, now - (lastFrame ?? now)); lastFrame = now;
     if (!model) return;
+    // 짓는 방식을 결정했으면 집 자리가 들어온 뒤에 세운다 (그래야 집 안에 선다)
+    if (!people.length && (s.homes?.length || !s.decided?.module)) spawnCrew(s.homes ?? []);
     for (const p of people) think(p, dt);
     // 부축받는 사람은 데려가는 사람 오른쪽에 붙어 같은 쪽을 본다
     for (const p of people) if (p.carrying) {
@@ -495,18 +561,23 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
       const pos = v.points.geometry.getAttribute('position');
       v.skin(pos.array); pos.needsUpdate = true;
       // 색: 힘들어함은 주황 머리 + 몸이 주황으로 깜빡, 쓰러짐은 주황
-      const tone = p.status === 'down' ? 'down' : p.status === 'tired' ? ((time + v.phase * 100) % 700 < 350 ? 'blink' : 'tired') : 'ok';
+      const tone = p.status === 'down' ? 'down' : p.status === 'ok' && p === pinned ? 'pick' : p.status === 'tired' ? ((time + v.phase * 100) % 700 < 350 ? 'blink' : 'tired') : 'ok';
       if (tone !== v.tone) {
         v.tone = tone;
         const color = v.points.geometry.getAttribute('color');
         color.array.set(model.tones[tone]); v.points.geometry.userData.baseColor.set(model.tones[tone]); color.needsUpdate = true;
       }
-      v.mark.geometry = RINGS[p.status];
+      v.mark.geometry = p === pinned && p.status === 'ok' ? RINGS.pick : p === focused && p.status === 'ok' ? RINGS.focus : RINGS[p.status];   // 얼굴로 보고 있는 대원은 발밑 고리가 크림색
       v.mark.scale.setScalar(p.status === 'ok' ? 1 : 1 + 0.25 * (0.5 + 0.5 * Math.sin(now * (p.status === 'down' ? 5 : 3) + v.phase)));   // 힘들거나 쓰러지면 발밑 고리가 맥박처럼
       v.points.rotation.set(p.act === 'carried' ? 0.35 : 0, v.heading, 0, 'YXZ');   // 부축받는 사람은 앞으로 기울어 끌려가듯
       v.holder.position.set(p.x, floorAt(site, p.x, p.z), p.z);
     }
-    if (hoverAt) { const p = nearest(hoverAt.x, hoverAt.y); if (p) showTip(p); else hideTip(); }
+    if (focused) {   // 이름표를 머리 위에
+      const at = screenOf(focused), r = box.getBoundingClientRect();
+      tag.hidden = at.behind;
+      tag.style.left = `${at.x - r.left}px`; tag.style.top = `${at.y - r.top - 34}px`;
+    }
+    if (hoverAt) { const p = nearest(hoverAt.x, hoverAt.y); if (p) { showTip(p); focus(p, true); } else hideTip(); setHover(Boolean(p)); }
     else if (shown) showTip(shown);
   }
   count();
@@ -520,6 +591,6 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     count();
   };
   const resumeClock = () => { paused = false; last = null; };
-  window.people = { add, addGroup, clear, list: people, screenOf, advance, resumeClock, devices: () => devices };
+  window.people = { focused: () => focused, pinned: () => pinned, pin, add, addGroup, clear, list: people, screenOf, advance, resumeClock, devices: () => devices };
   return { frame, add, addGroup, clear };
 }

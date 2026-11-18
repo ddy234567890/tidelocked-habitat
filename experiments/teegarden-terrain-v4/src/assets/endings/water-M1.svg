@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2100 900">
+  <!-- 엔딩 ② 철수 · 물 × 한꺼번에 입주(M1). 팀 자체 제작 그림 (Claude, 2026-11-16). 밝기만 쓰고 색은 ending.js 필터가 게임 팔레트로 바꾼다 -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050505"/><stop offset=".55" stop-color="#2a2a2a"/><stop offset="1" stop-color="#5a5a5a"/></linearGradient>
+    <radialGradient id="star" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="#ddd"/><stop offset="1" stop-color="#444" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1c1c"/><stop offset="1" stop-color="#050505"/></linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".35"/></linearGradient>
+    <symbol id="w" viewBox="0 0 50 110"><circle cx="28" cy="14" r="12"/><rect x="17" y="8" width="24" height="8" rx="3" fill="#777"/><path d="M14 30q14-6 26 0l4 40h-6l8 38h-9l-9-30-6 30h-9l4-38H8z"/></symbol>
+    <symbol id="b" viewBox="0 0 50 110"><rect x="2" y="44" width="16" height="22" rx="3"/><circle cx="28" cy="14" r="12"/><rect x="17" y="8" width="24" height="8" rx="3" fill="#777"/><path d="M14 30q14-6 26 0l4 40h-6l6 38h-9l-7-30-6 30h-9l4-38H8z"/></symbol>
+  </defs>
+  <rect width="2100" height="900" fill="url(#sky)"/>
+  <g fill="#bbb"><circle cx="140" cy="80" r="2"/><circle cx="420" cy="150" r="1.6"/><circle cx="700" cy="60" r="2.2"/><circle cx="980" cy="120" r="1.5"/><circle cx="1260" cy="50" r="2"/><circle cx="1500" cy="170" r="1.4"/><circle cx="1880" cy="90" r="2.4"/><circle cx="300" cy="260" r="1.3"/></g>
+  <circle cx="330" cy="610" r="260" fill="url(#star)" opacity=".55"/>
+  <circle cx="330" cy="610" r="70" fill="#f4f4f4"/>
+  <path d="M0 640 L180 600 L420 625 L700 570 L980 610 L1250 560 L1560 615 L1820 585 L2100 620 V900 H0Z" fill="#141414"/>
+  <!-- 기지: 불은 켜져 있는데 아무도 남지 않는다 -->
+  <g fill="#262626"><path d="M80 700 a150 120 0 0 1 300 0Z"/><path d="M390 700 a100 80 0 0 1 200 0Z"/><rect x="360" y="660" width="50" height="40"/></g>
+  <g fill="#d8d8d8"><rect x="200" y="640" width="16" height="11"/><rect x="250" y="640" width="16" height="11"/><rect x="470" y="660" width="14" height="10"/></g>
+  <path d="M0 700 H2100 V900 H0Z" fill="url(#ground)"/>
+  <!-- 빈 물탱크 -->
+  <g>
+    <rect x="640" y="430" width="180" height="270" rx="14" fill="#3a3a3a"/>
+    <ellipse cx="730" cy="430" rx="90" ry="19" fill="#4a4a4a"/>
+    <rect x="658" y="452" width="144" height="226" rx="9" fill="#111"/>
+    <rect x="658" y="666" width="144" height="12" rx="5" fill="#e6e6e6"/>
+    <rect x="650" y="700" width="18" height="36" fill="#333"/><rect x="792" y="700" width="18" height="36" fill="#333"/>
+  </g>
+  <!-- 착륙한 이주선과 경사로: 모두 다시 탄다 -->
+  <g transform="translate(1760 0)">
+    <path d="M-60 300 L-60 690 L60 690 L60 300 L0 180Z" fill="#9a9a9a"/>
+    <path d="M-60 620 L-110 720 L-90 720 L-60 660Z M60 620 L110 720 L90 720 L60 660Z" fill="#777"/>
+    <g fill="#fff"><circle cx="0" cy="300" r="14"/><circle cx="0" cy="350" r="14"/><circle cx="0" cy="400" r="14"/></g>
+    <rect x="-40" y="560" width="54" height="110" fill="#f0f0f0"/>
+    <path d="M-40 670 L-260 735 L-240 745 L14 670Z" fill="#5a5a5a"/>
+  </g>
+  <path d="M1000 600 L1720 560 L1720 680 L1000 760Z" fill="url(#beam)"/>
+  <!-- 기지에서 이주선까지 이어진 줄: 짐을 든 사람, 빈손인 사람 -->
+  <g fill="#7a7a7a">
+    <use href="#w" x="880" y="650" width="50" height="138"/>
+    <use href="#b" x="980" y="648" width="50" height="138"/>
+    <use href="#w" x="1080" y="646" width="50" height="136"/>
+    <use href="#w" x="1180" y="642" width="50" height="136"/>
+    <use href="#b" x="1280" y="640" width="48" height="134"/>
+    <use href="#w" x="1375" y="636" width="48" height="132"/>
+    <use href="#b" x="1462" y="626" width="46" height="128"/>
+    <use href="#w" x="1545" y="608" width="44" height="122"/>
+    <use href="#w" x="1630" y="580" width="42" height="116"/>
+  </g>
+  <!-- 마지막 한 사람이 기지를 돌아본다 -->
+  <g fill="#9a9a9a" transform="translate(830 652) scale(-1 1)"><use href="#w" x="-50" y="0" width="50" height="138"/></g>
+  <path d="M0 900 L0 820 Q80 790 160 815 T330 900Z" fill="#070707"/>
+  <path d="M2100 900 V840 Q2000 820 1920 850 T1760 900Z" fill="#070707"/>
+</svg>

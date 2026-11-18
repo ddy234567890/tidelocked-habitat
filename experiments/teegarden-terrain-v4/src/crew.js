@@ -4,6 +4,7 @@
 import { createBodyLoop } from './face/bodyLoop.js';
 import { createFacePanel } from './face/facePanel.js';
 import { LEVEL_NAMES } from './face/physiology.js';
+import { STATUS_NAMES } from './peopleSim.js';
 import { fromGameStats } from './face/envInput.js';
 import faceUrl from './assets/face/face.glb';
 import landmarks from './assets/face/face.landmarks.json' with { type: 'json' };
@@ -34,9 +35,64 @@ function currentEnv() {
 }
 const body = createBodyLoop({ getEnv: currentEnv });
 
+// 얼굴의 주인: 지역 화면의 대원 10명 중 마우스를 올린(또는 가장 최근에 올렸던) 사람 (people.js 가 'crew-focus' 로 알린다).
+// 그 사람의 몸 상태를 그대로 보여 준다. 아직 대원이 없으면(행성 화면) 바깥 공기를 마시는 가상의 대원
+let person = null;
+// 마우스가 대원 위에 있으면 얼굴이 밝게, 떼면 마지막 대원 얼굴이 흐리게 남는다. 아직 아무도 가리키지 않았으면 안내 문구
+let hovering = false, everHovered = false, pinned = null;
+const hint = document.createElement('span'); hint.className = 'crew-hint-idle'; hint.textContent = '▲ 가운데 화면에서 걸어다니는 대원에게 마우스를 올려 보세요. 누르면 그 대원으로 고정돼요';
+addEventListener('crew-pin', e => { pinned = e.detail.person; everHovered = true; renderIdle(); renderDetails(); });
+addEventListener('crew-hover', e => { hovering = e.detail.on; if (hovering) everHovered = true; renderIdle(); renderDetails(); });
+function renderIdle() {
+  const slot = $('#crew-slot'); if (!hint.isConnected) slot.append(hint);
+  const live = hovering || (pinned && person === pinned);   // 마우스를 올렸거나, 고른 대원이면 밝게
+  slot.classList.toggle('crew-idle', Boolean(person) && !live);
+  slot.classList.toggle('crew-pinned', Boolean(pinned) && person === pinned);
+  hint.hidden = !person || everHovered;
+}
+addEventListener('crew-focus', e => { person = e.detail.person; renderIdle(); renderDetails(); if (e.detail.at) signalSwitch(e.detail.at); });
+// 마우스로 대원을 바꾸면: 얼굴 창이 지지직 다시 그려지고, 그 대원 머리 위 이름표에서 얼굴 창까지 가는 선이 잠깐 이어진다
+const link = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+link.classList.add('crew-link'); link.setAttribute('aria-hidden', 'true'); link.innerHTML = '<line/><circle r="4"/>';
+document.body.append(link);
+let switchTimer = null;
+function signalSwitch(at) {
+  const slot = $('#crew-slot'), r = slot.getBoundingClientRect();
+  slot.classList.remove('crew-switch'); void slot.offsetWidth; slot.classList.add('crew-switch');
+  const line = link.querySelector('line'), dot = link.querySelector('circle');
+  line.setAttribute('x1', at.x); line.setAttribute('y1', at.y - 34);
+  line.setAttribute('x2', r.left + r.width / 2); line.setAttribute('y2', r.top + 8);
+  dot.setAttribute('cx', at.x); dot.setAttribute('cy', at.y - 34);
+  link.classList.remove('on'); void link.getBoundingClientRect(); link.classList.add('on');
+  clearTimeout(switchTimer); switchTimer = setTimeout(() => { slot.classList.remove('crew-switch'); link.classList.remove('on'); }, 1100);
+}
+const current = () => person?.state ?? body.state;
+
+// 대원 상태(괜찮음 · 힘들어함 · 쓰러짐)를 얼굴에도: 장면의 사람과 같은 상태로 보이게 표정을 더한다 (2026-11-18 사용자 요청)
+//  쓰러짐: 눈이 거의 감기고, 턱이 풀려 입이 벌어지고, 고개가 숙여지고, 창백하고 기운이 없다
+//  힘들어함: 미간을 찌푸리고 눈을 가늘게, 입을 조금 벌려 숨을 쉰다
+const LOOK = {
+  down: { weights: { eyeBlinkLeft: 0.82, eyeBlinkRight: 0.88, jawOpen: 0.32, mouthFrownLeft: 0.25, mouthFrownRight: 0.25, browInnerUp: 0.2 }, pitch: 0.32, fx: { pallor: 0.75, tired: 1 } },
+  tired: { weights: { browDownLeft: 0.3, browDownRight: 0.3, eyeSquintLeft: 0.35, eyeSquintRight: 0.35, jawOpen: 0.15, browInnerUp: 0.2 }, pitch: 0.06, fx: { tired: 0.5 } },
+};
+const blend = { down: 0, tired: 0 }; let blendAt = null, blendWho = null;
+function faceBias() {
+  const now = performance.now() / 1000, dt = blendAt === null ? 0 : Math.min(0.1, now - blendAt); blendAt = now;
+  if (person !== blendWho) { blendWho = person; for (const k in blend) blend[k] = person?.status === k ? 1 : 0; }   // 사람을 바꾸면 그 사람 상태로 바로
+  for (const k in blend) blend[k] += ((person?.status === k ? 1 : 0) - blend[k]) * (1 - Math.exp(-dt / 0.6));      // 상태가 바뀌면 0.6초쯤에 걸쳐 천천히
+  const out = { weights: { ...(person?.face?.weights ?? {}) }, pitch: 0, fx: {} };
+  for (const k in blend) {
+    const a = blend[k], look = LOOK[k]; if (a < 0.01) continue;
+    for (const w in look.weights) out.weights[w] = (out.weights[w] ?? 0) * (1 - a) + look.weights[w] * a;
+    out.pitch += look.pitch * a;
+    for (const f in look.fx) out.fx[f] = Math.max(out.fx[f] ?? 0, look.fx[f] * a);
+  }
+  return out;
+}
+
 const stage = $('#face-stage');
 const panel = createFacePanel({
-  container: stage, getBody: () => body.state, modelUrl: faceUrl, modelOptions: { landmarks, credit },
+  container: stage, getBody: current, getBias: faceBias, modelUrl: faceUrl, modelOptions: { landmarks, credit },
   style: 'surface',
 });
 $('#crew-credit').textContent = `얼굴 모델 "${credit.title}" · ${credit.author.replace(/ \(.*\)$/, '')} · CC BY 4.0`;
@@ -71,11 +127,15 @@ function worst(s) {
   return SEVERITY.map(([k, n]) => [n, s.level[k], s.sev[k]]).sort((a, b) => b[1] - a[1] || b[2] - a[2])[0];
 }
 function renderDetails() {
-  const s = body.state; if (!s) return;
+  const s = current(); if (!s) return;
   const [name, level] = worst(s);
-  const text = level ? `${name} · ${LEVEL_NAMES[level]}` : '정상';
-  $('#crew-state').textContent = text;
-  for (const el of [$('#crew-status')]) { el.textContent = text; el.dataset.lv = level; }
+  // 대원이 있으면 장면 정보창과 같은 말(괜찮음 · 힘들어함 · 쓰러짐 + 원인)을 쓴다
+  const text = person ? STATUS_NAMES[person.status] + (person.status !== 'ok' && person.cause ? ` · ${person.cause}` : '')
+    : level ? `${name} · ${LEVEL_NAMES[level]}` : '정상';
+  const live = hovering || (pinned && person === pinned);
+  $('#crew-state').textContent = person ? `${person.name}${pinned === person ? ' (고정)' : ''} · ${live ? text : '대기'}` : text;
+  $('#crew-title').textContent = person ? `${person.name} 상태` : '대원 상태';
+  for (const el of [$('#crew-status')]) { el.textContent = text; el.dataset.lv = person ? { ok: 0, tired: 1, down: 2 }[person.status] : level; }
   $('#c-spo2').textContent = `${s.spo2Pct.toFixed(0)}%`;
   $('#c-core').textContent = `${s.coreC.toFixed(1)}°`;
   $('#c-rr').textContent = `${s.breathsPerMin.toFixed(0)}/분`;
