@@ -1,12 +1,12 @@
 /* 쨍한 파랑 + 검정 (2026-11-18, 사용자 요청): 프롤로그 접속 화면(public/web/prologue-access.html)과 같은 톤.
    다른 css 의 색 값은 이미 이 톤으로 바꿨고, 여기서는 바탕을 더 검게, 글자에 파란 발광을 더한다.
-   글·칸·순서는 그대로. 파랑 #3D8BFF / 밝은 파랑 #8CC4FF / 본문 #DCEBFF / 보조 #6A8CC8 / 바탕 #02040C·#000 */
-:root{--vv-acc:#3D8BFF;--vv-hi:#8CC4FF;--vv-glow:0 0 8px rgba(30,110,255,.85);--vv-glow-s:0 0 4px rgba(30,110,255,.45)}
-body{background:#000;text-shadow:var(--vv-glow-s)}
+   글·칸·순서는 그대로. 파랑 var(--c-acc) / 밝은 파랑 var(--c-hi) / 본문 var(--c-text) / 보조 var(--c-dim) / 바탕 var(--c-bg)·var(--c-black) */
+:root{--vv-acc:var(--c-acc);--vv-hi:var(--c-hi);--vv-glow:0 0 8px rgba(var(--c-glow-rgb),.85);--vv-glow-s:0 0 4px rgba(var(--c-glow-rgb),.45)}
+body{background:var(--c-black);text-shadow:var(--vv-glow-s)}
 .panel>.titlebar,.window>.titlebar,.tab.on,.chip,.heading h1,.brief-page{color:var(--vv-hi);text-shadow:var(--vv-glow)}
 button:hover:not(:disabled){box-shadow:var(--vv-glow-s)}
 /* 이동 중 화면 · 로봇 브리핑: 바탕은 검정, 테두리와 막대는 쨍한 파랑 */
-.intro{background:#000}
-.intro .screen{background-color:#000}
+.intro{background:var(--c-black)}
+.intro .screen{background-color:var(--c-black)}
 #travel-fill{background:var(--vv-acc);box-shadow:var(--vv-glow)}
 #travel-pct,#travel-eta,#brief-bubble{color:var(--vv-hi);text-shadow:var(--vv-glow)}

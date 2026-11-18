@@ -16,7 +16,7 @@ function drawRadar() {
   const w = body.clientWidth, h = body.clientHeight, cx = w * CENTER_X, cy = h * CENTER_Y, R = h * PLANET_R;
   rs.setAttribute('viewBox', `0 0 ${w} ${h}`); rs.innerHTML = '';
   const defs = el('defs', {}, rs), g = el('radialGradient', { id: 'k-sweep-g', cx: cx, cy: cy, r: R * 1.45, gradientUnits: 'userSpaceOnUse' }, defs);
-  el('stop', { offset: '0', 'stop-color': '#8FC1FF', 'stop-opacity': '0' }, g); el('stop', { offset: '.6', 'stop-color': '#8FC1FF', 'stop-opacity': '.05' }, g); el('stop', { offset: '1', 'stop-color': '#8FC1FF', 'stop-opacity': '.12' }, g);
+  el('stop', { offset: '0', style: 'stop-color:var(--c-hi)', 'stop-opacity': '0' }, g); el('stop', { offset: '.6', style: 'stop-color:var(--c-hi)', 'stop-opacity': '.05' }, g); el('stop', { offset: '1', style: 'stop-color:var(--c-hi)', 'stop-opacity': '.12' }, g);
   [1.08, 1.24, 1.42].forEach((k, i) => el('circle', { class: 'ring' + (i === 1 ? ' dash' : ''), cx, cy, r: R * k }, rs));
   for (let a = 0; a < 360; a += 5) {           // 바깥 고리 눈금 (숫자는 쓰지 않음)
     const rad = a * Math.PI / 180, major = a % 30 === 0, r0 = R * 1.42, r1 = r0 + (major ? 12 : 5);
