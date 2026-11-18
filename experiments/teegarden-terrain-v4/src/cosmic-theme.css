@@ -213,3 +213,42 @@ kbd{border:1px solid var(--k-hair)!important;background:rgba(14,27,72,.6)!import
 @media (max-width:960px){.k-radar,.k-title,.k-corner,.k-topline{display:none}}
 .pin{transition:opacity .25s}.pin.k-under{opacity:0;pointer-events:none}
 @media (min-width:961px){.p-decision{z-index:7!important}}
+
+/* ── 2026-11-18 정리: 글씨 한 단계 작게 · 겹침/넘침 없애기 · 선지판 깔끔하게 ── */
+:root{--fs-s:12px;--lh-s:18px;--fs-m:14px;--lh-m:21px;--fs-l:17px;--lh-l:24px}
+@media(min-width:1700px){:root{--fs-s:13px;--lh-s:19px;--fs-m:15px;--lh-m:22px;--fs-l:18px;--lh-l:26px}}
+body{font-size:var(--fs-m)}
+.panel>.titlebar,.p-stage>.titlebar{font-size:11px}
+.k-title .k-name{font-size:32px;line-height:36px}.k-title .k-sub{font-size:11px}
+@media (max-height:820px){.k-title .k-name{font-size:26px;line-height:30px}}
+.tab{font-size:var(--fs-s)}
+.gauge-row{font-size:var(--fs-m)!important}.gauge-row .g-val{font-size:15px!important}
+/* 온도·산소 줄: 칸 셋으로 나눠 숫자가 옆 칸을 침범하지 않게 */
+.stat{display:grid!important;grid-template-columns:48px minmax(0,1.7fr) minmax(0,1fr);column-gap:10px;align-items:start}
+.stat-row{flex-direction:column!important;align-items:flex-start!important;gap:2px!important;min-width:0}
+.stat-row>small{min-width:0!important;font-size:11px}
+.stat-row b,.stat-row strong{white-space:nowrap}
+.stat strong{font-size:19px!important;line-height:24px!important}.stat b{font-size:16px!important}
+.meta{font-size:11px}.facts{font-size:var(--fs-m)}
+/* 대원: 머리줄엔 상태만 (글이 잘리지 않게), 접기·키우기 단추는 오른쪽 */
+.p-crew>.titlebar>span:first-child{display:none}
+.crew-state{flex:1;min-width:0;margin-left:0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.p-crew>.titlebar .wbtns{flex:none}
+/* 선지판: 판 높이를 칸에 맞춰 잘리지 않게, 머리줄은 한 줄 */
+.hb-prompt{font-size:16px!important}.hb-prompt b{font-size:11px!important}
+.hb-steps button,.hb-notes,.hb-count{font-size:12px!important}
+.hb-head{flex-wrap:nowrap!important;min-width:0}.hb-prompt span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hb-body{min-height:0}
+.hb-map{max-height:calc(var(--k-bottom) - 46px);width:auto!important}
+.hb-node text{font-size:11px}
+.hb-tip{width:260px!important;font-size:13px!important;line-height:1.4!important;max-height:calc(100vh - 16px);overflow:hidden}
+.decide{font-size:15px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.hb-decide{flex:0 0 200px!important}
+/* 아래 줄은 선지판 위에 (홈 링크가 가려지지 않게) */
+.p-foot{z-index:8!important;font-size:12px}
+.pin span{font-size:var(--fs-m)}.pin small{font-size:10px}
+.local-nav button,.pp-tools button{font-size:13px!important;white-space:nowrap}
+.stage-bottom span{font-size:12px}
+.hb-decide{flex:0 0 232px!important}.decide{padding-left:18px!important;padding-right:44px!important}.decide::after{right:16px}
+/* 선지 설명창: 육각 칸을 가리지 않게, 선지판 위 왼쪽(장면 쪽)에 뜸 */
+@media (min-width:961px){.hb-tip{left:40px!important;top:auto!important;right:auto!important;bottom:calc(100% + 14px)!important;transform:none!important}}
