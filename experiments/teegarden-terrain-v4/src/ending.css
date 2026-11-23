@@ -59,18 +59,45 @@ body.ending-flicker #canvas-host { animation: ending-flicker 2.6s steps(1) infin
 /* ④ 결말 글: 행성 위 아래쪽 반투명 칸. 아래쪽만 어둡게 해 글이 읽히게 한다 */
 .ending { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; padding: 16px 16px 28px; pointer-events: none; overflow: auto;
   background: linear-gradient(to top, rgba(2, 4, 12, .92) 0%, rgba(2, 4, 12, .55) 34%, rgba(2, 4, 12, 0) 62%); animation: ending-in 1.6s ease-out; }
-.ending-frame { pointer-events: auto; width: min(760px, 100%); padding: 16px 22px 18px; background: rgba(3, 8, 26, .72); border: 1px solid #1E4FB0; box-shadow: 0 0 24px rgba(30, 110, 255, .25); }
+.ending-frame { pointer-events: auto; width: min(1040px, 100%); max-height: calc(100vh - 44px); overflow: auto; padding: 16px 22px 18px; background: rgba(3, 8, 26, .78); border: 1px solid #1E4FB0; box-shadow: 0 0 24px rgba(30, 110, 255, .25); }
 .ending-tag { margin: 0 0 6px; color: #8FC1FF; font-size: 12px; letter-spacing: .14em; }
 .ending-text { color: #DCE6FF; }
-.ending-tag, .ending-text > * { opacity: 0; animation: ending-line .8s ease-out forwards; }
-.ending-tag { animation-delay: .4s; }
-.ending-text > :nth-child(1) { animation-delay: 1s; }
-.ending-text > :nth-child(2) { animation-delay: 1.6s; }
-.ending-text > :nth-child(3) { animation-delay: 2.4s; }
-.ending-text > :nth-child(4) { animation-delay: 3.4s; }
-.ending-text > :nth-child(5) { animation-delay: 4.4s; }
-.ending-text > :nth-child(6) { animation-delay: 5.2s; }
-.ending-text > :nth-child(7) { animation-delay: 5.8s; }
+/* 한 칸씩 차례로 나타난다 (--d: 나타나는 때) */
+.ending .rv { opacity: 0; animation: ending-line .8s ease-out forwards; animation-delay: var(--d, 0s); }
+/* 글(왼쪽) + 이번 판 기록(오른쪽) */
+.ending-main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px 26px; align-items: start; }
+.ending h3 { margin: 0 0 8px; color: #8FC1FF; font-size: 12px; font-weight: normal; letter-spacing: .12em; }
+.ending h3 b { color: #E8DFC8; font-weight: normal; margin-left: 6px; }
+.ending-epilogue { margin-top: 14px; padding: 10px 14px; border-left: 3px solid #8FC1FF; background: rgba(10, 26, 68, .55); }
+.ending-epilogue small { color: #8FC1FF; font-size: 12px; letter-spacing: .12em; }
+.ending-epilogue p { margin: 4px 0 0 !important; color: #E8DFC8; }
+.ending-report { padding: 12px 14px; border: 1px solid #1E4FB0; background: rgba(2, 4, 12, .55); }
+.ending-gauges { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 7px; }
+.ending-gauges li { display: grid; grid-template-columns: 3em 1fr 2.4em; align-items: center; gap: 8px; color: #6A8CC8; font-size: 13px; }
+.ending-gauges i { position: relative; height: 8px; background: #03081A; border: 1px solid #1E4FB0; }
+.ending-gauges em { position: absolute; inset: 0 auto 0 0; width: 0; background: #8FC1FF; }
+.ending-gauges b { text-align: right; color: #DCE6FF; font-weight: normal; font-size: 16px; }
+.ending-gauges li.key small, .ending-gauges li.key b { color: #F2B84B; }
+.ending-gauges li.key em { background: #F2B84B; }
+.ending-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 12px; }
+.ending-facts div { padding: 6px 8px; border: 1px solid #1E4FB0; text-align: center; }
+.ending-facts dt { color: #6A8CC8; font-size: 11px; }
+.ending-facts dd { margin: 2px 0 0; color: #E8DFC8; font-size: 18px; }
+.ending-badges { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ending-badges li { padding: 6px 10px; border: 1px solid #E8DFC8; background: rgba(232, 223, 200, .06); }
+.ending-badges b { display: block; color: #E8DFC8; font-weight: normal; }
+.ending-badges small { color: #6A8CC8; font-size: 12px; }
+/* 결말 모으기: 본 결말은 켜지고, 못 본 결말은 ??? + 힌트 */
+.ending-collect { margin-top: 16px; }
+.ending-collect ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.ending-collect li { padding: 8px 8px 6px; border: 1px solid #1E4FB0; color: #DCE6FF; font-size: 13px; line-height: 1.35; min-height: 4.2em; }
+.ending-collect li b { display: block; color: #8FC1FF; font-weight: normal; font-size: 12px; }
+.ending-collect li.locked { color: #6A8CC8; border-style: dashed; }
+.ending-collect li.locked small { display: block; margin-top: 3px; font-size: 11px; color: #6A8CC8; }
+.ending-collect li.now { border-color: #E8DFC8; color: #E8DFC8; box-shadow: 0 0 14px rgba(232, 223, 200, .25); }
+.ending-collect li.now b { color: #F2B84B; }
+.ending-actions { display: flex; align-items: flex-start; gap: 18px; margin-top: 14px; flex-wrap: wrap; }
+.ending-actions .ending-story { flex: 1; min-width: 240px; margin-top: 14px; }
 .ending-text h2 { margin: 4px 0 10px; color: #E8DFC8; font-size: 26px; }
 .ending-text p { margin: 0 0 8px; line-height: 1.6; }
 .ending-code { color: #F2B84B; font-size: 13px; letter-spacing: .08em; }
@@ -85,6 +112,8 @@ body.ending-flicker #canvas-host { animation: ending-flicker 2.6s steps(1) infin
 
 @media (max-width: 760px) {
   .ending-frame { padding: 12px 14px 14px; }
+  .ending-main { grid-template-columns: 1fr; }
+  .ending-collect ul { grid-template-columns: repeat(2, 1fr); }
   .ending-text h2 { font-size: 22px; }
   .ending-sub { font-size: 16px; padding: 10px 12px; }
   .ending-clock { top: 12px; gap: 10px; padding: 8px 10px; flex-wrap: wrap; justify-content: center; white-space: normal; width: calc(100% - 32px); }
@@ -102,6 +131,6 @@ body.ending-bright #canvas-host { filter: brightness(1.15) saturate(1.1); transi
 @keyframes ending-in { from { opacity: 0; } }
 @keyframes ending-line { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .ending, .ending-tag, .ending-text > *, .ending-subs, .ending-sub.in, body.ending-flash #canvas-host, body.ending-flicker #canvas-host, .ending-clock, .ec-day.tick { animation: none; opacity: 1; }
+  .ending, .ending .rv, .ending-subs, .ending-sub.in, body.ending-flash #canvas-host, body.ending-flicker #canvas-host, .ending-clock, .ec-day.tick { animation: none; opacity: 1; }
   body.ending-mode * { transition: none !important; }
 }

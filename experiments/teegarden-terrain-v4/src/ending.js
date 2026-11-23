@@ -183,7 +183,12 @@ export function buildStory({ selection, start, failed = null, move = selection.a
       final = { tag: 'ORI · 입주 후 4주 · 정착 완료', title: STORY.final.E5.title, line: fill(STORY.final.E5.line, testValues), cost: STORY.final.E5.cost };
     }
   }
-  return { j, code: j.code, key, beats, cause: sym.cause, final };
+  // 이번 판 기록: 마지막 게이지 값과 버틴 날
+  const lastTrace = j.H?.trace?.[j.H.trace.length - 1];
+  const values = (j.code === 'E3' || j.code === 'E4' || j.code === 'E5') && lastTrace ? lastTrace : start;
+  const span = { E1: `준비 ${j.week}주차`, E2: '착륙 보류', E3: `${(j.week ?? 4) * 7}일`, E4: '28일', E5: '28일' }[j.code];
+  const report = { values: Object.fromEntries(GAUGE_KEYS.map(k => [k, Math.max(0, Math.round(values[k] ?? 0))])), span };
+  return { j, code: j.code, key, beats, cause: sym.cause, final, report };
 }
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -281,6 +286,7 @@ function makeClock(key) {
   let shownValue = null, anim = null;
   const count = () => {
     const list = window.people?.list ?? [], down = list.filter(p => p.status === 'down').length;
+    if (story) { story.peakDown = Math.max(story.peakDown ?? 0, down); story.headcount = list.length; }
     ppl.textContent = `기지 인원 ${list.length}명${down ? ` · 쓰러짐 ${down}` : ''}`;
   };
   const people = setInterval(count, 500);   // 쓰러지는 사람 수가 바로 바뀐다
@@ -340,6 +346,44 @@ function playSubtitles(beats, key) {
   });
 }
 
+// 결말 모으기: 이 브라우저에서 본 결말을 남긴다 (저장이 막혀 있으면 이번 결말만 보인다)
+const SEEN_KEY = 'tidelocked.endings.seen';
+function rememberEnding(code) {
+  let seen = [];
+  try { seen = JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]'); } catch { seen = []; }
+  if (!Array.isArray(seen)) seen = [];
+  if (!seen.includes(code)) seen.push(code);
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify(seen)); } catch { /* 저장 안 됨: 이번만 보인다 */ }
+  return seen;
+}
+// 얻은 칭호: 결과로 얻는 것 먼저, 그다음 고른 선지로 얻는 것 (ending-story.json badges)
+function badgesFor(selection, st) {
+  const B = STORY.badges, out = [], code = st.code, down = st.peakDown ?? 0;
+  if (down === 0 && code !== 'E1' && code !== 'E3') out.push(B.noDown);
+  if (down > 0) out.push(B.helpers);
+  if (code === 'E5') out.push(B.harvest);
+  if ((code === 'E4' || code === 'E5') && selection.fix === 'U2') out.push(B.sturdy);
+  if (selection.oxygen === 'O2' && selection.reuse === 'R2') out.push(B.loop);
+  if (selection.power === 'P2') out.push(B.reactor);
+  if (selection.arrive === 'M2' && code !== 'E1') out.push(B.staged);
+  out.push({ A: B.plain, B: B.cave, C: B.ridge }[selection.location] ?? B.plain);
+  return out.filter(Boolean);
+}
+// 이번 판 기록의 숫자와 막대가 0 에서 차오른다
+function countUp(root) {
+  const t0 = performance.now() + (reducedMotion ? 0 : 2200);
+  const targets = [...root.querySelectorAll('[data-to]')];
+  const step = now => {
+    const k = reducedMotion ? 1 : Math.max(0, Math.min(1, (now - t0) / 1400)), e = 1 - (1 - k) ** 3;
+    for (const el of targets) {
+      const v = Math.round(Number(el.dataset.to) * e);
+      if (el.tagName === 'EM') el.style.width = `${Math.min(100, v)}%`; else el.textContent = v;
+    }
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 let shown = false;
 async function showEnding({ move = 'M1', start, failed = null, selection = readSelection() }) {
   if (shown) return; shown = true;
@@ -353,26 +397,51 @@ async function showEnding({ move = 'M1', start, failed = null, selection = readS
 
   const name = GAUGE_LABELS[key] ?? '물';
   const verdict = j.H ? `입주 날 최저 ${j.M} · 입주 후 4주 검증 ${j.H.ok ? '통과' : `실패 (${j.H.week}주째 ${GAUGE_LABELS[j.H.key]} 0)`} · 고장 시험 최저 ${Math.max(0, j.B.B)} (${j.B.worst.name})` : '';
-  const list = Object.entries(ENDINGS).map(([c, e]) => `<li${c === code ? ' class="on"' : ''}>${e.n} · ${esc(e.name)}</li>`).join('');
+  const seen = rememberEnding(code);
+  const badges = badgesFor(selection, story).slice(0, 3);
+  const rv = story.report.values, lowest = GAUGE_KEYS.reduce((a, b) => rv[a] <= rv[b] ? a : b);   // 가장 낮게 끝난 게이지를 주황으로
+  const gauges = GAUGE_KEYS.map(k => `<li class="${k === lowest ? 'key' : ''}"><small>${esc(GAUGE_LABELS[k])}</small><i><em data-to="${story.report.values[k]}"></em></i><b data-to="${story.report.values[k]}">0</b></li>`).join('');
+  const slots = Object.entries(ENDINGS).map(([c, e]) => seen.includes(c)
+    ? `<li class="got${c === code ? ' now' : ''}"><b>${e.n}</b>${esc(e.name)}</li>`
+    : `<li class="locked"><b>${e.n}</b>???<small>${esc(STORY.hint[c])}</small></li>`).join('');
   const root = document.createElement('div');
   root.className = `ending ending-${code}`; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-labelledby', 'ending-title');
   root.innerHTML = `
     <div class="ending-frame">
-      <p class="ending-tag">${esc(final.tag)}</p>
-      <div class="ending-text">
-        <p class="ending-code">결말 ${ENDINGS[code].n} · ${esc(ENDINGS[code].name)}</p>
-        <h2 id="ending-title">${esc(final.title)}</h2>
-        <p>${esc(final.line)}</p>
-        <p class="ending-cost">${esc(final.cost)}</p>
+      <p class="ending-tag rv" style="--d:.3s">${esc(final.tag)}</p>
+      <div class="ending-main">
+        <div class="ending-text">
+          <p class="ending-code rv" style="--d:.7s">결말 ${ENDINGS[code].n} · ${esc(ENDINGS[code].name)}</p>
+          <h2 id="ending-title" class="rv" style="--d:1.1s">${esc(final.title)}</h2>
+          <p class="rv" style="--d:1.7s">${esc(final.line)}</p>
+          <p class="ending-cost rv" style="--d:2.3s">${esc(final.cost)}</p>
+          <div class="ending-epilogue rv" style="--d:3.2s"><small>10년 뒤</small><p>${esc(STORY.epilogue[code])}</p></div>
+        </div>
+        <div class="ending-report rv" style="--d:2s" aria-label="이번 판 기록">
+          <h3>이번 판 기록</h3>
+          <ul class="ending-gauges">${gauges}</ul>
+          <dl class="ending-facts">
+            <div><dt>기지 인원</dt><dd data-to="${story.headcount ?? 0}">0</dd></div>
+            <div><dt>쓰러진 사람</dt><dd data-to="${story.peakDown ?? 0}">0</dd></div>
+            <div><dt>버틴 기간</dt><dd>${esc(story.report.span)}</dd></div>
+          </dl>
+          ${badges.length ? `<h3>얻은 칭호</h3><ul class="ending-badges">${badges.map(([title, why], n) => `<li class="rv" style="--d:${3.6 + n * 0.4}s"><b>${esc(title)}</b><small>${esc(why)}</small></li>`).join('')}</ul>` : ''}
+        </div>
+      </div>
+      <div class="ending-collect rv" style="--d:4.4s">
+        <h3>결말 모으기 <b>${seen.length} / 5</b></h3>
+        <ul>${slots}</ul>
+      </div>
+      <div class="ending-actions rv" style="--d:4.8s">
+        <button type="button" class="decide" id="ending-restart">▶ 다른 결말 찾으러 가기</button>
         <details class="ending-story"><summary>되짚어 보기</summary>
           ${cause && code !== 'E5' ? `<p class="ending-cause">${cause.week}주차 「${esc(cause.label)}」에서 ${esc(particle(name, '이', '가'))} 부족해지기 시작했다.</p>` : ''}
           ${verdict ? `<p class="ending-verdict">${esc(verdict)}</p>` : ''}
-          <ol>${beats.map(b => `<li><b>${esc(b.day)}</b> ${esc(b.text)}</li>`).join('')}</ol>
-          <ul class="ending-list" aria-label="결말 5가지">${list}</ul></details>
-        <button type="button" class="decide" id="ending-restart">▶ 처음부터 다시</button>
+          <ol>${beats.map(b => `<li><b>${esc(b.day)}</b> ${esc(b.text)}</li>`).join('')}</ol></details>
       </div>
     </div>`;
   document.body.append(root);
+  countUp(root);
   const button = root.querySelector('#ending-restart');
   button.addEventListener('click', () => { location.href = location.pathname; });
   button.focus({ preventScroll: true });
