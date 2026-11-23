@@ -5,7 +5,7 @@
 //   4 취약한 정착(버티지만 여유 없음) · 5 안정적 이주(첫 마을). 결말 1 은 게임의 '기지 운영 실패' 창이 뜰 때 대신 시작한다.
 // 연출: 옆 창들이 사라지고 가운데 3D 기지만 남는다(교수님 제안). 위에는 시계(날짜 · 중심 게이지 값 · 기지 인원·쓰러진 수),
 //   아래에는 그날 장면이 자막으로 뜨고 기지에서 그 장면이 벌어진다(이주민 도착, 힘들어함·쓰러짐·부축, 고장, 깜빡임 등).
-//   마지막에 카메라가 '← 행성으로'를 눌러 행성까지 빠지고 결말 글이 뜬다. 그림은 없다.
+//   마지막에는 카메라가 기지에서 조금 물러나고, 기지가 그 결말의 모습(밝음·빈 기지 등)으로 남은 채 오른쪽에 결말 칸이 뜬다. 그림은 없다.
 // 지난 선택은 '몇 주차에 골랐다'고 말하지 않고 결과로만 보여 준다(사용자: 브리핑 느낌은 재미없다). 말투는 담담한 기록체.
 // 이야기 문구는 src/ending-story.json. main.js 는 건드리지 않는다: 화면(DOM)에서 고른 선지·게이지를 읽고,
 //   사람은 window.people 과 peopleSim.js 의 Person.step 에 끼워 넣은 환경 덮어쓰기로만 움직인다 (엔딩 때만 켜진다).
@@ -266,14 +266,23 @@ function clearScreen() {
   document.body.classList.add('ending-mode');
   inBase = true;
 }
-// 마지막: 카메라가 기지에서 살짝 물러난 뒤 '← 행성으로'로 행성 전체가 보이는 곳까지 날아간다
-// (지역 화면은 따로 떼어 낸 땅이라 휠로는 행성까지 못 간다). 게임 안 선택 단계는 처음으로 돌아가지만,
-// 엔딩 동안 칸은 모두 숨겨져 있고 '처음부터 다시'는 새로 불러온다.
-async function pullBack() {
-  await dolly(1, 2400, 24);
+// 마지막 장면 (2026-11-23 사용자: 행성으로 빠지면 그냥 공만 남아 심각하다 → 기지와 사람으로 끝낸다).
+// 카메라는 기지에서 조금만 물러나고, 결말마다 기지가 그 결말의 모습으로 남는다. 결말 칸은 오른쪽에 붙어 기지를 가리지 않는다.
+//   5 안정적 이주: 모두 서 있고 기지가 밝다 · 4 취약한 정착: 사람들은 남고 조금 어둡다 · 2 수용 준비 미달: 선발대만 남는다
+//   3 시한부 정착: 불은 켜진 채 아무도 없다(모두 철수) · 1 생존 실패: 어둡고 아무도 없다
+async function finale(code) {
   clearInterval(watchDown); window.people?.pin(null);
-  document.body.dataset.endingDim = '0'; document.body.classList.remove('ending-flicker', 'ending-bright');
-  document.getElementById('back')?.click();
+  const body = document.body;
+  body.classList.remove('ending-flicker');
+  if (code === 'E5' || code === 'E4' || code === 'E2') { hardship = null; hardLevel = 0; }   // 남은 사람들은 숨을 고르고 다시 일어난다
+  await dolly(1, 900, 18);
+  if (code === 'E3' || code === 'E1') {   // 철수: 사람들이 모두 떠나 빈 기지만 남는다
+    await wait(800);
+    window.people?.evacuate();
+    body.dataset.endingDim = code === 'E1' ? '3' : '1';
+  } else body.dataset.endingDim = code === 'E5' ? '0' : '1';
+  if (code === 'E5') body.classList.add('ending-bright');
+  body.classList.add('ending-final');
 }
 
 // 위 시계: 날짜 · 중심 게이지(값이 바뀌는 막대) · 기지 인원
@@ -392,8 +401,8 @@ async function showEnding({ move = 'M1', start, failed = null, selection = readS
   clearScreen();
   await wait(1600);
   await playSubtitles(beats, key);
-  await pullBack();
-  await wait(2600);   // 행성까지 날아가는 동안
+  await finale(code);
+  await wait(1400);
 
   const name = GAUGE_LABELS[key] ?? '물';
   const verdict = j.H ? `입주 날 최저 ${j.M} · 입주 후 4주 검증 ${j.H.ok ? '통과' : `실패 (${j.H.week}주째 ${GAUGE_LABELS[j.H.key]} 0)`} · 고장 시험 최저 ${Math.max(0, j.B.B)} (${j.B.worst.name})` : '';

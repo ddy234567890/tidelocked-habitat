@@ -568,7 +568,7 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     // 지역에 들어가면 바로 대원 10명을 세운다 (2026-11-23 사용자: 얼굴 연결이 1-1 위치 고르기부터 떠야 함).
     // 기지(집)가 있으면 집 안에, 아직 없으면 착륙 자리 둘레 바깥에 우주복을 입고 서 있다가(SUIT_TIME 만큼 버티다 서서히 지침),
     // 집이 생기면 moveIn 으로 걸어 들어간다. (예전에는 바로 바깥 환경을 겪어 몇 초 만에 모두 쓰러져서, 2026-11-18 에는 집이 생긴 뒤에만 세웠다)
-    if (!people.length) spawnCrew(s.homes ?? []);
+    if (!people.length && !evacuated) spawnCrew(s.homes ?? []);
     for (const p of people) think(p, dt);
     // 부축받는 사람은 데려가는 사람 오른쪽에 붙어 같은 쪽을 본다
     for (const p of people) if (p.carrying) {
@@ -612,6 +612,9 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     count();
   };
   const resumeClock = () => { paused = false; last = null; };
-  window.people = { focused: () => focused, pinned: () => pinned, pin, add, addGroup, clear, list: people, screenOf, advance, resumeClock, devices: () => devices };
+  // 철수 (엔딩, src/ending.js): 모두 떠나고 다시 세우지 않는다
+  let evacuated = false;
+  const evacuate = () => { evacuated = true; clear(); };
+  window.people = { focused: () => focused, pinned: () => pinned, pin, add, addGroup, clear, evacuate, list: people, screenOf, advance, resumeClock, devices: () => devices };
   return { frame, add, addGroup, clear };
 }

@@ -57,15 +57,16 @@ body.ending-flicker #canvas-host { animation: ending-flicker 2.6s steps(1) infin
 .ending-skip:hover, .ending-skip:focus-visible { background: #1450D8; color: #DCE6FF; }
 
 /* ④ 결말 글: 행성 위 아래쪽 반투명 칸. 아래쪽만 어둡게 해 글이 읽히게 한다 */
-.ending { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; padding: 16px 16px 28px; pointer-events: none; overflow: auto;
-  background: linear-gradient(to top, rgba(2, 4, 12, .92) 0%, rgba(2, 4, 12, .55) 34%, rgba(2, 4, 12, 0) 62%); animation: ending-in 1.6s ease-out; }
-.ending-frame { pointer-events: auto; width: min(1040px, 100%); max-height: calc(100vh - 44px); overflow: auto; padding: 16px 22px 18px; background: rgba(3, 8, 26, .78); border: 1px solid #1E4FB0; box-shadow: 0 0 24px rgba(30, 110, 255, .25); }
+.ending { position: fixed; inset: 0; z-index: 60; display: flex; justify-content: flex-end; align-items: stretch; padding: 16px; pointer-events: none;
+  background: linear-gradient(to left, rgba(2, 4, 12, .88) 0%, rgba(2, 4, 12, .5) 32%, rgba(2, 4, 12, 0) 55%); animation: ending-in 1.6s ease-out; }
+.ending-frame { pointer-events: auto; width: min(460px, 100%); max-height: calc(100vh - 32px); overflow: auto; align-self: center; padding: 16px 22px 18px; background: rgba(3, 8, 26, .78); border: 1px solid #1E4FB0; box-shadow: 0 0 24px rgba(30, 110, 255, .25); }
 .ending-tag { margin: 0 0 6px; color: #8FC1FF; font-size: 12px; letter-spacing: .14em; }
 .ending-text { color: #DCE6FF; }
 /* 한 칸씩 차례로 나타난다 (--d: 나타나는 때) */
 .ending .rv { opacity: 0; animation: ending-line .8s ease-out forwards; animation-delay: var(--d, 0s); }
 /* 글(왼쪽) + 이번 판 기록(오른쪽) */
-.ending-main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px 26px; align-items: start; }
+/* 오른쪽 패널 안에서는 위아래로 쌓는다: 글 → 10년 뒤 → 이번 판 기록 → 칭호 → 결말 모으기 */
+.ending-main { display: grid; grid-template-columns: 1fr; gap: 14px; }
 .ending h3 { margin: 0 0 8px; color: #8FC1FF; font-size: 12px; font-weight: normal; letter-spacing: .12em; }
 .ending h3 b { color: #E8DFC8; font-weight: normal; margin-left: 6px; }
 .ending-epilogue { margin-top: 14px; padding: 10px 14px; border-left: 3px solid #8FC1FF; background: rgba(10, 26, 68, .55); }
@@ -89,11 +90,11 @@ body.ending-flicker #canvas-host { animation: ending-flicker 2.6s steps(1) infin
 .ending-badges small { color: #6A8CC8; font-size: 12px; }
 /* 결말 모으기: 본 결말은 켜지고, 못 본 결말은 ??? + 힌트 */
 .ending-collect { margin-top: 16px; }
-.ending-collect ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.ending-collect li { padding: 8px 8px 6px; border: 1px solid #1E4FB0; color: #DCE6FF; font-size: 13px; line-height: 1.35; min-height: 4.2em; }
-.ending-collect li b { display: block; color: #8FC1FF; font-weight: normal; font-size: 12px; }
+.ending-collect ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 4px; }
+.ending-collect li { display: grid; grid-template-columns: 1.4em 1fr; column-gap: 6px; padding: 5px 8px; border: 1px solid #1E4FB0; color: #DCE6FF; font-size: 13px; line-height: 1.35; }
+.ending-collect li b { color: #8FC1FF; font-weight: normal; font-size: 12px; grid-row: span 2; }
 .ending-collect li.locked { color: #6A8CC8; border-style: dashed; }
-.ending-collect li.locked small { display: block; margin-top: 3px; font-size: 11px; color: #6A8CC8; }
+.ending-collect li.locked small { grid-column: 2; font-size: 11px; color: #6A8CC8; }
 .ending-collect li.now { border-color: #E8DFC8; color: #E8DFC8; box-shadow: 0 0 14px rgba(232, 223, 200, .25); }
 .ending-collect li.now b { color: #F2B84B; }
 .ending-actions { display: flex; align-items: flex-start; gap: 18px; margin-top: 14px; flex-wrap: wrap; }
@@ -112,8 +113,8 @@ body.ending-flicker #canvas-host { animation: ending-flicker 2.6s steps(1) infin
 
 @media (max-width: 760px) {
   .ending-frame { padding: 12px 14px 14px; }
-  .ending-main { grid-template-columns: 1fr; }
-  .ending-collect ul { grid-template-columns: repeat(2, 1fr); }
+  .ending { align-items: flex-end; background: linear-gradient(to top, rgba(2, 4, 12, .9) 0%, rgba(2, 4, 12, .4) 45%, rgba(2, 4, 12, 0) 65%); }
+  .ending-frame { width: 100%; max-height: 62vh; align-self: auto; }
   .ending-text h2 { font-size: 22px; }
   .ending-sub { font-size: 16px; padding: 10px 12px; }
   .ending-clock { top: 12px; gap: 10px; padding: 8px 10px; flex-wrap: wrap; justify-content: center; white-space: normal; width: calc(100% - 32px); }
@@ -134,3 +135,5 @@ body.ending-bright #canvas-host { filter: brightness(1.15) saturate(1.1); transi
   .ending, .ending .rv, .ending-subs, .ending-sub.in, body.ending-flash #canvas-host, body.ending-flicker #canvas-host, .ending-clock, .ec-day.tick { animation: none; opacity: 1; }
   body.ending-mode * { transition: none !important; }
 }
+/* 마지막 장면에서는 대원 이름표를 숨긴다 */
+body.ending-final .pp-tag { display: none; }
