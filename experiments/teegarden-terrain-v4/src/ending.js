@@ -122,9 +122,13 @@ export function buildStory({ selection, start, failed = null, move = selection.a
   const j = judge(selection, start, failed), key = j.key, g = GAUGE_LABELS[key] ?? '물';
   const label = id => choiceOf(id, selection)?.label ?? '';
   const beats = [];
-  const add = (day, value, parts, cue) => {
+  // 위 시계에 뜰 게이지 4개: 운영 검증 기록(trace)의 d 일째 값 (기록이 없으면 그날 값 그대로). 중심 게이지는 value, 고장 장면은 고장 난 게이지를 덮어쓴다
+  const add = (day, value, parts, cue, d = null, over = {}) => {
     const text = parts.filter(Boolean).map(t => fill(t, { g, value: start[key] })).join(' ');
-    if (text) beats.push({ text, cue, day, value: Math.max(0, Math.round(value)) });
+    const trace = j.H?.trace && d != null ? j.H.trace : null;
+    const values = Object.fromEntries(GAUGE_KEYS.map(k => [k, Math.max(0, Math.round(trace ? valueAt(trace, k, d) : start[k]))]));
+    Object.assign(values, over, { [key]: Math.max(0, Math.round(value)) });
+    if (text) beats.push({ text, cue, day, value: values[key], values });
   };
   const steady = selection.oxygen && selection.crop ? fill(STORY.steady, { oxygen: `「${label('oxygen')}」`, crop: `「${label('crop')}」` }) : null;
   const sym = symptomText(key, selection, g);
@@ -154,32 +158,33 @@ export function buildStory({ selection, start, failed = null, move = selection.a
     const days = [0, 3, 7, 14, 21, 28].map((d, i) => i === 0 ? 0 : Math.max(i, Math.round(d * scale)));
     for (let i = 1; i < days.length; i++) if (days[i] <= days[i - 1]) days[i] = days[i - 1] + 1;
     const at = i => valueAt(trace, key, days[i]);
-    add(dayLabel(days[0]), start[key], [STORY.arrive[move], STORY.place[selection.module]], 'arrive');
-    add(dayLabel(days[1]), at(1), [steady], 'calm');
-    add(dayLabel(days[2]), at(2), [...sym.parts, STORY.symptom.tail], 'symptom');
+    add(dayLabel(days[0]), start[key], [STORY.arrive[move], STORY.place[selection.module]], 'arrive', days[0]);
+    add(dayLabel(days[1]), at(1), [steady], 'calm', days[1]);
+    add(dayLabel(days[2]), at(2), [...sym.parts, STORY.symptom.tail], 'symptom', days[2]);
     const picks = new Set(Object.values(selection));
     const detail = Object.entries(STORY.detail).find(([k]) => { const [gauge, id] = k.split(':'); return gauge === key && picks.has(id) && id !== sym.cause?.id; });
-    add(dayLabel(days[3]), at(3), [STORY.ration[key], detail?.[1], move === 'M2' && STORY.ration.M2], 'ration');
-    add(dayLabel(days[4]), at(4), [STORY.crisis[key], STORY.crisis[selection.pool]], 'crisis');
-    add(dayLabel(days[5]), 0, [STORY.end.lead, STORY.end[selection.fix], STORY.end.call], 'end');
+    add(dayLabel(days[3]), at(3), [STORY.ration[key], detail?.[1], move === 'M2' && STORY.ration.M2], 'ration', days[3]);
+    add(dayLabel(days[4]), at(4), [STORY.crisis[key], STORY.crisis[selection.pool]], 'crisis', days[4]);
+    add(dayLabel(days[5]), 0, [STORY.end.lead, STORY.end[selection.fix], STORY.end.call], 'end', days[5]);
     const text = MOVE[move] ?? MOVE.M1;
     final = { tag: `ORI · 입주 후 ${j.week}주 · 철수`, title: fill(STORY.final.E3.title, { g }), line: `${SCENE[key]} ${text.line}`, cost: text.cost };
   } else {   // E4 취약한 정착 · E5 안정적 이주: 4주를 버틴다. 1주째에 고장 시험과 같은 고장이 실제로 일어난다
     const trace = j.H.trace, at = d => valueAt(trace, key, d), E = STORY[j.code];
-    add(dayLabel(0), start[key], [STORY.arrive[move], STORY.place[selection.module]], 'arrive');
-    add(dayLabel(3), at(3), [steady], 'calm');
+    const shocked = test ? { [test.low]: bmin } : {};
+    add(dayLabel(0), start[key], [STORY.arrive[move], STORY.place[selection.module]], 'arrive', 0);
+    add(dayLabel(3), at(3), [steady], 'calm', 3);
     if (j.code === 'E4') {
       const low = j.weakBy === 'low';
-      add(dayLabel(7), test && test.low === key ? bmin : at(7), [fill(E.shock, testValues)], 'shock');
-      add(dayLabel(14), at(14), [fill(low ? E.weekLow : E.weekTest, testValues), low && sym.parts[1]], 'symptom');
-      add(dayLabel(21), at(21), [fill(low ? E.rationLow : E.rationTest, testValues), move === 'M2' && STORY.ration.M2], low ? 'strain' : 'calm');
-      add(dayLabel(28), at(28), [fill(low ? E.endLow : E.endTest, testValues)], 'hold');
+      add(dayLabel(7), test && test.low === key ? bmin : at(7), [fill(E.shock, testValues)], 'shock', 7, shocked);
+      add(dayLabel(14), at(14), [fill(low ? E.weekLow : E.weekTest, testValues), low && sym.parts[1]], 'symptom', 14);
+      add(dayLabel(21), at(21), [fill(low ? E.rationLow : E.rationTest, testValues), move === 'M2' && STORY.ration.M2], low ? 'strain' : 'calm', 21);
+      add(dayLabel(28), at(28), [fill(low ? E.endLow : E.endTest, testValues)], 'hold', 28);
       final = { tag: 'ORI · 입주 후 4주 · 정착 유지', title: STORY.final.E4.title[j.weakBy], line: fill(STORY.final.E4.line[j.weakBy], testValues), cost: STORY.final.E4.cost };
     } else {
-      add(dayLabel(7), test && test.low === key ? bmin : at(7), [fill(E.shock, testValues)], 'shockSmall');
-      add(dayLabel(14), at(14), [fill(E.week, testValues)], 'calm');
-      add(dayLabel(21), at(21), [E.drill], 'calm');
-      add(dayLabel(28), at(28), [E.harvest[selection.crop], move === 'M2' && E.M2, E.end], 'thrive');
+      add(dayLabel(7), test && test.low === key ? bmin : at(7), [fill(E.shock, testValues)], 'shockSmall', 7, shocked);
+      add(dayLabel(14), at(14), [fill(E.week, testValues)], 'calm', 14);
+      add(dayLabel(21), at(21), [E.drill], 'calm', 21);
+      add(dayLabel(28), at(28), [E.harvest[selection.crop], move === 'M2' && E.M2, E.end], 'thrive', 28);
       final = { tag: 'ORI · 입주 후 4주 · 정착 완료', title: STORY.final.E5.title, line: fill(STORY.final.E5.line, testValues), cost: STORY.final.E5.cost };
     }
   }
@@ -285,14 +290,16 @@ async function finale(code) {
   body.classList.add('ending-final');
 }
 
-// 위 시계: 날짜 · 중심 게이지(값이 바뀌는 막대) · 기지 인원
+// 위 시계: 날짜 · 게이지 4개(공기·물·식량·전력, 이야기의 중심 게이지는 주황 테두리) · 기지 인원
+// (2026-11-23 사용자: 물만 떠서 궁금하다 → 4개 모두 보인다)
 function makeClock(key) {
   const root = document.createElement('div');
   root.className = 'ending-clock'; root.setAttribute('aria-live', 'polite');
-  root.innerHTML = `<b class="ec-day"></b><span class="ec-gauge"><small>${esc(GAUGE_LABELS[key] ?? '물')}</small><i><em></em></i><strong></strong></span><span class="ec-people"></span>`;
+  root.innerHTML = `<b class="ec-day"></b><span class="ec-gauges">${GAUGE_KEYS.map(k => `<span class="ec-gauge${k === key ? ' key' : ''}" data-k="${k}"><small>${esc(GAUGE_LABELS[k])}</small><i><em></em></i><strong></strong></span>`).join('')}</span><span class="ec-people"></span>`;
   document.body.append(root);
-  const day = root.querySelector('.ec-day'), bar = root.querySelector('em'), num = root.querySelector('strong'), ppl = root.querySelector('.ec-people');
-  let shownValue = null, anim = null;
+  const day = root.querySelector('.ec-day'), ppl = root.querySelector('.ec-people');
+  const slots = Object.fromEntries(GAUGE_KEYS.map(k => { const el = root.querySelector(`[data-k="${k}"]`); return [k, { el, bar: el.querySelector('em'), num: el.querySelector('strong') }]; }));
+  let shown = null, anim = null;
   const count = () => {
     const list = window.people?.list ?? [], down = list.filter(p => p.status === 'down').length;
     if (story) { story.peakDown = Math.max(story.peakDown ?? 0, down); story.headcount = list.length; }
@@ -305,15 +312,18 @@ function makeClock(key) {
     show(beat) {
       day.textContent = beat.day;
       day.classList.remove('tick'); void day.offsetWidth; day.classList.add('tick');
-      const from = shownValue ?? beat.value, to = beat.value, t0 = performance.now();
+      const from = shown ?? beat.values, to = beat.values, t0 = performance.now();
       cancelAnimationFrame(anim);
       const step = now => {   // 숫자가 1.6초에 걸쳐 바뀐다
-        const k = reducedMotion ? 1 : Math.min(1, (now - t0) / 1600), v = Math.round(from + (to - from) * k);
-        num.textContent = v; bar.style.width = `${Math.max(0, Math.min(100, v))}%`;
-        root.classList.toggle('low', v <= 20);
+        const k = reducedMotion ? 1 : Math.min(1, (now - t0) / 1600);
+        for (const g of GAUGE_KEYS) {
+          const v = Math.round(from[g] + (to[g] - from[g]) * k), s = slots[g];
+          s.num.textContent = v; s.bar.style.width = `${Math.max(0, Math.min(100, v))}%`;
+          s.el.classList.toggle('low', v <= 20);
+        }
         if (k < 1) anim = requestAnimationFrame(step);
       };
-      anim = requestAnimationFrame(step); shownValue = to;
+      anim = requestAnimationFrame(step); shown = to;
       count();
     },
   };
