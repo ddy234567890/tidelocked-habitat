@@ -183,6 +183,7 @@ export function createHexBoard(root, { onPick, onDecide }) {
 
     let i = 0;
     const nodes = steps.map((step, k) => step.status === 'locked' ? '' : step.choices.map(c => nodeSvg(step, c, pos[c.id], i++, k)).join('')).join('');
+    hideTip();   // 판을 다시 그리면 마우스 아래 토큰이 새것으로 바뀌어 '떠남' 신호가 안 오므로, 설명 팝업을 먼저 닫는다
     content.innerHTML = `<g class="hb-lattice">${lattice}</g><g>${edges}</g><g>${beams}</g>${ghosts.map(ghostSvg).join('')}${nodes}<g class="hb-comet" style="opacity:0" aria-hidden="true"><circle class="c0" r="14"/><circle class="c1" r="6"/><circle class="c2" r="3"/></g>`;
 
     // 새 단계가 열렸으면: 앞 빛줄기가 닿은 뒤 → 후보 선이 그려지고 → 토큰이 차례로 켜진다
@@ -380,6 +381,8 @@ export function createHexBoard(root, { onPick, onDecide }) {
   svg.addEventListener('pointerout', e => { const n = e.target.closest('.hb-node'); if (n && !n.contains(e.relatedTarget)) hideTip(); });
   svg.addEventListener('focusin', e => { const n = e.target.closest('.hb-node'); if (n && n.matches(':focus-visible')) showTip(n); });
   svg.addEventListener('focusout', hideTip);
+  svg.addEventListener('pointerleave', hideTip);   // 판 밖으로 나가면 늘 닫는다
+  svg.addEventListener('pointermove', e => { if (!e.target.closest('.hb-node')) hideTip(); });   // 토큰 사이 빈 곳에서도 닫는다
   decideButton.addEventListener('click', () => {
     if (decideButton.disabled || cheering) return;
     if (allDone(state)) cheer(); else onDecide();
