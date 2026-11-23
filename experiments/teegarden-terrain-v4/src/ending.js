@@ -270,6 +270,7 @@ function clearScreen() {
   document.querySelectorAll('.crew-modal, .data-modal').forEach(el => { el.hidden = true; });
   document.body.classList.add('ending-mode');
   inBase = true;
+  window.terrainEnding?.settleAll();   // 5주차 선지도 1~4주차처럼 면으로 (main.js)
 }
 // 마지막 장면 (2026-11-23 사용자: 행성으로 빠지면 그냥 공만 남아 심각하다 → 기지와 사람으로 끝낸다).
 // 카메라는 기지에서 조금만 물러나고, 결말마다 기지가 그 결말의 모습으로 남는다. 결말 칸은 오른쪽에 붙어 기지를 가리지 않는다.

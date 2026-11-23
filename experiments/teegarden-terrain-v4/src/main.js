@@ -376,6 +376,11 @@ try {
     // 카드를 누르면 먼저 지금까지 지은 기지 전체(물 흐름·물이 나는 곳 포함)가 들어오게 물러서서 보여 준다 (2026-11-11 사용자 요청)
     if (added) focusAssets(true);
   }
+  // 엔딩(src/ending.js)이 부른다: 5주차까지 지은 건물을 모두 지난 주차처럼 면으로 바꾼다 (5주차에는 '다음 주로'가 없어 선으로 남았다).
+  // 2026-11-23 사용자 허락으로 main.js 에 이 연결만 더함
+  window.terrainEnding = {
+    settleAll() { [moduleLayer, ...overlayLayers.values()].filter(Boolean).forEach(layer => showPast(layer, true)); },
+  };
   // 단계별 선지: 1단계 위치(아래 A·B·C 카드) → 2단계 짓는 방식 → 3단계 숨 쉴 공기
   function renderStep(stepId, element, visible) {
     element.hidden = !visible;
