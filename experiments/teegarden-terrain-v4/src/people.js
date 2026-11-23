@@ -13,7 +13,7 @@ import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { mulberry32 } from './terrain.js';
 import { floorAt, WEEKS } from './choices.js';
 import { blueStep, cream, orange } from './palette.js';
-import { Person, placeOf, envFor, STATUS_NAMES, ACT_MET } from './peopleSim.js';
+import { Person, placeOf, envFor, STATUS_NAMES, ACT_MET, INDOOR } from './peopleSim.js';
 import { prepareRig, createSkinner } from './pointRig.js';
 import { GAME } from './face/physiology.js';
 import humanUrl from './models/human.glb';
@@ -28,6 +28,14 @@ const GROUP_R = 0.8;         // 무리로 놓을 때 원 반지름
 const MAX_PEOPLE = 30;
 const CREW = 10;            // 지역에 들어가면 처음부터 대원 10명이 있다 (2026-11-18 사용자: 10명 고정, 더하기·치우기 단추 없음)
 const CREW_R = [1.6, 3.6];
+// 우주복 (2026-11-23 사용자: 바깥 산소 14% 에 맨몸으로 다니는 건 이상하다 → 바깥에선 모두 우주복, 위치마다 버티는 시간이 다르다).
+// 바깥에 나간 사람은 우주복 덕에 처음엔 집 안과 같은 환경(INDOOR)을 겪고, 바깥에 있는 시간만큼 우주복이 한계에 가까워져
+// 바깥 환경이 서서히 몸에 닿는다: 바깥에 있은 시간 ÷ (SUIT_TIME[지대] × 버티는 힘) 만큼 실내 값 → 바깥 값으로 바뀐다.
+//   평원 20초: 60°C 라 냉각이 금방 한계 → 10초쯤 힘들어하고 15초쯤부터 쓰러진다
+//   능선 40초: 덜 더워서 천천히, 힘들어하기만 한다 / 동굴: 바위가 열을 막아 한계 없음 (null)
+// 집 안에 들어가면 우주복이 다시 채워진다 (바깥에 있던 시간이 SUIT_RECHARGE 배 빠르게 줄어든다)
+const SUIT_TIME = { plain: 20, ridge: 40, lavaTube: null };
+const SUIT_RECHARGE = 2;
 // 대원마다 기본 표정 (얼굴 모델은 하나라서 눈썹·눈·입꼬리 기본값으로 사람을 구별한다)
 const FACES = [
   { weights: { browDownLeft: 0.25, browDownRight: 0.25, mouthPressLeft: 0.3, mouthPressRight: 0.3 } },
@@ -191,11 +199,11 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
   function spawnCrew(homes) {
     const r = mulberry32(4242);
     for (let i = 0; i < CREW; i++) {
-      // 기지가 있으면 집 안에 나눠 세운다 (바깥은 덥거나 숨이 차서 금방 쓰러진다). 기지가 없으면 가운데 둘레에
+      // 기지가 있으면 집 안에 나눠 세운다. 기지가 없으면 가운데 둘레에 (바깥에선 우주복이 SUIT_TIME 만큼 버틴다)
       const h = homes[i % homes.length];
       if (h) { const a = r() * Math.PI * 2, d = h.r * 0.7 * Math.sqrt(r()); add(h.at[0] + Math.cos(a) * d, h.at[2] + Math.sin(a) * d); continue; }
       const a = i / CREW * Math.PI * 2 + (r() - 0.5) * 0.5, d = CREW_R[0] + r() * (CREW_R[1] - CREW_R[0]);
-      add(Math.cos(a) * d, Math.sin(a) * d);
+      add(Math.cos(a) * d, Math.sin(a) * d);   // 기지가 아직 없으면 우주복을 입고 착륙 자리 둘레에 선다 (아래 stepBodies 의 우주복)
     }
     focus(people[0] ?? null);
   }
@@ -290,7 +298,7 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
   function showTip(p) {
     const e = p.env, s = p.state;
     if (!e || !s) return hideTip();
-    const where = p.place === 'home' ? '집 안' : '바깥';
+    const where = p.place === 'home' ? '집 안' : `바깥 · 우주복 ${SUIT_TIME[site] ? Math.round((p.suit ?? 1) * 100) + '%' : '여유'}`;
     const status = STATUS_NAMES[p.status] + (p.cause && p.status !== 'ok' ? ` · ${p.cause}` : '');
     tip.innerHTML = `<small>${p.name} · ${where} · ${e.tempC.toFixed(1)}°C · 산소 ${e.oxygenPct.toFixed(1)}%</small><b>${status}</b><span>${ACT_NAMES[p.act] ?? ''}${DEVICE_ACTS.has(p.act) && p.device ? ` · ${p.device.name}` : ''}</span><span>산소포화도 ${s.spo2Pct.toFixed(0)}% · 체온 ${s.coreC.toFixed(1)}° · 버티는 힘 ${p.fit.toFixed(1)}${p.selfish ? ' · 급한 성격' : ''}</span>`;
     tip.hidden = false; shown = p;
@@ -325,7 +333,18 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     for (const p of people) {
       p.place = placeOf(p.x, p.z, homes);
       const before = p.status;
-      p.step(envFor({ site, place: p.place, stats: s.stats, decided: s.decided, met: ACT_MET[p.act] ?? 2 }));
+      const met = ACT_MET[p.act] ?? 2;
+      let env = envFor({ site, place: p.place, stats: s.stats, decided: s.decided, met });
+      // 우주복: 바깥에 있은 시간(p.outside)이 쌓일수록 바깥 환경이 서서히 몸에 닿는다. 집 안에선 다시 채워진다
+      const limit = SUIT_TIME[site];
+      if (p.place === 'home') p.outside = Math.max(0, (p.outside ?? 0) - GAME.dt * SUIT_RECHARGE);
+      else {
+        p.outside = (p.outside ?? 0) + GAME.dt;
+        const k = limit ? Math.min(1, p.outside / (limit * p.fit)) : 0;
+        p.suit = 1 - k;   // 우주복 남은 정도 (정보창에 보인다)
+        env = { tempC: INDOOR.tempC + (env.tempC - INDOOR.tempC) * k, oxygenPct: INDOOR.oxygenPct + (env.oxygenPct - INDOOR.oxygenPct) * k, activityMET: INDOOR.activityMET + (env.activityMET - INDOOR.activityMET) * k };
+      }
+      p.step(env);
       if (p.status !== before) changed = true;
     }
     return changed;
@@ -546,9 +565,10 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
     if (tools.hidden) { hideTip(); setHover(false); tag.hidden = true; if (mode) setMode(null); lastFrame = null; return; }
     const now = time / 1000, dt = Math.min(0.1, now - (lastFrame ?? now)); lastFrame = now;
     if (!model) return;
-    // 짓는 방식을 결정했으면 집 자리가 들어온 뒤에 세운다 (그래야 집 안에 선다)
-    // 대원은 기지(집)가 생긴 뒤에 집 안으로 들어온다: 기지 없이 바깥(55~66°C, 산소 14%)에 세우면 몇 초 만에 모두 쓰러진다 (2026-11-18 사용자: 처음부터 안 됨)
-    if (!people.length && s.homes?.length) spawnCrew(s.homes);
+    // 지역에 들어가면 바로 대원 10명을 세운다 (2026-11-23 사용자: 얼굴 연결이 1-1 위치 고르기부터 떠야 함).
+    // 기지(집)가 있으면 집 안에, 아직 없으면 착륙 자리 둘레 바깥에 우주복을 입고 서 있다가(SUIT_TIME 만큼 버티다 서서히 지침),
+    // 집이 생기면 moveIn 으로 걸어 들어간다. (예전에는 바로 바깥 환경을 겪어 몇 초 만에 모두 쓰러져서, 2026-11-18 에는 집이 생긴 뒤에만 세웠다)
+    if (!people.length) spawnCrew(s.homes ?? []);
     for (const p of people) think(p, dt);
     // 부축받는 사람은 데려가는 사람 오른쪽에 붙어 같은 쪽을 본다
     for (const p of people) if (p.carrying) {

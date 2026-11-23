@@ -36,7 +36,7 @@ function currentEnv() {
 const body = createBodyLoop({ getEnv: currentEnv });
 
 // 얼굴의 주인: 지역 화면의 대원 10명 중 마우스를 올린(또는 가장 최근에 올렸던) 사람 (people.js 가 'crew-focus' 로 알린다).
-// 그 사람의 몸 상태를 그대로 보여 준다. 아직 대원이 없으면(행성 화면) 바깥 공기를 마시는 가상의 대원
+// 그 사람의 몸 상태를 그대로 보여 준다. 아직 대원이 없으면(행성 화면) 우주복 없이 바깥 공기를 마시는 가상의 대원 (진짜 대원은 바깥에서 우주복을 입는다, people.js SUIT_TIME)
 let person = null;
 // 마우스가 대원 위에 있으면 얼굴이 밝게, 떼면 마지막 대원 얼굴이 흐리게 남는다. 아직 아무도 가리키지 않았으면 안내 문구
 let hovering = false, everHovered = false, pinned = null;
@@ -45,11 +45,13 @@ addEventListener('crew-pin', e => { pinned = e.detail.person; everHovered = true
 addEventListener('crew-hover', e => { hovering = e.detail.on; if (hovering) everHovered = true; renderIdle(); renderDetails(); });
 // 얼굴 위 왼쪽 위 글씨: 고정 여부와 상태 (제목줄은 좁아서 대원 이름만 둔다)
 const caption = document.createElement('span'); caption.className = 'crew-caption'; caption.hidden = true;
+queueMicrotask(() => { renderIdle(); renderDetails(); });   // 맨 처음(대원이 생기기 전)부터 대기 화면으로 시작한다
 function renderIdle() {
   if (!caption.isConnected) $('#crew-slot').append(caption);
   const slot = $('#crew-slot'); if (!hint.isConnected) slot.append(hint);
   const live = hovering || (pinned && person === pinned);   // 마우스를 올렸거나, 고른 대원이면 밝게
-  slot.classList.toggle('crew-idle', Boolean(person) && !live);
+  // 대기 화면(흐린 얼굴 + '대기'): 맨 처음 아직 대원이 없을 때부터, 대원이 생긴 뒤에는 마우스를 떼었을 때 (2026-11-23 사용자: 맨 처음부터 뜨게)
+  slot.classList.toggle('crew-idle', !person || !live);
   slot.classList.toggle('crew-pinned', Boolean(pinned) && person === pinned);
   hint.hidden = !person || everHovered;
 }
@@ -137,8 +139,8 @@ function renderDetails() {
     : level ? `${name} · ${LEVEL_NAMES[level]}` : '정상';
   const live = hovering || (pinned && person === pinned);
   $('#crew-state').textContent = person ? person.name : text;
-  caption.hidden = !person;
-  if (person) caption.textContent = (pinned === person ? '고정 · ' : '') + (live ? text : '대기');
+  caption.hidden = false;
+  caption.textContent = person ? (pinned === person ? '고정 · ' : '') + (live ? text : '대기') : '대기';
   caption.dataset.lv = person ? { ok: 0, tired: 1, down: 2 }[person.status] : 0;
   $('#crew-title').textContent = person ? `${person.name} 상태` : '대원 상태';
   for (const el of [$('#crew-status')]) { el.textContent = text; el.dataset.lv = person ? { ok: 0, tired: 1, down: 2 }[person.status] : level; }
