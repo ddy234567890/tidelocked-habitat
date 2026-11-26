@@ -2,7 +2,7 @@
 // '메모장'을 열면 주차마다 고른 노드를 이은 경로만 보여 준다. 노드에 마우스를 올리거나 한 번 누르면 정보가 뜬다.
 // 기록은 이 판 안에서만 한다 (main.js 는 그대로). 새로고침하면 처음부터 다시 적는다.
 import { WEEKS } from './choices.js';
-import { ICONS } from './hexIcons.js';
+import { ICONS, iconOf } from './hexIcons.js';
 import './field-notes.css';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -54,7 +54,7 @@ export function createFieldNotes() {
       const c = s.choice;
       nodes += `<g class="fn-node${s.done ? ' done' : ''}" transform="translate(${x} ${Y})" ${c ? `tabindex="0" role="button" data-w="${wk}" data-i="${i}" aria-label="${esc(s.short)}: ${esc(c.label)}"` : 'aria-hidden="true"'}>
         <polygon class="fn-hex" points="${hex(R)}"/>
-        ${c ? `<use href="#fn-ic-${ICONS[c.id] ? c.id : '_'}" x="-11" y="-11" width="22" height="22" class="fn-icon"/><text class="fn-name" y="${R + 20}">${esc(c.label)}</text>` : '<text class="fn-q" y="6">?</text>'}
+        ${c ? `<use href="#fn-ic-${iconOf(c.id)}" x="-11" y="-11" width="22" height="22" class="fn-icon"/><text class="fn-name" y="${R + 20}">${esc(c.label)}</text>` : '<text class="fn-q" y="6">?</text>'}
       </g>`;
     });
     return `<svg class="fn-map" viewBox="0 0 ${width} ${H}" width="${width}" height="${H}" xmlns="${SVG}">${lines}${nodes}</svg>`;

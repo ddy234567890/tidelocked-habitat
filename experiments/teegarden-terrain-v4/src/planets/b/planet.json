@@ -1,0 +1,79 @@
+{
+  "notes": {
+    "target": "난이도 목표 (%). scripts/balance.mjs check 가 npm test 에서 확인한다",
+    "difficulty": "난이도는 이 파일(사건 수·세기·시간)과 gauges.json(시작 값·매주 소비), judge.json(입주 후 수요)으로만 조절한다. 엔딩 기준(40·50·25)은 모든 행성이 같고 endingJudge.js 에 있다",
+    "severity": "사건 피해 세기. 줄어드는 값(음수)에만 곱한다 (events.js harsh). 2.5 면 적힌 피해의 2.5배. b 는 5 였는데 2026-11-24 사용자 승인으로 2.5 로 낮췄다 (모의: 무작위 선지에서 안정적 이주 0.2% → 3.1%, 신중한 선지에서 1.2% → 약 15%)",
+    "eventsPerGame": "한 판에 사건이 나오는 주의 수 (2~5주차 중)",
+    "goodPerGame": "있으면 한 판 사건 중 그만큼은 꼭 좋은 소식 (b 는 안 쓴다)",
+    "secondChance": "사건이 나오는 주에 하나 더 나올 확률",
+    "timerSeconds": "나쁜 사건의 대응 제한 시간",
+    "storage": "이 브라우저에 남기는 사건 기록장·결말 모으기 이름. b 는 이미 저장된 기록을 지키려고 예전 이름 그대로 쓴다. 다른 행성은 이름에 행성 id 를 붙인다",
+    "siteCopy": "지역 화면에 뜨는 이름과 설명"
+  },
+  "id": "b",
+  "name": "Teegarden b",
+  "level": "쉬움",
+  "ready": true,
+  "target": {
+    "아무거나": {
+      "E1": [
+        0,
+        5
+      ]
+    },
+    "신중": {
+      "E5": [
+        11,
+        19
+      ]
+    }
+  },
+  "events": {
+    "severity": 2.5,
+    "eventsPerGame": 3,
+    "secondChance": 0,
+    "timerSeconds": 20
+  },
+  "storage": {
+    "events": "tidelocked.events.seen",
+    "endings": "tidelocked.endings.seen"
+  },
+  "siteCopy": {
+    "plain": {
+      "letter": "A",
+      "title": "현무암 평원",
+      "text": "낮게 겹친 용암엽과 오래된 충돌 흔적. 중앙의 평탄면을 거주 후보지로 남겼습니다.",
+      "tag": "주거 후보지",
+      "sub": "중앙 평탄면",
+      "position": [
+        0,
+        0,
+        0
+      ]
+    },
+    "lavaTube": {
+      "letter": "B",
+      "title": "용암동굴",
+      "text": "아치 입구에서 내려가 큰 방과 좁은 목이 번갈아 이어지고, 옆 굴이 갈라집니다. 천장에서 떨어진 바위가 큰 방 바닥에 쌓여 있습니다.",
+      "tag": "용암 유동 통로",
+      "sub": "아치 입구 · 큰 방 · 옆 굴 · 바위 더미",
+      "position": [
+        2,
+        -2,
+        -0.5
+      ]
+    },
+    "ridge": {
+      "letter": "C",
+      "title": "황혼 능선",
+      "text": "굽이치는 마루에서 마른 완사면과 곁가지 능선이 갈라져 내려가고, 반대편은 침식 홈과 퇴적 부채, 얼음 골짜기와 낮은 지맥으로 이어집니다.",
+      "tag": "거주 가능한 정상 띠",
+      "sub": "",
+      "position": [
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}

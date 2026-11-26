@@ -2,12 +2,12 @@
 // 선지를 글 카드 대신 육각 토큰으로 보여 준다. 단계마다 벌집 묶음 하나, 고른 토큰끼리는 빛줄기로 잇는다.
 // 이 판은 '보여 주기'만 한다: 무엇을 고를 수 있는지·결정했는지는 main.js 가 정해 update() 로 넘기고,
 // 누르면 onPick / onDecide 로 main.js 에 돌려준다 (기존 카드·결정 버튼과 같은 함수를 부른다)
-import { ICONS } from './hexIcons.js';
+import { ICONS, iconOf } from './hexIcons.js';
 import { createFieldNotes } from './fieldNotes.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const SHORT = { location: '위치', module: '짓는 방식', oxygen: '산소', power: '발전', storage: '전기 저장', heat: '열 빼기', source: '물 구하기', reuse: '물 재사용', share: '물 나누기', farm: '농장', balance: '비축·확장', crop: '작물', fix: '보강', pool: '사고 대비', arrive: '입주' };
-export const shortName = step => SHORT[step.id] ?? step.short ?? step.id;
+export const shortName = step => step.boardName ?? SHORT[step.id] ?? step.short ?? step.id;
 
 // 판 크기 (화면 픽셀과 1:1 로 그린다 → 픽셀 폰트가 뭉개지지 않는다)
 const R = 52, SQ = Math.sqrt(3), HW = SQ / 2 * R, PAD = 4;   // HW: 뾰족한 육각의 가로 반폭
@@ -120,20 +120,20 @@ export function createHexBoard(root, { onPick, onDecide }) {
   let L = null, cam = null, focus = -1, lookAt = null, tween = null, sig = '', lastWant = -1;
   const born = new Map();
   const still = matchMedia('(prefers-reduced-motion: reduce)');
-  const icon = id => (ICONS[id] ? id : '_');
-  const findChoice = id => { for (const step of state?.steps ?? []) { const c = step.choices.find(x => x.id === id); if (c) return { step, choice: c }; } };
+  const icon = iconOf;
+  const findChoice = id => { for (const step of state?.steps ?? []) { const c = step.choices.find(x => x.id === id); if (c) return { step, choice: c }; const l = step.locked?.find(x => x.id === id); if (l) return { step, choice: l, locked: true }; } };
 
   function layout(steps) {
-    const rows = Math.max(1, ...steps.map(s => rowsFor(s.choices.length)));
+    const rows = Math.max(1, ...steps.map(s => rowsFor(s.choices.length + (s.locked?.length ?? 0))));
     const height = TOP + 2 * R + (rows - 1) * RH + 10;
     const pos = {}, ghosts = [], centers = [], lefts = [];
     steps.forEach((step, k) => {
       const c0 = k * GROUP_COLS;
       const shown = step.status !== 'locked';
-      const n = shown ? step.choices.length : 2, nr = rowsFor(n);   // 아직 열리지 않은 단계는 "?" 두 칸만 (몇 개인지 미리 알리지 않는다)
+      const list = shown ? [...step.choices, ...(step.status === 'open' ? step.locked ?? [] : [])] : [], n = shown ? list.length : 2, nr = rowsFor(n);   // 아직 열리지 않은 단계는 "?" 두 칸만 (몇 개인지 미리 알리지 않는다)
       const r0 = Math.floor((rows - nr) / 2);
       const ps = Array.from({ length: n }, (_, i) => { const r = r0 + Math.floor(i / PER_ROW); return { x: cellX(c0 + i % PER_ROW, r), y: cellY(r) }; });
-      ps.forEach((p, i) => { if (shown) pos[step.choices[i].id] = p; else ghosts.push(p); });
+      ps.forEach((p, i) => { if (shown) pos[list[i].id] = p; else ghosts.push(p); });
       const xs = ps.map(p => p.x), ys = ps.map(p => p.y);
       centers.push({ x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 });  // 화면은 묶음마다 이 가운데를 비춘다
       lefts.push(Math.min(...xs));
@@ -155,6 +155,12 @@ export function createHexBoard(root, { onPick, onDecide }) {
         <use href="#hb-ic-${icon(c.id)}" class="icon" x="-16" y="${lines.length === 1 ? -26 : -30}" width="32" height="32"/>${label}
       </g></g>`;
   }
+  // 조건이 안 맞아 잠긴 선지: 흐린 토큰과 자물쇠. 누를 수 없고, 마우스를 올리면 여는 방법이 뜬다
+  const lockedSvg = (step, c, p) => {
+    const lines = wrap(c.label), ty = lines.length === 1 ? 24 : 20;
+    return `<g class="hb-node s-lock" data-id="${esc(c.id)}" data-step="${esc(step.id)}" tabindex="0" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})" aria-label="${esc(c.label)} (잠김: ${esc(c.lockHint)})" style="opacity:.45">
+      <g class="body"><polygon class="outer" points="${hex(R)}" stroke-dasharray="4 4"/><g class="lock" transform="translate(-8 -26)" fill="none" stroke="#6A8CC8" stroke-width="1.6"><rect x="0" y="8" width="16" height="12"/><path d="M3 8V5a5 5 0 0 1 10 0v3"/></g>${lines.map((l, j) => `<text y="${ty + j * 13}">${esc(l)}</text>`).join('')}</g></g>`;
+  };
   const ghostSvg = p => `<g class="hb-ghost" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})" aria-hidden="true"><g class="body">
     <polygon class="outer" points="${hex(R)}"/><g class="lock" transform="translate(-8 -16)"><rect x="0" y="6" width="16" height="12"/><path d="M4 6V4a4 4 0 0 1 8 0v2"/></g><text y="24">?</text></g></g>`;
 
@@ -182,7 +188,7 @@ export function createHexBoard(root, { onPick, onDecide }) {
     });
 
     let i = 0;
-    const nodes = steps.map((step, k) => step.status === 'locked' ? '' : step.choices.map(c => nodeSvg(step, c, pos[c.id], i++, k)).join('')).join('');
+    const nodes = steps.map((step, k) => step.status === 'locked' ? '' : step.choices.map(c => nodeSvg(step, c, pos[c.id], i++, k)).join('') + (step.status === 'open' ? step.locked ?? [] : []).map(c => lockedSvg(step, c, pos[c.id])).join('')).join('');
     hideTip();   // 판을 다시 그리면 마우스 아래 토큰이 새것으로 바뀌어 '떠남' 신호가 안 오므로, 설명 팝업을 먼저 닫는다
     content.innerHTML = `<g class="hb-lattice">${lattice}</g><g>${edges}</g><g>${beams}</g>${ghosts.map(ghostSvg).join('')}${nodes}<g class="hb-comet" style="opacity:0" aria-hidden="true"><circle class="c0" r="14"/><circle class="c1" r="6"/><circle class="c2" r="3"/></g>`;
 
@@ -357,7 +363,7 @@ export function createHexBoard(root, { onPick, onDecide }) {
       ${c.line ? `<p>${esc(c.line)}</p>` : ''}
       ${c.gain ? `<div class="t-row"><span>얻는 것</span><span>${esc(c.gain)}</span></div>` : ''}
       ${c.cost ? `<div class="t-row cost"><span>감수</span><span>${esc(c.cost)}</span></div>` : ''}
-      ${hint ? `<div class="t-hint">${hint}</div>` : ''}`;
+      ${f.locked ? `<div class="t-hint">잠김 · ${esc(c.lockHint)}</div>` : hint ? `<div class="t-hint">${hint}</div>` : ''}`;
     tip.classList.add('on');
     const b = root.getBoundingClientRect(), r = node.getBoundingClientRect();
     let left = r.right - b.left + 8;

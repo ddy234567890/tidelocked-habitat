@@ -1,11 +1,11 @@
-// 돌발 사건 데이터 (src/events.json) 와 게이지 반영 (gauges.js extras) 검사
+// 돌발 사건 데이터 (src/planets/b/events.json) 와 게이지 반영 (gauges.js extras) 검사
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ALL_STEPS } from '../src/choices.js';
 import { gaugeState, GAUGE_KEYS } from '../src/gauges.js';
 
 // events.js 는 document 를 쓰므로 순수 함수만 같은 규칙으로 다시 확인한다
-const data = JSON.parse(readFileSync(new URL('../src/events.json', import.meta.url)));
+const data = JSON.parse(readFileSync(new URL('../src/planets/b/events.json', import.meta.url)));
 const steps = Object.fromEntries(ALL_STEPS.map(step => [step.id, new Set(step.choices.map(choice => choice.id))]));
 const ids = new Set(data.events.map(event => event.id));
 const keys = new Set([...GAUGE_KEYS, 'lowest']);

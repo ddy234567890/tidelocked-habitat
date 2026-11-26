@@ -247,5 +247,92 @@
       "첫 수확",
       "이 행성에서 자란 음식을 거뒀다"
     ]
-  }
+  },
+  "leaveScene": {
+    "water": "빈 물탱크 앞에서 마지막 인원이 철수를 준비한다.",
+    "food": "빈 식량 선반을 뒤로하고 마지막 인원이 철수를 준비한다.",
+    "power": "전력이 끊긴 기지에서 손전등을 든 인원이 철수를 준비한다.",
+    "air": "마지막 산소통을 나눠 쓰며 인원이 철수를 준비한다."
+  },
+  "leaveMove": {
+    "M1": {
+      "line": "전원이 한꺼번에 입주했던 기지에서, 전원이 다시 이주선에 오른다.",
+      "cost": "기지에는 불이 켜진 채 아무도 남지 않았다."
+    },
+    "M2": {
+      "line": "먼저 온 절반은 이주선으로 돌아가고, 2주 늦게 지구를 떠난 나머지 절반은 도착을 앞두고 착륙 중지 신호를 받는다.",
+      "cost": "늦게 떠난 절반은 아직 돌아갈 곳 없이 항해 중이다."
+    }
+  },
+  "badgeRules": [
+    {
+      "badge": "sturdy",
+      "codes": [
+        "E4",
+        "E5"
+      ],
+      "requires": {
+        "fix": [
+          "U2"
+        ]
+      }
+    },
+    {
+      "badge": "loop",
+      "requires": {
+        "oxygen": [
+          "O2"
+        ],
+        "reuse": [
+          "R2"
+        ]
+      }
+    },
+    {
+      "badge": "reactor",
+      "requires": {
+        "power": [
+          "P2"
+        ]
+      }
+    },
+    {
+      "badge": "staged",
+      "codes": [
+        "E2",
+        "E3",
+        "E4",
+        "E5"
+      ],
+      "requires": {
+        "arrive": [
+          "M2"
+        ]
+      }
+    },
+    {
+      "badge": "plain",
+      "requires": {
+        "location": [
+          "A"
+        ]
+      }
+    },
+    {
+      "badge": "cave",
+      "requires": {
+        "location": [
+          "B"
+        ]
+      }
+    },
+    {
+      "badge": "ridge",
+      "requires": {
+        "location": [
+          "C"
+        ]
+      }
+    }
+  ]
 }

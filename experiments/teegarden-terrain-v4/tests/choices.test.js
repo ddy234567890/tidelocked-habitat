@@ -5,7 +5,7 @@ import { PILLAR_SPOTS } from '../src/lavaTube.js';
 import { buildCaveSeal, caveSection, SEAL_STATIONS } from '../src/lavaTube.js';
 import { ridgeFrame } from '../src/ridge.js';
 
-const definitions = JSON.parse(readFileSync(new URL('../src/sites.json', import.meta.url)));
+const definitions = JSON.parse(readFileSync(new URL('../src/planets/b/sites.json', import.meta.url)));
 const placement = readFileSync(new URL('../src/placement.js', import.meta.url), 'utf8');
 
 // 단계 순서와 선지가 가리키는 레이어·모델이 모두 있어야 한다
@@ -77,7 +77,7 @@ for (const step of choiceData.steps) {
   }
 }
 // 화면 칸에 채우는 값: 모르는 값은 지어내지 않고 null
-const hud = JSON.parse(readFileSync(new URL('../src/hud.json', import.meta.url)));
+const hud = JSON.parse(readFileSync(new URL('../src/planets/b/hud.json', import.meta.url)));
 assert.ok(hud.temperature.night < hud.temperature.day, '밤 최저 < 낮 최고');
 for (const site of Object.keys(definitions)) if (site !== 'planet' && hud.sites[site]) assert.ok(hud.sites[site].temperature[0] <= hud.sites[site].temperature[1], `${site} 기온 범위`);
 assert.ok(hud.oxygen === null || typeof hud.oxygen === 'number');

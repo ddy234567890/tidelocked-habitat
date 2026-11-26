@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { fromGameStats } from '../src/face/envInput.js';
 import { applyProtection } from '../src/face/protection.js';
 import { Physiology } from '../src/face/physiology.js';
-import hud from '../src/hud.json' with { type: 'json' };
+import hud from '../src/planets/b/hud.json' with { type: 'json' };
 
 // 기온만 정해진 값으로 넣고 나머지는 평소 공기일 때의 신체 상태 (crew.js 와 같은 방식)
 function run(stats, seconds) {

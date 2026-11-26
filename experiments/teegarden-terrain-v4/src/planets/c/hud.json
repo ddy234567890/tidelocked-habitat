@@ -1,0 +1,32 @@
+{
+  "notes": "c 의 평형 온도는 약 −64°C [자료: Dreizler 외 2024 요약, 표 원문 대조 필요]. 지역별 기온은 그 둘레로 나눈 [설정]. 바깥 공기의 산소는 정하지 않아 null (화면에는 —)",
+  "year": "7777",
+  "crewName": null,
+  "temperature": {
+    "night": -75,
+    "day": -58,
+    "now": null
+  },
+  "oxygen": null,
+  "outsideOxygen": null,
+  "sites": {
+    "basin": {
+      "temperature": [
+        -64,
+        -58
+      ]
+    },
+    "rift": {
+      "temperature": [
+        -66,
+        -60
+      ]
+    },
+    "shore": {
+      "temperature": [
+        -75,
+        -68
+      ]
+    }
+  }
+}

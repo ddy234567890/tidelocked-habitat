@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import definitions from './sites.json' with { type: 'json' };
+import './planet-ui.js';
 import { buildPlain } from './plain.js';
+import { buildBasin, buildRift, buildShore } from './coldLands.js';
 import { buildLavaTube } from './lavaTube.js';
 import { buildRidge } from './ridge.js';
 import { buildSurroundings, joinPoints } from './surroundings.js';
-import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor, flowsFor, roomAirFor, floorAt, surfaceSpot } from './choices.js';
+import { availableChoices, lockedChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor, flowsFor, roomAirFor, floorAt, surfaceSpot } from './choices.js';
 import { buildFlowPoints, pairSpots, outSpots, waterSources } from './flows.js';
-import hud from './hud.json' with { type: 'json' };
+import { PLANET, restartQuery } from './planets/index.js';
 import { openBriefing } from './intro.js';
 import { createHexBoard, shortName } from './hexBoard.js';
 import { setCrewSite, setCrewStats } from './crew.js';
@@ -20,18 +21,16 @@ import { smooth, clamp, mulberry32 } from './terrain.js';
 import { orange } from './palette.js';
 import { siteFrame, surfacePose, LOCAL_SCALE, poseQuaternion, prepareFlight, flightSample } from './navigation.js';
 import { buildStarfield, buildTransitSurface, transitionTiming, assemblyBrightness } from './effects.js';
+const definitions = PLANET.sites;
+const { hud } = PLANET;
 
 const POINT_COUNT = 30000;
 const POINT_SIZE = 0.075;
 const LINE_NEAR = 16; // 에셋 선 점: 카메라가 이 거리(지역 단위)보다 가까우면 점을 거리에 비례해 줄인다
 const LINE_BASE = 0.5; // 에셋 선 점은 지형 점의 이 비율로 늘 가늘게 그린다
 const LINE_MIN = 0.5; // 가까이에서 더 줄이는 가장 작은 비율. LINE_BASE × LINE_MIN × POINT_SIZE 가 placement.js EDGE_SPACING 의 1.5배보다 커야 선이 끊기지 않는다
-const BUILDERS = { plain: buildPlain, lavaTube: buildLavaTube, ridge: buildRidge };
-const COPY = {
-  plain: { letter: 'A', title: '현무암 평원', text: '낮게 겹친 용암엽과 오래된 충돌 흔적. 중앙의 평탄면을 거주 후보지로 남겼습니다.', tag: '주거 후보지', sub: '중앙 평탄면', position: [0, 0, 0] },
-  lavaTube: { letter: 'B', title: '용암동굴', text: '아치 입구에서 내려가 큰 방과 좁은 목이 번갈아 이어지고, 옆 굴이 갈라집니다. 천장에서 떨어진 바위가 큰 방 바닥에 쌓여 있습니다.', tag: '용암 유동 통로', sub: '아치 입구 · 큰 방 · 옆 굴 · 바위 더미', position: [2, -2, -0.5] },
-  ridge: { letter: 'C', title: '황혼 능선', text: '굽이치는 마루에서 마른 완사면과 곁가지 능선이 갈라져 내려가고, 반대편은 침식 홈과 퇴적 부채, 얼음 골짜기와 낮은 지맥으로 이어집니다.', tag: '거주 가능한 정상 띠', sub: '', position: [0, 0, 0] }
-};
+const BUILDERS = { plain: buildPlain, lavaTube: buildLavaTube, ridge: buildRidge, basin: buildBasin, rift: buildRift, shore: buildShore };
+const COPY = PLANET.siteCopy;
 const $ = selector => document.querySelector(selector);
 const host = $('#canvas-host'), stage = $('#stage');
 
@@ -54,7 +53,8 @@ for (const choice of choiceData.steps[0].choices) {
   if (button) fillCard(button, choice);
 }
 $('#hud-year').textContent = 'YEAR ' + hud.year;
-$('#fact-day').textContent = hud.temperature.day + '°C'; $('#fact-night').textContent = hud.temperature.night + '°C';
+if ($('#fact-day')) $('#fact-day').textContent = hud.temperature.day + '°C';
+if ($('#fact-night')) $('#fact-night').textContent = hud.temperature.night + '°C';
 let mode = 'planet', currentSite = null, transition = null, localPoints = null, localSection = false, caveInterior = false;
 const cache = new Map();
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -200,7 +200,7 @@ try {
       if (!choice) continue;
       const id = layer === moduleLayer ? null : [...overlayLayers].find(([, l]) => l === layer)?.[0];
       if (id ? choice.overlays?.includes(id) : choice.module && layer === moduleLayer) {
-        const short = { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[step.id] ?? step.short ?? step.label;
+        const short = step.boardName ?? { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[step.id] ?? step.short ?? step.label;
         return { week: w + 1, short, label: choice.label, line: choice.line };
       }
     }
@@ -405,7 +405,7 @@ try {
     if (transition || selection[stepId] === choiceId) return;
     selection = choose(selection, stepId, choiceId); renderSteps(true); syncAssets();
   }
-  const DECIDE_SHORT = { location: '위치', module: '건설 방식', oxygen: '산소 방식' };
+  const DECIDE_SHORT = { location: '위치', module: '건설 방식', oxygen: '산소 방식', ...Object.fromEntries(ALL_STEPS.filter(step => step.boardName).map(step => [step.id, step.boardName])) };
   function decideStep(stepId) {
     if (transition || !selection[stepId]) return;
     decided[stepId] = true; renderSteps(true);
@@ -422,8 +422,9 @@ try {
       if (!done && !opened && (k === 0 || (local && decided[steps[k - 1].id]))) { status = 'open'; opened = true; }
       const isLocation = step.id === 'location';
       const choices = isLocation ? step.choices : status === 'locked' ? [] : availableChoices(step.id, selection);
+      const locked = isLocation || status === 'locked' ? [] : lockedChoices(step.id, selection);
       const selected = isLocation ? (local ? selection.location : null) : selection[step.id] ?? null;
-      return { id: step.id, label: step.label, short: shortName(step), status, selected, choices };
+      return { id: step.id, label: step.label, short: shortName(step), status, selected, choices, locked };
     });
   }
   function updateBoard(local) {
@@ -440,7 +441,7 @@ try {
   function decideButton(stepId) {
     const button = document.createElement('button');
     button.className = 'decide'; button.disabled = !selection[stepId];
-    const short = { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[stepId] ?? ALL_STEPS.find(step => step.id === stepId).short;
+    const short = DECIDE_SHORT[stepId] ?? ALL_STEPS.find(step => step.id === stepId).short;
     button.textContent = '▶ ' + short + ' 결정';
     button.addEventListener('click', () => decideStep(stepId));
     return button;
@@ -478,8 +479,8 @@ try {
     setText($('#hud-temp-out'), range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° ~ ' + hud.temperature.day + '°');
     setText($('#hud-temp'), base ? value('tempC') + '°' : '—');
     // 바깥 산소: 1주차 행성 강의(planet-brief.json)와 같은 약 14% (지구 20.9% 보다 조금 부족해 숨이 찬 정도). hud.json outsideOxygen
-    const outsideO2 = hud.outsideOxygen;
-    setText($('#hud-o2-out'), outsideO2 + '%');
+    const outsideO2 = hud.outsideOxygen ?? '—';
+    setText($('#hud-o2-out'), outsideO2 === '—' ? outsideO2 : outsideO2 + '%');
     setText($('#hud-o2'), indoor ? value('oxygenPct') + '%' : '—');
     renderGauges(local);
     renderWeekSummary(local);
@@ -520,7 +521,7 @@ try {
       $('#fail').hidden = false; $('#fail-restart').focus();
     }
   }
-  $('#fail-restart').addEventListener('click', () => { location.href = location.pathname; });
+  $('#fail-restart').addEventListener('click', () => { location.href = location.pathname + restartQuery; });
   // 왼쪽 주차 탭을 누르면 '현재' 칸 자리에 그 주 요약이 뜬다: 주제 · 목표 · 단계마다 고른 선지 (변화량은 적지 않는다).
   // '현재' 탭을 누르면 게이지·기온·산소 칸으로 돌아온다
   function renderWeekSummary(local) {
@@ -599,7 +600,7 @@ try {
     // 2주차부터는 방금 더한 장치만 비춘다
     const overlays = [...overlayLayers.values()].slice(week > 1 ? -1 : 0);
     const shown = whole ? [moduleLayer, ...overlayLayers.values()] : week > 1 && overlays.length ? overlays : decided.oxygen ? [moduleLayer, ...overlays] : selection.oxygen && overlays.length ? overlays : [moduleLayer];
-    const [anchor, size] = FOCUS[currentSite], center = new THREE.Vector3(...anchor);
+    const [anchor, size] = FOCUS[currentSite] ?? FOCUS.plain, center = new THREE.Vector3(...anchor);
     let radius = size;
     const box = new THREE.Box3();
     for (const layer of shown) if (layer) box.union(new THREE.Box3().setFromBufferAttribute(layer.points.geometry.getAttribute('position')));
@@ -632,7 +633,7 @@ try {
     // 기지 전체 보기: 감싸는 구가 세로·가로 시야 중 좁은 쪽에 여유 15% 를 두고 꼭 들어오는 거리 (멀리 빠져 작아지지 않게)
     const half = Math.min(camera.fov / 2, THREE.MathUtils.radToDeg(Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect))) * Math.PI / 180;
     const distance = whole && !box.isEmpty() ? Math.max(box.getSize(new THREE.Vector3()).length() / 2, 2) * 1.15 / Math.sin(half) : radius * 2.3;
-    const position = target.clone().addScaledVector(direction, distance * FOCUS_ZOOM[currentSite] * LOCAL_SCALE);
+    const position = target.clone().addScaledVector(direction, distance * (FOCUS_ZOOM[currentSite] ?? 1) * LOCAL_SCALE);
     focusTween = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
     controls.autoRotate = false;
   }
@@ -859,7 +860,7 @@ try {
     week = startWeek; startWeek = 1;
     renderSteps(true); syncAssets(); showBrief(week);
   }
-  if (WEEKS[startWeek - 1] && startWeek > 1) selectSite(jump.get('site') ?? 'plain');
+  if (WEEKS[startWeek - 1] && startWeek > 1) selectSite(COPY[jump.get('site')] ? jump.get('site') : Object.keys(COPY)[0]);
   const projected = new THREE.Vector3(), temporary = new THREE.Vector3();
   function labels() {
     if (!transition && mode === 'planet') {

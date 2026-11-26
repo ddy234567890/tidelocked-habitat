@@ -1,20 +1,19 @@
-import week1 from './weeks/week1.json' with { type: 'json' };
-import week2 from './weeks/week2.json' with { type: 'json' };
-import week3 from './weeks/week3.json' with { type: 'json' };
-import week4 from './weeks/week4.json' with { type: 'json' };
-import week5 from './weeks/week5.json' with { type: 'json' };
-import definitions from './sites.json' with { type: 'json' };
+import { PLANET } from './planets/index.js';
 import { plainSurface } from './plain.js';
 import { ridgeSurface, ridgeCrest, ridgeFrame, TOP_HALF_WIDTH } from './ridge.js';
+import { COLD } from './coldLands.js';
 import { caveSection, tubeFrame, tubeSurface, PILLAR_SPOTS } from './lavaTube.js';
+
+const definitions = PLANET.sites ?? {};
+const [week1] = PLANET.weeks;
 
 // 단계별 선지 (플레이테스트 1주차 갈래): 위치(A·B·C) → 짓는 방식(위치마다 2개) → 숨 쉴 공기(3개). 앞 단계를 고르면 다음 단계 선지가 열린다.
 // 선택 상태는 { location, module, oxygen } 이다. 메인 게임 composer.js 의 resolve·requires 규칙과 같다.
 export { week1 as choiceData };
 export const STEP_IDS = week1.steps.map(step => step.id);
 // 주차 파일은 따로 두고 선택 상태 하나에 쌓는다: { location, module, oxygen, power, … }. 그래서 뒤 주차가 앞 주차 선택을 그대로 읽는다.
-// 주차마다 src/weeks/weekN.json 하나. 새 주차는 여기에 추가한다
-export const WEEKS = [week1, week2, week3, week4, week5];
+// 주차마다 src/planets/<행성>/weeks/weekN.json 하나. 새 주차는 그 행성의 index.js 에 추가한다
+export const WEEKS = PLANET.weeks;
 export const ALL_STEPS = WEEKS.flatMap(week => week.steps);
 for (const { layers } of WEEKS.slice(1)) Object.assign(week1.layers.overlay, layers.overlay);
 export const siteLetter = site => week1.sites[site];
@@ -28,6 +27,11 @@ export const textsFor = (items, selection) => (items ?? []).filter(item => meets
 /** 그 단계에서 지금 고를 수 있는 선지 */
 export function availableChoices(stepId, selection) {
   return (ALL_STEPS.find(step => step.id === stepId)?.choices ?? []).filter(choice => isAvailable(choice, selection));
+}
+
+/** 조건이 안 맞아 잠긴 채로 보여 줄 선지 (lockHint 가 있는 것만) */
+export function lockedChoices(stepId, selection) {
+  return (ALL_STEPS.find(step => step.id === stepId)?.choices ?? []).filter(choice => choice.lockHint && !choice.hidden && !meets(choice.requires, selection));
 }
 
 /** 앞 단계를 바꾸면 그 뒤 단계 선택은 지운다 */
@@ -109,8 +113,11 @@ export function roomAirFor(selection, week) {
 }
 
 // 그 지대에서 (x, z) 자리의 바닥 높이. A·C 는 지표, B 는 동굴 바닥(절개면에서 잰 아랫선)
-const plain = plainSurface(definitions.plain);
+// c 지형: 지역 이름이 COLD 에 있으면 그 지표를 쓴다
+const cold = Object.fromEntries(Object.keys(definitions).filter(name => COLD[name]).map(name => [name, COLD[name].surface(definitions[name])]));
+const plain = definitions.plain && plainSurface(definitions.plain); // 지형이 아직 없는 행성은 건너뛴다
 export function floorAt(site, x, z) {
+  if (cold[site]) return cold[site](x, z);
   if (site === 'plain') return Math.hypot(x, z) <= 1.65 ? 0 : plain(x, z);
   if (site === 'ridge') return Math.abs(ridgeFrame(x, z).u) <= TOP_HALF_WIDTH ? 0 : ridgeSurface(x, z, definitions.ridge);
   return caveSection(x, definitions.lavaTube)?.bottom ?? 0;

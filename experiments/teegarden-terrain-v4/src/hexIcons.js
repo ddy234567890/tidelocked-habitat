@@ -1,5 +1,6 @@
 // 육각 토큰 아이콘 (24×24 선 그림, 직접 그림). 선지 id → SVG 조각. 새 선지를 더하면 여기에 그림 하나를 더한다
 // 없는 id 는 '_' (시계 모양) 로 그린다
+import { PLANET } from './planets/index.js';
 export const ICONS = {
   A:'<path d="M2 18h20"/><path d="M3 18l5-6 3 3 3-4 7 7"/><path d="M5 21h3M11 21h6"/>',
   B:'<path d="M2 20h20"/><path d="M4 20c0-9 4-14 8-14s8 5 8 14"/><path d="M8.5 20c0-4.5 1.6-7 3.5-7s3.5 2.5 3.5 7"/>',
@@ -38,5 +39,18 @@ export const ICONS = {
   X2:'<rect x="3" y="3" width="18" height="18" stroke-dasharray="3 2"/><circle cx="12" cy="10" r="2.5"/><path d="M7.5 17.5c.8-2.5 2.5-3.8 4.5-3.8s3.7 1.3 4.5 3.8"/>',
   M1:'<circle cx="12" cy="7" r="2.6"/><circle cx="5.5" cy="9" r="2.1"/><circle cx="18.5" cy="9" r="2.1"/><path d="M7 20c0-3.5 2.2-6 5-6s5 2.5 5 6M1.5 19c0-3 1.7-5 4-5 .9 0 1.7.3 2.3.8M22.5 19c0-3-1.7-5-4-5-.9 0-1.7.3-2.3.8"/>',
   M2:'<circle cx="6" cy="8" r="2.4"/><path d="M2 18c0-3.2 1.8-5.5 4-5.5s4 2.3 4 5.5"/><path d="M12 3v18" stroke-dasharray="2 2"/><circle cx="18" cy="8" r="2.4"/><path d="M14 18c0-3.2 1.8-5.5 4-5.5s4 2.3 4 5.5"/>',
+  // Teegarden c 전용 (c- 로 시작). 나머지 c 선지는 ICON_ALIAS 로 위 그림을 함께 쓴다
+  'c-A':'<path d="M2 8c3 0 4 9 10 9s7-9 10-9"/><circle cx="12" cy="5" r="2.6"/><path d="M2 20h20"/>',
+  'c-B':'<path d="M2 7h7l2 13h2l2-13h7"/><path d="M12 12c1 1.5-1 2.5 0 4"/>',
+  'c-C':'<path d="M2 10c3-2 5-2 8 0"/><path d="M10 10l3 4 3-2 3 3 3-1"/><path d="M2 17h8l3 2 4-1 5 1"/>',
+  stilt:'<path d="M5 12V8l7-4 7 4v4z"/><path d="M7 12v8M17 12v8M12 12v8M3 20h18"/>',
+  bury:'<path d="M2 9h20"/><path d="M7 20v-4a5 5 0 0 1 10 0v4z"/><path d="M5 5l2 2M12 4v3M19 5l-2 2"/>',
+  ice:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
+  fungi:'<path d="M4 11c0-5 4-8 8-8s8 3 8 8z"/><path d="M10 11v7a2 2 0 0 0 4 0v-7"/><path d="M8 7h1M14 6h1"/>',
+  heatfirst:'<path d="M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 3-6 1 1 2 2 2 3 1-2 1-5 1-8z"/>',
   _:'<circle cx="12" cy="12" r="7"/><path d="M12 8v4l3 2"/>'
 };
+
+const ICON_ALIAS = { c: { A: 'c-A', B: 'c-B', C: 'c-C', dome: 'A1', shell: 'A2', direct: 'B1', buffer: 'C2', stdp: 'O1', lowp: 'O3', waste: 'O2', csp: 'P1', geo: 'T1', rtg: 'P2', thermal: 'D1', h2: 'C_algae', resist: 'U1', hp: 'R2', shrink: 'X2', mine: 'W1', hydro: 'W2', closed: 'O2', emelt: 'S1', wmelt: 'R1', warm: 'D1', hydroponic: 'G1', microbe: 'C_algae', lowtemp: 'T2', optimal: 'heatfirst', compost: 'C_leaf', seal: 'K1', insulate: 'U2', generator: 'S1', airfirst: 'O1', full: 'M1', elite: 'M2' } };
+/** 선지 id → 아이콘 이름 (행성마다 다른 그림, 없으면 '_') */
+export const iconOf = id => { const name = ICON_ALIAS[PLANET.id]?.[id] ?? id; return ICONS[name] ? name : '_'; };

@@ -1,5 +1,6 @@
 import { noise, mulberry32, output, put, clamp, smooth } from './terrain.js';
 import { blue, cream, orange, shade } from './palette.js';
+import { PLANET } from './planets/index.js';
 
 export const PLANET_RADIUS = 8;
 export const PLANET_SEED = 20261029;
@@ -29,7 +30,8 @@ export function buildPlanet(count = 30000) {
     const exposure = x * PLANET_SUN.x + y * PLANET_SUN.y + z * PLANET_SUN.z;
     const day = smooth(-0.13, 0.25, exposure);
     const bands = planetNoise(x * 2 + 5, y * 13, z * 2) * (1 - smooth(0.1, 0.6, exposure));
-    const base = exposure < -0.05 ? blue(0.43 + clamp(geology + bands + 0.3) * 0.55)
+    // 추운 행성: 낮 쪽도 얼음빛 파랑이고, 땅의 열이 올라오는 곳만 주황이다
+    const base = PLANET.climate === 'cold' ? (geology > 0.24 ? orange(0.5 + day * 0.4) : geology < -0.12 ? cream(0.35 + day * 0.4) : blue(0.5 + day * 0.35 + clamp(bands + 0.2) * 0.3)) : exposure < -0.05 ? blue(0.43 + clamp(geology + bands + 0.3) * 0.55)
       : geology > 0.09 ? orange(0.65 + day * 0.35) : cream(0.5 + day * 0.5);
     put(out, i, x * radius, y * radius, z * radius, shade(base, 0.62 + clamp(geology + 0.25) * 0.65));
   }

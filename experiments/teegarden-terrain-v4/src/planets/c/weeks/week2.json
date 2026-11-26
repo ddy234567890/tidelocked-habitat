@@ -1,0 +1,325 @@
+{
+  "week": 2,
+  "brief": "이번 주에는 전기와 난방을 조사할게요.",
+  "goal": "빛이 b의 3분의 1뿐이에요. 남는 에너지는 곧 난방이 돼요.",
+  "situation": [
+    {
+      "requires": {
+        "location": [
+          "A"
+        ]
+      },
+      "text": "분지는 빛이 가장 많아 거울로 모으기 좋아요."
+    },
+    {
+      "requires": {
+        "location": [
+          "B"
+        ]
+      },
+      "text": "열곡은 얕게만 파도 땅의 열이 나와요."
+    },
+    {
+      "requires": {
+        "location": [
+          "C"
+        ]
+      },
+      "text": "해안은 빛이 약하고 바람이 세요."
+    },
+    {
+      "text": "여기서 만드는 에너지가 3주차 물과 4주차 식량까지 좌우해요."
+    }
+  ],
+  "source": "플레이테스트 페이지 「행성 기지 플레이테스트」(https://claude.ai/artifact/2pRJeLi6RBUSQpfzbH3aoX) c 행성. 3D 장치(module·overlays)는 c 화면을 만들 때 더한다",
+  "layers": {
+    "overlay": {
+      "csp": {
+        "label": "집광 열발전",
+        "parts": [
+          {
+            "asset": "cold-suntower",
+            "offset": [
+              0,
+              -0.9
+            ]
+          },
+          {
+            "asset": "cold-heliostat",
+            "offset": [
+              -2.1,
+              0.3
+            ],
+            "scale": 0.8
+          },
+          {
+            "asset": "cold-heliostat",
+            "offset": [
+              -1.15,
+              1.35
+            ],
+            "scale": 0.8
+          },
+          {
+            "asset": "cold-heliostat",
+            "offset": [
+              0,
+              1.75
+            ],
+            "scale": 0.8
+          },
+          {
+            "asset": "cold-heliostat",
+            "offset": [
+              1.15,
+              1.35
+            ],
+            "scale": 0.8
+          },
+          {
+            "asset": "cold-heliostat",
+            "offset": [
+              2.1,
+              0.3
+            ],
+            "scale": 0.8
+          }
+        ],
+        "faceStar": true,
+        "scaleAt": {
+          "A": 0.9,
+          "B": 0.9,
+          "C": 0.9
+        }
+      },
+      "geo": {
+        "label": "지열 발전",
+        "parts": [
+          {
+            "asset": "cold-geoplant",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "rtg": {
+        "label": "동위원소 발전기",
+        "parts": [
+          {
+            "asset": "cold-rtg",
+            "offset": [
+              0,
+              0
+            ],
+            "scale": 1.1
+          }
+        ]
+      },
+      "thermal": {
+        "label": "축열조",
+        "parts": [
+          {
+            "asset": "cold-heatstore",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "h2": {
+        "label": "수소 저장",
+        "parts": [
+          {
+            "asset": "cold-spheretank",
+            "offset": [
+              -0.8,
+              0
+            ]
+          },
+          {
+            "asset": "cold-spheretank",
+            "offset": [
+              0.8,
+              0
+            ]
+          }
+        ]
+      },
+      "resist": {
+        "label": "전기 히터",
+        "parts": [
+          {
+            "asset": "cold-heater",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ],
+        "perHome": true,
+        "scaleAt": {
+          "A": 0.7,
+          "B": 0.7,
+          "C": 0.7
+        }
+      },
+      "hp": {
+        "label": "히트펌프",
+        "parts": [
+          {
+            "asset": "cold-heatpump",
+            "offset": [
+              -0.4,
+              0
+            ]
+          }
+        ]
+      },
+      "shrink": {
+        "label": "생활 구역 축소",
+        "parts": [
+          {
+            "asset": "cold-foldwall",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "flows": [
+    {
+      "kind": "power",
+      "path": [
+        "power",
+        "storage",
+        "homes"
+      ],
+      "below": "storage"
+    },
+    {
+      "kind": "heat",
+      "path": [
+        "heat",
+        "homes"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "id": "power",
+      "label": "전기를 만들 방법을 골라 주세요",
+      "choices": [
+        {
+          "id": "csp",
+          "label": "집광 열발전",
+          "line": "거울로 빛을 모아 발전",
+          "gain": "분지에서 가장 많이 만들어요",
+          "cost": "먼지 폭풍에 약하고 해안에서는 빛이 부족해요",
+          "overlays": [
+            "csp"
+          ],
+          "flowAmount": 1,
+          "flowVary": 0.3
+        },
+        {
+          "id": "geo",
+          "label": "지열 발전",
+          "line": "땅속 열로 발전",
+          "gain": "빛과 상관없는 강한 출력",
+          "cost": "열곡이 아니면 설치 전력이 매우 커요",
+          "overlays": [
+            "geo"
+          ],
+          "flowAmount": 1
+        },
+        {
+          "id": "rtg",
+          "label": "동위원소 발전기",
+          "line": "화성 탐사차의 핵전지",
+          "gain": "사건에도 출력 유지, 폐열로 난방",
+          "cost": "출력이 작아 확장 여유 적음",
+          "signature": true,
+          "overlays": [
+            "rtg"
+          ],
+          "flowAmount": 0.5
+        }
+      ],
+      "boardName": "발전",
+      "short": "발전"
+    },
+    {
+      "id": "storage",
+      "label": "남는 에너지를 모아 둘 방법을 골라 주세요",
+      "choices": [
+        {
+          "id": "thermal",
+          "label": "축열조",
+          "line": "남는 에너지를 열로 저장",
+          "gain": "정전·한파·난방 정지에 강함",
+          "cost": "전기로 되돌리기는 어려움",
+          "signature": true,
+          "overlays": [
+            "thermal"
+          ]
+        },
+        {
+          "id": "h2",
+          "label": "수소 저장",
+          "line": "남는 전기를 수소로 저장",
+          "gain": "정전에 강함, 4주 미생물 식량 열림",
+          "cost": "매주 얻는 것이 적어요",
+          "overlays": [
+            "h2"
+          ]
+        }
+      ],
+      "boardName": "에너지 저장",
+      "short": "에너지 저장"
+    },
+    {
+      "id": "heat",
+      "label": "실내를 데울 방법을 골라 주세요",
+      "choices": [
+        {
+          "id": "resist",
+          "label": "전기 히터",
+          "line": "바로 데워요",
+          "gain": "설치 쉬움",
+          "cost": "매주 전력을 쓰고 한파에 약해요",
+          "overlays": [
+            "resist"
+          ]
+        },
+        {
+          "id": "hp",
+          "label": "히트펌프",
+          "line": "땅의 열을 끌어와요",
+          "gain": "매주 전력 절약",
+          "cost": "고장 나면 난방이 한꺼번에 멈춤",
+          "overlays": [
+            "hp"
+          ]
+        },
+        {
+          "id": "shrink",
+          "label": "생활 구역 축소",
+          "line": "데울 공간을 줄여요",
+          "gain": "적은 비용으로 난방 절약",
+          "cost": "4주 생산 ×0.75, 5주 정원 수용 잠김",
+          "overlays": [
+            "shrink"
+          ]
+        }
+      ],
+      "boardName": "난방",
+      "short": "난방"
+    }
+  ]
+}

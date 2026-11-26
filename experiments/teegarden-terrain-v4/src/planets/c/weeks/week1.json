@@ -1,0 +1,552 @@
+{
+  "week": 1,
+  "brief": "첫 주차에는 추위에서 버틸 집을 정할게요.",
+  "goal": "바깥은 영하 60도 아래예요. 열을 잃지 않는 첫 거점을 세워요.",
+  "situation": [
+    {
+      "text": "착륙선의 임시 전원과 난방기로 버티고 있어요. 고르는 선지마다 난방 부담이 달라져요."
+    }
+  ],
+  "source": "플레이테스트 페이지 「행성 기지 플레이테스트」(https://claude.ai/artifact/2pRJeLi6RBUSQpfzbH3aoX) c 행성. 3D 장치(module·overlays)는 c 화면을 만들 때 더한다",
+  "notes": {
+    "lockHint": "requires 가 안 맞을 때 잠긴 채 보여 줄 때 쓰는 글 (화면은 아직 없음)",
+    "signature": "c 에서만 나오는 선지"
+  },
+  "sites": {
+    "basin": "A",
+    "rift": "B",
+    "shore": "C"
+  },
+  "layers": {
+    "module": {
+      "dome": {
+        "label": "집광 돔형",
+        "parts": [
+          {
+            "asset": "cold-geodome",
+            "position": [
+              -1.2,
+              0
+            ],
+            "home": true
+          },
+          {
+            "asset": "corridor",
+            "position": [
+              1.55,
+              0
+            ],
+            "rotation": 90
+          },
+          {
+            "asset": "cold-geodome",
+            "position": [
+              3.4,
+              0
+            ],
+            "scale": 0.62,
+            "rotation": 20,
+            "home": true
+          },
+          {
+            "asset": "antenna-dish",
+            "position": [
+              1.4,
+              -2.2
+            ]
+          }
+        ]
+      },
+      "shell": {
+        "label": "이중 단열 셸형",
+        "parts": [
+          {
+            "asset": "cold-doubleshell",
+            "position": [
+              -1.5,
+              0
+            ],
+            "rotation": 90,
+            "home": true
+          },
+          {
+            "asset": "corridor",
+            "position": [
+              0.75,
+              0
+            ],
+            "rotation": 90
+          },
+          {
+            "asset": "cold-doubleshell",
+            "position": [
+              2.6,
+              0
+            ],
+            "rotation": 90,
+            "scale": 0.78,
+            "home": true
+          },
+          {
+            "asset": "antenna-dish",
+            "position": [
+              0.7,
+              -1.9
+            ]
+          },
+          {
+            "asset": "cold-doubleshell",
+            "position": [
+              -1.5,
+              3
+            ],
+            "rotation": 90,
+            "scale": 0.62,
+            "home": true
+          }
+        ]
+      },
+      "direct": {
+        "label": "열원 직결형",
+        "parts": [
+          {
+            "asset": "cold-heathut",
+            "position": [
+              2.9,
+              -0.2
+            ],
+            "home": true
+          },
+          {
+            "asset": "cold-heathut",
+            "position": [
+              2.9,
+              2.5
+            ],
+            "scale": 0.85,
+            "home": true
+          },
+          {
+            "asset": "corridor",
+            "position": [
+              0.95,
+              -0.2
+            ],
+            "rotation": 90
+          },
+          {
+            "asset": "cold-heathut",
+            "position": [
+              -0.9,
+              -0.2
+            ],
+            "scale": 0.85,
+            "home": true
+          },
+          {
+            "asset": "cold-pipeloop",
+            "position": [
+              5.3,
+              0.4
+            ],
+            "scale": 0.8
+          }
+        ]
+      },
+      "buffer": {
+        "label": "완충 거리형",
+        "parts": [
+          {
+            "asset": "cold-heathut",
+            "position": [
+              -2.9,
+              0
+            ],
+            "scale": 0.8,
+            "home": true
+          },
+          {
+            "asset": "cold-heathut",
+            "position": [
+              -2.9,
+              2.6
+            ],
+            "scale": 0.7,
+            "home": true
+          },
+          {
+            "asset": "corridor",
+            "position": [
+              -1.2,
+              0.2
+            ],
+            "rotation": 90
+          },
+          {
+            "asset": "cold-pipeloop",
+            "position": [
+              1.1,
+              0.2
+            ]
+          },
+          {
+            "asset": "cold-pipeloop",
+            "position": [
+              4,
+              0.2
+            ]
+          }
+        ]
+      },
+      "bury": {
+        "label": "빙상 매설형",
+        "parts": [
+          {
+            "asset": "cold-igloo",
+            "position": [
+              -1.7,
+              0
+            ],
+            "home": true
+          },
+          {
+            "asset": "cold-igloo",
+            "position": [
+              2.4,
+              0.5
+            ],
+            "scale": 0.85,
+            "rotation": 25,
+            "home": true
+          },
+          {
+            "asset": "cold-igloo",
+            "position": [
+              0.2,
+              -2.7
+            ],
+            "scale": 0.7,
+            "rotation": -20,
+            "home": true
+          },
+          {
+            "asset": "corridor",
+            "position": [
+              0.4,
+              0.4
+            ],
+            "rotation": 90
+          },
+          {
+            "asset": "ice-crystal",
+            "position": [
+              -3.7,
+              -1.9
+            ]
+          },
+          {
+            "asset": "ice-shards",
+            "position": [
+              4.2,
+              -1.6
+            ],
+            "scale": 0.8
+          },
+          {
+            "asset": "rock-snow",
+            "position": [
+              -3.3,
+              2.3
+            ]
+          }
+        ]
+      },
+      "stilt": {
+        "label": "고상 거치형",
+        "parts": [
+          {
+            "asset": "cold-polarpod",
+            "position": [
+              -2.5,
+              0.6
+            ],
+            "scale": 0.8,
+            "home": true
+          },
+          {
+            "asset": "cold-polarpod",
+            "position": [
+              2.1,
+              0.6
+            ],
+            "scale": 0.8,
+            "home": true
+          },
+          {
+            "asset": "cold-polarpod",
+            "position": [
+              -0.2,
+              -2.9
+            ],
+            "rotation": 90,
+            "scale": 0.65,
+            "home": true
+          },
+          {
+            "asset": "corridor",
+            "position": [
+              -0.2,
+              0.6
+            ],
+            "rotation": 90,
+            "lift": 0.8
+          },
+          {
+            "asset": "antenna-mast",
+            "position": [
+              -0.2,
+              3
+            ]
+          },
+          {
+            "asset": "stairs",
+            "position": [
+              -4,
+              0.6
+            ],
+            "rotation": -90
+          }
+        ]
+      }
+    },
+    "overlay": {
+      "stdp": {
+        "label": "표준 기압형",
+        "parts": [
+          {
+            "asset": "cold-airstd",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "lowp": {
+        "label": "저기압·고산소형",
+        "parts": [
+          {
+            "asset": "cold-airlow",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ],
+        "perHome": true,
+        "zone": true,
+        "scaleAt": {
+          "A": 0.7,
+          "B": 0.7,
+          "C": 0.7
+        }
+      },
+      "waste": {
+        "label": "폐열 연계형",
+        "parts": [
+          {
+            "asset": "cold-airheat",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "flows": [
+    {
+      "kind": "oxygen",
+      "path": [
+        "oxygen",
+        "homes"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "id": "location",
+      "label": "기지를 세울 위치를 골라 주세요",
+      "choices": [
+        {
+          "id": "A",
+          "label": "별 바로 아래 분지",
+          "line": "가장 덜 추운 곳, 물은 멀어요",
+          "gain": "빛을 가장 많이 받고 난방도 아껴요",
+          "cost": "3주 물 운반 비용 큼",
+          "site": "basin"
+        },
+        {
+          "id": "B",
+          "label": "지열 열곡",
+          "line": "땅이 주는 열, 땅이 내는 가스",
+          "gain": "난방 거의 공짜, 3주 열수 시추 열림",
+          "cost": "초기 공사 전력, 화산 가스",
+          "site": "rift",
+          "signature": true
+        },
+        {
+          "id": "C",
+          "label": "얼음 해안",
+          "line": "물은 넘치고, 빛은 약해요",
+          "gain": "3주 물 확보가 쉬움",
+          "cost": "집광 발전이 어렵고 바닥 얼음이 녹을 수 있어요",
+          "site": "shore"
+        }
+      ],
+      "boardName": "위치",
+      "short": "위치"
+    },
+    {
+      "id": "module",
+      "label": "집을 짓는 방식을 골라 주세요",
+      "choices": [
+        {
+          "id": "dome",
+          "label": "집광 돔형",
+          "line": "빛을 모아 안을 데워요",
+          "gain": "매주 전력 절약",
+          "cost": "먼지 폭풍에 약함",
+          "requires": {
+            "location": [
+              "A"
+            ]
+          },
+          "module": "dome"
+        },
+        {
+          "id": "shell",
+          "label": "이중 단열 셸형",
+          "line": "열이 새지 않게 막아요",
+          "gain": "정전·난방 정지·동결에 강함",
+          "cost": "초기 전력 큼",
+          "requires": {
+            "location": [
+              "A"
+            ]
+          },
+          "module": "shell"
+        },
+        {
+          "id": "direct",
+          "label": "열원 직결형",
+          "line": "열 바로 위에 지어요",
+          "gain": "매주 전력 크게 절약",
+          "cost": "화산 가스에 매우 약함",
+          "requires": {
+            "location": [
+              "B"
+            ]
+          },
+          "module": "direct"
+        },
+        {
+          "id": "buffer",
+          "label": "완충 거리형",
+          "line": "멀리 짓고 배관으로 열을 끌어와요",
+          "gain": "화산 가스에 강함",
+          "cost": "긴 배관이 얼 수 있음",
+          "requires": {
+            "location": [
+              "B"
+            ]
+          },
+          "module": "buffer"
+        },
+        {
+          "id": "bury",
+          "label": "빙상 매설형",
+          "line": "얼음을 단열재로 써요",
+          "gain": "매주 전력 절약",
+          "cost": "기지 열로 얼음이 녹으면 기울어짐",
+          "signature": true,
+          "requires": {
+            "location": [
+              "C"
+            ]
+          },
+          "module": "bury"
+        },
+        {
+          "id": "stilt",
+          "label": "고상 거치형",
+          "line": "기둥 위에 띄워요",
+          "gain": "얼음이 녹아도 안전, 난방 조금 절약",
+          "cost": "얼음 속 집보다 난방을 덜 아껴요",
+          "requires": {
+            "location": [
+              "C"
+            ]
+          },
+          "module": "stilt"
+        }
+      ],
+      "boardName": "짓는 방식",
+      "short": "짓는 방식"
+    },
+    {
+      "id": "oxygen",
+      "label": "실내 공기를 유지할 방법을 골라 주세요",
+      "choices": [
+        {
+          "id": "stdp",
+          "label": "표준 기압형",
+          "line": "지구와 같은 공기",
+          "gain": "특별한 약점 없음",
+          "cost": "매주 물 조금 소모",
+          "overlays": [
+            "stdp"
+          ]
+        },
+        {
+          "id": "lowp",
+          "label": "저기압·고산소형",
+          "line": "기압은 낮게, 산소는 진하게",
+          "gain": "자원 소비 가장 적음",
+          "cost": "고장 시뮬레이션에서 화재 위험",
+          "overlays": [
+            "lowp"
+          ]
+        },
+        {
+          "id": "waste",
+          "label": "폐열 연계형",
+          "line": "산소 장치의 열로 난방",
+          "gain": "매주 전력 크게 절약",
+          "cost": "고장 나면 공기·난방 동시 하락",
+          "signature": true,
+          "overlays": [
+            "waste"
+          ]
+        }
+      ],
+      "boardName": "실내 공기",
+      "short": "실내 공기"
+    }
+  ],
+  "slots": {
+    "A": [
+      0.6,
+      3.6
+    ],
+    "B": [
+      0.6,
+      3.6
+    ],
+    "C": [
+      0.6,
+      3.6
+    ]
+  }
+}

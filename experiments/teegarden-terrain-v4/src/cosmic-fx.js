@@ -1,3 +1,4 @@
+import { PLANET } from './planets/index.js';
 // 낯선 행성 탐사 화면 효과 (2026-11-16): 행성 둘레 레이더 고리 · 창에서 행성으로 이어지는 지시선 ·
 // 메인 화면이 처음 나올 때 창 펼침 + 제목 글자 해독. 겉모습만 더한다 (main.js 와 게임 상태는 건드리지 않음).
 const NS = 'http://www.w3.org/2000/svg';
@@ -55,7 +56,7 @@ function drawLeads() {
 // ── 화면 장식: 제목 블록 · 모서리 꺾쇠 · 위쪽 계기선 (글은 장식이고 기능은 없음) ──
 if (hud) {
   const t = document.createElement('div'); t.className = 'k-title'; t.setAttribute('aria-hidden', 'true');
-  t.innerHTML = '<span class="k-name">TEEGARDEN <b>b</b></span><span class="k-sub"><i></i>SITE SURVEY · <em>YEAR 7777</em></span>';
+  t.innerHTML = '<span class="k-name">TEEGARDEN <b>' + PLANET.id + '</b></span><span class="k-sub"><i></i>SITE SURVEY · <em>YEAR 7777</em></span>';
   hud.appendChild(t);
   ['tl', 'tr', 'bl', 'br'].forEach(c => { const e = document.createElement('i'); e.className = 'k-corner ' + c; e.setAttribute('aria-hidden', 'true'); hud.appendChild(e); });
   const line = document.createElement('i'); line.className = 'k-topline'; line.setAttribute('aria-hidden', 'true'); hud.appendChild(line);

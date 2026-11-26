@@ -1,8 +1,10 @@
-// 게이지 4개 (공기 · 물 · 식량 · 전력): 숫자는 gauges.json (플레이테스트 페이지 가정값).
+// 게이지 4개 (공기 · 물 · 식량 · 전력): 숫자는 planets/<행성>/gauges.json (플레이테스트 페이지 가정값).
 // 상태를 따로 들고 있지 않고, 지금까지 '결정한' 선지와 주차로 매번 처음부터 다시 계산한다 (결정은 되돌릴 수 없으므로 같은 결과가 나온다).
 // 한 주 안에서는 결정하자마자 now 가 반영되고, '다음 주로'를 누르면 그 주가 끝나며 매주 변화(weekly + 수확)가 한 번 반영된다.
-import data from './gauges.json' with { type: 'json' };
+import { PLANET } from './planets/index.js';
 import { WEEKS } from './choices.js';
+
+const data = PLANET.gauges;
 
 export const GAUGE_KEYS = Object.keys(data.labels);
 export const GAUGE_LABELS = data.labels;
@@ -22,7 +24,7 @@ export const effectsFor = (choiceId, selection) => (data.choices[choiceId] ?? []
  * → { values: {air…}, weekly: {air…} (다음 주에 더해질 양), failed: null | { key, week } }
  */
 export function gaugeState(selection, decided, week, extras = []) {
-  const values = Object.fromEntries(GAUGE_KEYS.map(key => [key, data.start]));
+  const values = { ...data.start };
   const rates = { ...data.weekly };
   const harvests = [];
   let harvestScale = 1, failed = null;
@@ -44,7 +46,9 @@ export function gaugeState(selection, decided, week, extras = []) {
         }
         for (const [key, value] of Object.entries(entry.weekly ?? {})) rates[key === 'lowest' ? lowest : key] += value;
         if (entry.harvestScale) harvestScale *= entry.harvestScale;
-        if (entry.harvest) harvests.push({ ...entry.harvest, food: Math.round((entry.harvest.food ?? 0) * harvestScale) });
+        const last = harvests.at(-1);
+        if (entry.harvestAdd && last) for (const [key, value] of Object.entries(entry.harvestAdd)) last[key] = (last[key] ?? 0) + value;
+        if (entry.harvest) harvests.push({ ...entry.harvest, food: Math.round((entry.harvest.food ?? 0) * (entry.harvest.fixed ? 1 : harvestScale)) });
       }
       check(w);
     }

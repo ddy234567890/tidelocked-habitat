@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { choiceData, placeAt, overlaySpot, surfaceSpot, findSpot, occupancy, siteLetter, overlayDef } from './choices.js';
 import { buildCaveSeal } from './lavaTube.js';
 import { toneColors, cream, blue, orange, gray } from './palette.js';
-import definitions from './sites.json' with { type: 'json' };
+import { PLANET } from './planets/index.js';
 import modelSizes from './modelSizes.json' with { type: 'json' };
 import { mulberry32 } from './terrain.js';
 import { growMotion, fillMotion } from './motion.js';
@@ -38,6 +38,7 @@ import generatorSmall from './models/generator-small.glb';
 import airUnitSmall from './models/air-unit-small.glb';
 import rockLarge from './models/rock-large.glb';
 import rocksSmall from './models/rocks-small.glb';
+const definitions = PLANET.sites;
 import solarPanel from './models/solar-panel.glb';
 import battery from './models/battery.glb';
 import machine from './models/machine.glb';
@@ -52,6 +53,7 @@ import shelf from './models/shelf.glb';
 import cabbage from './models/cabbage.glb';
 import wheat from './models/wheat.glb';
 import corn from './models/corn.glb';
+import { COLD_MODELS } from './coldModels.js';
 import astronaut from './models/astronaut.glb';
 import spaceship from './models/spaceship.glb';
 
@@ -64,7 +66,7 @@ const MODELS = {
   recycler, 'pipe-straight': pipeStraight, 'pipe-split': pipeSplit, 'pipe-ring': pipeRing, 'generator-small': generatorSmall,
   'air-unit-small': airUnitSmall, 'rock-large': rockLarge, 'rocks-small': rocksSmall,
   'solar-panel': solarPanel, battery,
-  machine, 'water-tower-b': waterTowerB, 'barrel-b': barrelB, 'glass-cylinder': glassCylinder, 'lander-b': landerB, 'space-truck': spaceTruck, drill, oven, shelf, cabbage, wheat, corn, astronaut, spaceship
+  machine, 'water-tower-b': waterTowerB, 'barrel-b': barrelB, 'glass-cylinder': glassCylinder, 'lander-b': landerB, 'space-truck': spaceTruck, drill, oven, shelf, cabbage, wheat, corn, astronaut, spaceship, ...COLD_MODELS
 };
 // 와이어프레임: 모델의 면을 채우지 않고 모서리 선을 따라 점을 촘촘히 늘어놓는다. 머티리얼은 지형과 같은 하나 그대로다.
 // EDGE_ANGLE 보다 덜 꺾인 모서리(둥근 면을 이루는 잔 선)는 그리지 않아 선이 뭉치지 않는다

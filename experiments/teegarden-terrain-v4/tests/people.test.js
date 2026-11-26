@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone } from 'three/addons/utils/SkeletonUtils.js';
 import { prepareRig, createSkinner } from '../src/pointRig.js';
-import hud from '../src/hud.json' with { type: 'json' };
+import hud from '../src/planets/b/hud.json' with { type: 'json' };
 import fs from 'node:fs';
 
 const run = (p, env, seconds) => { for (let t = 0; t < seconds; t += 0.1) p.step(env); return p; };

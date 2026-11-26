@@ -8,7 +8,8 @@
 import { fromGameStats } from './face/envInput.js';
 import { applyProtection } from './face/protection.js';
 import { Physiology, GAME } from './face/physiology.js';
-import hud from './hud.json' with { type: 'json' };
+import { PLANET } from './planets/index.js';
+const { hud } = PLANET;
 
 export const INDOOR = { tempC: 22, oxygenPct: 20.9, activityMET: 1.5 };   // crew.js · main.js 의 INDOOR 와 같은 값
 export const OUTSIDE_MET = 4;                                             // crew.js OUTSIDE_MET 과 같은 값 (바깥에서 공사하는 활동량)
@@ -28,7 +29,7 @@ export function placeOf(x, z, homes = []) {
 export function envFor({ site, place, stats = {}, decided = {}, met = OUTSIDE_MET }) {
   const range = hud.sites[site]?.temperature;
   const outsideTemp = range ? (range[0] + range[1]) / 2 : 22;
-  const outsideO2 = hud.outsideOxygen ?? 14;
+  const outsideO2 = hud.outsideOxygen === null ? INDOOR.oxygenPct : hud.outsideOxygen ?? 14; // null: 바깥 공기를 정하지 않은 행성 (산소통으로 숨 쉰다)
   if (place !== 'home') return { tempC: outsideTemp, oxygenPct: outsideO2, activityMET: met };
   const add = key => INDOOR[key] + (stats[key] ?? 0);
   return { tempC: add('tempC'), oxygenPct: decided.oxygen ? add('oxygenPct') : outsideO2, activityMET: add('activityMET') };

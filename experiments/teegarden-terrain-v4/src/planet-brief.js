@@ -1,10 +1,10 @@
-import brief from './planet-brief.json' with { type: 'json' };
+import { PLANET } from './planets/index.js';
 
 // 1주차 ORI 브리핑 = 행성 강의 (데이터 담당 요청, 2026-11-11). 글은 planet-brief.json 의 pages.
 // intro.js 가 한 장씩 넘기고, 여기서는 풍경 속 망점 행성(wire-art.js, 왼쪽 절반이 낮) 위에 얇은 선 표시를 얹는다.
 // 표시는 장마다 쌓인다: sides(별 쪽·낮 쪽·밤 쪽·경계) → temps(기온). 새로 생기는 표시만 그려지는 움직임이 있다.
 // 별 방향은 빨강 대신 주황(#FF993D, 팀 규칙). 선·글은 화면 토큰(#8FC1FF, #DCE6FF, 크림 #E8DFC8).
-export const lecture = brief;
+export const lecture = PLANET.brief;
 const NS = 'http://www.w3.org/2000/svg';
 const LEVELS = ['sides', 'temps'];
 
@@ -51,7 +51,7 @@ export function showPlanetMarks(svg, level, { animate = true } = {}) {
   const room = place?.box ? place.box[0] - 24 - bubble.offsetLeft : 0;
   if (innerWidth > 1100 && room > 280) bubble.style.maxWidth = room + 'px';
   if (target < 0 || !place) { svg.toggleAttribute('hidden', true); svg.replaceChildren(); shown = -1; return; }
-  const { width, height, cx, cy, r } = place, { art } = brief;
+  const { width, height, cx, cy, r } = place, { art } = lecture;
   svg.toggleAttribute('hidden', false);
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   const label = (x, y, text, anchor = 'middle', cls = '') => el('text', { x, y, 'text-anchor': anchor, class: 'mk-t ' + cls }, text);

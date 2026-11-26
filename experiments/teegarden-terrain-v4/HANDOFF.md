@@ -233,3 +233,47 @@ GitHub 수정만으로 위 Sites 배포가 자동 갱신되지는 않습니다.
 - 얼굴 창 대기 화면(흐린 얼굴 + 왼쪽 위 '대기')은 맨 처음 아직 대원이 없을 때(행성 화면)부터 뜬다 (src/crew.js renderIdle). '마우스를 올려 보세요' 안내는 대원이 생긴 뒤에만 뜬다.
 - 1주차 위치 카드도 우주복 규칙에 맞췄다 (2026-11-23): 평원 감수 '그늘이 없어 냉방 전력이 들고, 바깥 작업이 짧아요', 동굴 한 줄 '두꺼운 암반이 열을 막아 밖에서도 오래 일할 수 있어요.', 능선 한 줄 '낮과 밤의 경계라 빛이 안정적이고 평원보다 덜 더워요.'. 대원 칸 안내는 가상의 얼굴이 '우주복 없이' 서 있는 사람이라고 밝힌다. 돌발 사건 글은 이미 '우주복 산소'를 쓰고 있어 그대로다.
 - 엔딩이 시작되면 5주차 선지도 1~4주차처럼 면으로 바뀐다: main.js window.terrainEnding.settleAll() (5주차에는 '다음 주로'가 없어 선으로 남았다. 2026-11-23 사용자 허락으로 main.js 에 이 연결만 더함). 엔딩 위 시계에는 게이지 4개가 모두 보이고, 이야기의 중심 게이지는 주황 테두리다.
+
+## 행성 폴더 구조 (2026-11-24, work/planets)
+- 새 행성(c)을 더하려고 b 의 데이터를 src/planets/b 로 모았다: planet.json(이름·난이도 값·지역 글·저장 이름), sites·hud·planet-brief·gauges·events·judge·ending-story.json, weeks/. 코드는 src/planets/index.js 의 PLANET(지금 하는 행성)만 읽는다. 주소 ?planet=<id>, 지금은 b 하나.
+- 고장 시험·입주 후 검증·기댄 것 글(endingJudge.js), 칭호 조건·철수 글(ending.js)을 judge.json · ending-story.json 으로 뺐다. 엔딩 기준 40·50·25 는 모든 행성이 같아서 endingJudge.js 에 그대로 있다.
+- 시작 게이지는 게이지마다 따로 적는다 (gauges.json start). 저장 이름(기록장·결말 모으기)은 b 가 예전 이름 그대로라 이미 본 기록이 남는다.
+- 옮기기 전후로 선택 조합 110,592 가지의 게이지·판정·시험·글이 같은 것을 확인했다. tests/planets.test.js 가 행성 데이터 모양과 조건을 검사한다.
+- 난이도: b 사건 피해 5배 → 2.5배 (planet.json severity, 사용자 승인). 위쪽 기록의 '5배' 비율은 그때 값이다.
+- 아직 b 에 묶인 것: index.html 의 지역 버튼·행성 수치·제목, cosmic-fx.js 제목, panel-windows.js 글, main.js BUILDERS(지형)와 동굴 처리, people.js 우주복 시간, ending.js HARDSHIP(더위)·ARRIVALS·M2 처리. c 화면을 만들 때 옮긴다.
+
+## Teegarden c 숫자 (2026-11-24, work/planets)
+- src/planets/c: 5주 × 결정 3개 선지(글 포함) · gauges.json · judge.json · planet.json. ready: false 라 화면에서는 고를 수 없고(?planet=c 를 붙여도 b), 화면 없는 시험에서만 열린다.
+- 플레이테스트 페이지 c 식과 조합 201,600 가지의 게이지·실패 주차·4주 검증·고장 시험이 모두 같은 것을 확인했다 (설계안에서 바꾼 5개 값은 원본 식에도 똑같이 넣고 비교).
+- gauges.js 에 harvestAdd(앞선 수확에 더하기)와 harvest.fixed(배율 안 곱함)를 더했다. b 결과는 그대로다.
+- 사건 없는 전체 조합: E1 4.1% · E2 51.9% · E3 1.1% · E4 31.9% · E5 11.0%. 난이도 목표(E1 10~20%, E5 5~10%)는 사건을 넣은 기준이라 사건 카드를 만든 뒤 다시 잰다.
+- 아직 없는 것: 돌발 사건과 '늦게 오는 피해', 현지 자재 발견의 고장 피해 −8, 잠긴 선지 화면, 주차 상황 글(situation), 3D 장치·흐름·지형·hud·브리핑·엔딩 글.
+
+## Teegarden c 돌발 사건과 난이도 (2026-11-24, work/planets)
+- src/planets/c/events.json: 위험 7(배관 동결 · 한파 예보 · 분지 먼지 폭풍 · 열곡 화산 가스 · 해안 지반 침하 · 난방 계통 정지 · 배양조 오염) + 기회 5. 위험은 누구나 대응 2 + 선지로 열리는 대응 1. 한 판 3번 = 위험 2 + 기회 1 (planet.json goodPerGame). 다른 행성은 이 값이 없으면 예전처럼 섞어 뽑는다.
+- events.js 새 기능: later(한 주 늦은 피해, 다음 주 브리핑에 laterText) · maxWeek · excludes · ease(고장 시험 피해 감소, 엔딩 판정에 반영). 사건 결과 계산을 outcome() 으로 뽑았다. b 사건에는 새 값이 없어 결과가 그대로다.
+- scripts/balance.mjs: 게임 코드로 자동 플레이를 돌려 결말 비율을 잰다. `node scripts/balance.mjs c 12000`. 숫자를 바꾸면 이걸로 다시 잰다.
+- 사건을 넣고 맞춘 c 값: 시작 전력 42 · 사건 세기 1.6 (설계안은 38 · 1.4). 선지: 생활 구역 축소 즉시 전력 −3 · 얼음 상태 비축 매주 전력 −1 · 버섯·곤충 수확 5 · 수경 재배 13 · 미생물 13 · 전기 히터 매주 −1 · 수소 저장 즉시 −5, 매주 물 소비 없음 · 히트펌프 열곡 3/분지 2/해안 1 · 얼음 해안 매주 전력 +1 · 고상 거치형 +2 · 선발대 수요 75%. 사건: 한파의 히터 추가 피해 −1, 난방 정지의 히트펌프 추가 피해 −2.
+- 결과(12,000판): 아무거나 E1 13.4% · E5 1.4%, 신중 E1 2.3% · E2 29.5% · E5 7.2%, 시간 초과 E1 32.3%. 목표(아무거나 E1 10~20%, 신중 E5 5~10%) 안이다. 신중 E5 는 위치 6.4~8.6%, 발전 5.5~9.3%. 가장 낮은 선지는 인공광 수경 재배 2.1%, 가장 높은 선지는 얼음 상태 비축 12.6%.
+- 사람이 해 본 값은 아니다. 앞 절 「Teegarden c 숫자」의 비율은 이 조정 전 값이다.
+
+## Teegarden c 화면 (2026-11-25, work/planets)
+- 주소 ?planet=c 로 열린다 (planet.json preview). 접속 화면(프롤로그)의 행성 선택에는 아직 잇지 않았다. ready: false.
+- 지형 3곳: src/coldLands.js (분지·열곡·해안). 가운데 반지름 4.6 이 평평한 자리. 열곡 바닥은 주황, 바다 얼음은 밝은 파랑. sites.json colorRange 로 추운 땅이 주황으로 칠해지지 않게 했다.
+- 집 6종·장치는 b 의 모델과 상자만 써서 weeks/weekN.json layers 에 조합했다. 새 모델·머티리얼 없음.
+- 잠긴 선지: choices.js lockedChoices + hexBoard.js. 흐린 토큰·자물쇠로 보이고 마우스를 올리면 여는 방법이 뜬다. lockHint 가 있는 선지만이라 b 는 그대로다.
+- 행성마다 다른 글: src/planet-ui.js (planet.json ui). 단계 이름은 steps 의 boardName. 아이콘은 hexIcons.js iconOf. 대원 추위는 planet.json suitTime · climate.
+- [설정] 값: 지역별 기온, 추정 반지름, 우주복 시간. 바깥 산소는 정하지 않아 화면에 — 로 보이고 대원 계산은 산소통(20.9%)으로 한다.
+- 남은 것: 접속 화면 연결, 분지·열곡·해안 전용 모델, 사용자가 해 본 뒤 카메라·장치 자리 조정, guide.js 안내 글(b 기준).
+
+## Teegarden c 전용 에셋과 얼음 해안 (2026-11-25, work/planets)
+- 에셋: c 는 src/coldModels.js 의 모델 50개를 쓴다. Poly Pizza CC0 13개(출처 ASSETS.md) + 팀 제작 cold-* 37개(scripts/make-cold-models.mjs, CC0). 점 선으로 그려지는 '꺾인 모서리(14° 이상)' 수가 모두 410개 이하. 재는 도구 scripts/model-lines.mjs.
+- 빼거나 안 쓴 것: 선이 1,000개를 넘던 drill·space-truck·astronaut·lander-b 는 c 에서 뺐다(b 는 그대로). Kenney 묶음은 기부 안내를 거쳐 받는 구조라 받지 않았다. house-single 은 매끈한 공이라 선이 없어 뺐다.
+- 얼음 해안(coldLands.js): 바다로 튀어나온 곶 + 절벽 + 검은 물길 + 깨진 유빙 판(칸마다 높이·기울기가 다름) + 각진 빙산 14개. 선 점(shoreLines)으로 빙산 모서리·절벽·판 둘레를 그린다. 물은 점을 거의 비운다(keep). 높이는 격자 대신 지표 함수에서 바로 잰다(exact). 처음 보는 곳은 navigation.js LOCAL_TARGETS.
+- 우주복 시간(planet.json suitTime): 추위는 힘들어한 뒤 8초 만에 쓰러져서 분지·열곡 600, 해안 420 으로 늘렸다.
+
+## 접속 화면 연결 (2026-11-25, work/planets)
+- 접속 화면(public/web/prologue-access.html)에서 확정한 행성으로 게임이 열린다. 지금 불러온 행성과 같으면 그대로 시작하고, 다르면 ?planet=<id>&prologue=0 으로 새로 불러온다 (src/prologue.js, src/planets/index.js planetSearch). 연구원 이름은 sessionStorage 로 한 번만 넘겨 window.prologue 에 다시 넣는다.
+- c 는 ready: true. 처음부터 고를 수 있고, 접속 화면 c 기록에 '첫 탐사라면 티가든 b를 먼저 권한다.' 를 더했다. 난이도 이름은 접속 화면과 planet.json level 이 같아야 한다 (b 쉬움 · c 어려움, tests/planets.test.js 가 확인).
+- 다시 시작하면 접속 화면부터라 다른 행성을 고를 수 있다. guide.js 안내 글은 추운 행성이면 바뀐다.
+- 확인할 것: 접속 화면의 온도(b 약 20°C, c 약 −52°C)·ESI 와 게임 안 값(b 12~66°C, c 평형 온도 −64°C)이 다르다. 팀이 하나로 정해야 한다.
