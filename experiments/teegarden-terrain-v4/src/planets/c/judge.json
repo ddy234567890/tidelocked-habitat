@@ -1,0 +1,292 @@
+{
+  "notes": {
+    "source": "플레이테스트 페이지 c 의 demand · stressTests · demandMul. 형식 설명은 planets/b/judge.json notes. 현지 자재 발견(고장 피해 −8)은 c 사건을 넣을 때 더한다"
+  },
+  "demand": {
+    "air": -8,
+    "water": -13,
+    "food": -15,
+    "power": -15
+  },
+  "verify": [
+    {
+      "requires": {
+        "arrive": [
+          "elite"
+        ]
+      },
+      "demandScale": 0.75
+    }
+  ],
+  "tests": [
+    {
+      "name": "주 전원 정지",
+      "damage": {
+        "power": 32,
+        "air": 16,
+        "water": 0
+      },
+      "adjust": [
+        {
+          "requires": {
+            "power": [
+              "rtg"
+            ]
+          },
+          "add": {
+            "power": -14
+          }
+        },
+        {
+          "requires": {
+            "storage": [
+              "thermal"
+            ]
+          },
+          "add": {
+            "power": -6
+          }
+        },
+        {
+          "requires": {
+            "storage": [
+              "h2"
+            ]
+          },
+          "add": {
+            "power": -10
+          }
+        },
+        {
+          "requires": {
+            "module": [
+              "shell"
+            ]
+          },
+          "add": {
+            "power": -6
+          }
+        },
+        {
+          "requires": {
+            "fix": [
+              "insulate"
+            ]
+          },
+          "add": {
+            "power": -6
+          }
+        },
+        {
+          "requires": {
+            "oxygen": [
+              "lowp"
+            ]
+          },
+          "add": {
+            "air": 6
+          }
+        },
+        {
+          "requires": {
+            "priority": [
+              "heatfirst"
+            ]
+          },
+          "add": {
+            "air": 6
+          }
+        },
+        {
+          "requires": {
+            "priority": [
+              "airfirst"
+            ]
+          },
+          "add": {
+            "air": -8,
+            "water": 6
+          }
+        }
+      ]
+    },
+    {
+      "name": "난방 계통 정지",
+      "damage": {
+        "water": 24,
+        "food": 4,
+        "air": 0,
+        "power": 0
+      },
+      "adjust": [
+        {
+          "requires": {
+            "growTemp": [
+              "optimal"
+            ]
+          },
+          "add": {
+            "food": 8
+          }
+        },
+        {
+          "requires": {
+            "oxygen": [
+              "waste"
+            ]
+          },
+          "add": {
+            "air": 12
+          }
+        },
+        {
+          "requires": {
+            "heat": [
+              "hp"
+            ]
+          },
+          "add": {
+            "power": 6,
+            "water": 8
+          }
+        },
+        {
+          "requires": {
+            "keep": [
+              "ice"
+            ]
+          },
+          "add": {
+            "water": -10
+          }
+        },
+        {
+          "requires": {
+            "keep": [
+              "warm"
+            ]
+          },
+          "add": {
+            "water": 8
+          }
+        },
+        {
+          "requires": {
+            "module": [
+              "shell"
+            ]
+          },
+          "add": {
+            "water": -6
+          }
+        },
+        {
+          "requires": {
+            "storage": [
+              "thermal"
+            ]
+          },
+          "add": {
+            "water": -8
+          }
+        },
+        {
+          "requires": {
+            "power": [
+              "rtg"
+            ]
+          },
+          "add": {
+            "water": -6
+          }
+        },
+        {
+          "requires": {
+            "fix": [
+              "insulate"
+            ]
+          },
+          "add": {
+            "water": -8
+          }
+        },
+        {
+          "requires": {
+            "melt": [
+              "wmelt"
+            ]
+          },
+          "add": {
+            "water": 6
+          }
+        },
+        {
+          "requires": {
+            "module": [
+              "buffer",
+              "stilt"
+            ]
+          },
+          "add": {
+            "water": 4
+          }
+        },
+        {
+          "requires": {
+            "priority": [
+              "heatfirst"
+            ]
+          },
+          "add": {
+            "water": -8,
+            "food": -4
+          }
+        },
+        {
+          "requires": {
+            "priority": [
+              "airfirst"
+            ]
+          },
+          "add": {
+            "air": -6,
+            "water": 6
+          }
+        }
+      ]
+    }
+  ],
+  "strategies": [
+    {
+      "any": [
+        {
+          "power": [
+            "geo"
+          ]
+        }
+      ],
+      "text": "땅이 내어 주는 열"
+    },
+    {
+      "any": [
+        {
+          "power": [
+            "csp"
+          ]
+        }
+      ],
+      "text": "거울로 모은 별빛"
+    },
+    {
+      "any": [
+        {
+          "power": [
+            "rtg"
+          ]
+        }
+      ],
+      "text": "꺼지지 않는 핵전지"
+    }
+  ],
+  "fallback": "단순하고 가벼운 설비"
+}

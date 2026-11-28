@@ -1,19 +1,21 @@
-// 돌발 사건 (체험판, 2026-11-16): 고른 선지와 선지 조합에서 사건이 생긴다. 데이터는 events.json.
+// 돌발 사건 (체험판, 2026-11-16): 고른 선지와 선지 조합에서 사건이 생긴다. 데이터는 planets/<행성>/events.json.
 // 2~5주차에 한 번씩. 사건은 한 주 앞서 뽑아 두고 그 주 브리핑에 예고(hint)를 띄운다.
 // 언제 터질지는 무작위다: 그 주 단계 중 하나를 결정하고 1~3초 뒤, 또는 '다음 주로'를 누를 때 (5주차는 단계 중 하나).
 // 사건이 뜨면 대응 버튼을 고르고, 그 효과는 gauges.js gaugeState 의 extras 로 들어간다.
 // 기록장: 한 번이라도 만난 사건은 이 브라우저에 남는다 (localStorage). 아직 못 만난 사건은 ??? 와 힌트로만 보인다.
-import data from './events.json' with { type: 'json' };
+import { PLANET } from './planets/index.js';
 import { ALL_STEPS, WEEKS } from './choices.js';
 import { mulberry32 } from './terrain.js';
 
-export const EVENTS = data.events;
+const rules = PLANET.events; // 사건 수·피해 세기·제한 시간 (planet.json)
+
+export const EVENTS = PLANET.eventData.events;
 const byId = Object.fromEntries(EVENTS.map(event => [event.id, event]));
-const SEEN_KEY = 'tidelocked.events.seen';
+const SEEN_KEY = PLANET.storage.events;
 const LAST_WEEK = 5; // 마지막 주에는 '다음 주로'가 없어서 단계를 결정할 때만 사건이 뜬다
 
-// 사건 피해 세기 (events.json severity): 줄어드는 값(음수)에만 곱한다. 좋아지는 값은 그대로다
-export const SEVERITY = data.severity ?? 1;
+// 사건 피해 세기 (planet.json severity): 줄어드는 값(음수)에만 곱한다. 좋아지는 값은 그대로다
+export const SEVERITY = rules.severity ?? 1;
 export const harsh = effect => effect && Object.fromEntries(Object.entries(effect).map(([key, value]) => [key, value < 0 ? Math.round(value * SEVERITY) : value]));
 const meets = (requires, selection) => Object.entries(requires ?? {}).every(([step, ids]) => ids.includes(selection[step]));
 /** 지금 선택으로 그 사건이 나올 수 있나 */
@@ -34,15 +36,36 @@ export function causes(event, selection) {
   }).filter(Boolean);
 }
 /** 다음 사건 하나 뽑기. used: 이번 판에 이미 나온 id, seen: 기록장, rand: 0~1 */
-export function pickEvent(selection, used, seen, rand, follow = null) {
+/** kind: 'bad' | 'good' 만 뽑기, week: 그 사건이 일어날 주차 (maxWeek 가 있는 사건은 그 주까지만), excludes 가 이미 나왔으면 빼고 뽑는다 */
+export function pickEvent(selection, used, seen, rand, follow = null, { kind = null, week = null } = {}) {
   if (follow && byId[follow] && !used.has(follow)) return byId[follow];
   const goodUsed = [...used].some(id => byId[id]?.kind === 'good');
-  const pool = EVENTS.filter(event => !used.has(event.id) && eligible(event, selection) && !(goodUsed && event.kind === 'good'));
+  const pool = EVENTS.filter(event => !used.has(event.id) && eligible(event, selection) && !(goodUsed && event.kind === 'good')
+    && (!kind || event.kind === kind) && (!week || week <= (event.maxWeek ?? LAST_WEEK)) && !event.excludes?.some(id => used.has(id)));
   const weights = pool.map(event => (event.weight ?? (event.when?.length ? 3 : 1)) * (seen.has(event.id) ? 1 : 2));
   let r = rand() * weights.reduce((a, b) => a + b, 0);
   for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r < 0) return pool[i]; }
   return pool.at(-1) ?? null;
 }
+
+/** 대응 하나의 결과 → gaugeState extras 항목들. 사건 기본 피해(adjust)와 대응 효과를 합치고,
+ * later(한 주 늦게 오는 효과)는 다음 주 항목으로 따로 넣는다. 마지막 주에는 미룰 곳이 없어 그 주에 바로 들어온다 */
+export function outcome(event, response, selection, week) {
+  const adjusts = (event.adjust ?? []).filter(a => meets(a.requires, selection));
+  const sum = key => {
+    const out = {};
+    for (const effect of [...adjusts.map(a => a[key]), response[key]]) for (const [gauge, value] of Object.entries(effect ?? {})) out[gauge] = (out[gauge] ?? 0) + value;
+    return out;
+  };
+  const list = [{ week, id: event.id, response: response.id, now: harsh(sum('now')), weekly: harsh(response.weekly), clearedBy: response.clearedBy, ease: response.ease ?? 0 }];
+  // 늦은 피해가 늦은 도움보다 작으면 0 (도움이 남아 이득이 되지는 않는다)
+  const base = sum('later'), later = Object.fromEntries(Object.entries(base).map(([k, v]) => [k, response.later?.[k] < 0 ? Math.min(0, v) : v]));
+  if (Object.keys(response.later ?? {}).length) list.push({ week: Math.min(week + 1, LAST_WEEK), id: event.id, response: response.id, now: harsh(later), text: event.laterText });
+  return list;
+}
+// 지금 판에서 사건으로 얻은 고장 시험 피해 감소 (엔딩 판정이 읽는다)
+let current = [];
+export const stressEase = () => current.reduce((total, item) => total + (item.ease ?? 0), 0);
 
 function loadSeen() {
   try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]')); } catch { return new Set(); }
@@ -59,16 +82,21 @@ const make = (tag, className, text) => {
 
 /** onChange: 대응을 고를 때마다 불린다 (게이지 다시 그리기) */
 export function createEvents({ onChange = () => {} } = {}) {
-  let rand, scheduled, used, results, follow, activeWeeks, pending = null, playing = false;
+  let rand, scheduled, used, results, follow, activeWeeks, kinds, pending = null, playing = false, stage = null, veil = null;
   const seen = loadSeen();
   function reset() {
     rand = mulberry32((Date.now() ^ 0x5eed) >>> 0);
     if (pending) clearTimeout(pending.timer);
-    scheduled = {}; used = new Set(); results = []; follow = null; pending = null;
+    stage?.end(true);
+    if (veil) veil.hidden = true;
+    scheduled = {}; used = new Set(); results = []; current = results; follow = null; pending = null;
     // 사건이 나올 주차: 2~5주차 중 eventsPerGame 개를 무작위로 고른다 (나머지 주는 조용히 지나간다)
     const weeks = [2, 3, 4, 5];
     for (let i = weeks.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [weeks[i], weeks[j]] = [weeks[j], weeks[i]]; }
-    activeWeeks = new Set(weeks.slice(0, data.eventsPerGame ?? 4));
+    activeWeeks = new Set(weeks.slice(0, rules.eventsPerGame ?? 4));
+    // goodPerGame 이 있으면 사건이 나오는 주 중 그만큼은 좋은 소식, 나머지는 나쁜 사건 (없으면 섞어서 뽑는다)
+    kinds = {};
+    if (rules.goodPerGame != null) weeks.slice(0, rules.eventsPerGame).forEach((week, i) => { kinds[week] = i < rules.goodPerGame ? 'good' : 'bad'; });
   }
   reset();
 
@@ -79,6 +107,17 @@ export function createEvents({ onChange = () => {} } = {}) {
   const card = make('div', 'event-card');
   modal.append(card);
   document.body.append(modal);
+  // 사건 직전 (2026-11-27): 게임을 멈추고(화면을 덮어 누를 수 없게) 테두리가 주황(좋은 소식은 민트)으로 몇 번 깜빡인 뒤 사건으로 들어간다.
+  // 덮개는 '계속'을 누를 때까지 남아 사건 중에도 선지판·다음 주 버튼을 막는다 (사건 카드는 그 위에 뜬다)
+  veil = make('div', 'event-veil');
+  veil.hidden = true; veil.setAttribute('aria-hidden', 'true');
+  document.body.append(veil);
+  const FLASH_MS = 1500, calm = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  function warn(kind) {
+    veil.className = 'event-veil ' + kind; veil.hidden = false;
+    void veil.offsetWidth; veil.classList.add('flash');
+    return new Promise(done => setTimeout(() => { veil.classList.remove('flash'); done(); }, calm() ? 400 : FLASH_MS));
+  }
 
   function footer(onBook) {
     const foot = make('p', 'event-foot');
@@ -102,9 +141,9 @@ export function createEvents({ onChange = () => {} } = {}) {
     close.focus();
   }
 
-  // 나쁜 사건은 제한 시간 안에 대응을 골라야 한다 (events.json timerSeconds). 기록장을 보는 동안은 시간이 멈춘다.
+  // 나쁜 사건은 제한 시간 안에 대응을 골라야 한다 (planet.json timerSeconds). 기록장을 보는 동안은 시간이 멈춘다.
   // 시간이 다 되면 아무 조치도 못 한 것이다: 사건의 ignore(손 놓았을 때 피해)가 그대로 들어온다. 어떤 대응보다 손해가 크다
-  const TIMER_MS = (data.timerSeconds ?? 20) * 1000, URGENT_MS = 5000;
+  const TIMER_MS = (rules.timerSeconds ?? 20) * 1000, URGENT_MS = 5000;
   const timeoutResponse = event => ({ ...event.ignore, id: 'timeout', timeout: true, label: '시간 초과',
     result: '아무 조치도 하지 못했어요. ' + event.ignore.result });
 
@@ -173,10 +212,8 @@ export function createEvents({ onChange = () => {} } = {}) {
         if (answered) return;
         answered = true; stopClock(); view = null;
         document.removeEventListener('keydown', onKey);
-        // 사건 기본 피해(adjust)와 대응 효과를 한 항목으로 넣는다
-        const now = {};
-        for (const effect of [...adjusts.map(a => a.now ?? {}), response.now ?? {}]) for (const [key, value] of Object.entries(effect)) now[key] = (now[key] ?? 0) + value;
-        results.push({ week, id: event.id, response: response.id, now: harsh(now), weekly: harsh(response.weekly), clearedBy: response.clearedBy });
+        stage?.answer(event, response);
+        results.push(...outcome(event, response, selection, week));
         follow = response.follow ?? null;
         onChange();
         const done = () => {
@@ -184,27 +221,35 @@ export function createEvents({ onChange = () => {} } = {}) {
           const parts = [make('p', 'event-code', event.name + ' · 결과'), make('h2', null, response.timeout ? '시간 초과 · 아무 조치도 못 했어요' : response.label), make('p', 'event-text', response.result)];
           if (response.aftermath) parts.push(make('p', 'event-cause', response.aftermath));
           const next = make('button', 'decide', '▶ 계속'); next.type = 'button';
-          next.addEventListener('click', () => { modal.hidden = true; playing = false; document.body.classList.remove('event-alert'); resolve(); });
+          next.addEventListener('click', () => { modal.hidden = true; playing = false; document.body.classList.remove('event-alert'); stage?.end(); veil.hidden = true; resolve(); });
           parts.push(next, footer(() => showBook(done)));
           card.replaceChildren(...parts);
           next.focus();
         };
         done();
       };
+      // 3D 연출(src/eventStage.js)이 있으면 경보와 함께 카메라가 고장 난 곳으로 다가간 뒤 카드가 뜬다. 카드는 옆으로 비켜 장면이 보이게 한다
       playing = true;
       document.body.classList.add('event-alert');
-      document.addEventListener('keydown', onKey);
-      modal.hidden = false;
-      ask();
+      Promise.resolve(stage?.settle?.()).then(() => warn(event.kind)).then(() => (stage ? stage.start(event, selection) : false)).catch(() => false).then(staged => {
+        modal.classList.toggle('staged', Boolean(staged));
+        document.addEventListener('keydown', onKey);
+        modal.hidden = false;
+        ask();
+      });
     });
   }
 
   return {
     reset,
+    /** 3D 연출 (src/eventStage.js 의 createEventStage). 없으면 카드만 뜬다 */
+    setStage(next) { stage = next; },
+    /** 확인용: 그 사건을 지금 바로 띄운다 (콘솔에서 terrainEvents.play('freeze')). 결과는 게이지에 그대로 들어간다 */
+    trial(id, week, selection) { return byId[id] && !playing ? play(byId[id], week, selection) : Promise.resolve(); },
     /** gaugeState 의 extras */
     effects: () => results,
     /** 그 주 브리핑에 붙일 예고 문장 */
-    hintFor: week => (scheduled[week] ?? []).map(plan => byId[plan.id].hint),
+    hintFor: week => [...results.filter(item => item.week === week && item.text).map(item => item.text), ...(scheduled[week] ?? []).map(plan => byId[plan.id].hint)],
     /** 사건 창이 떠 있으면 true ('다음 주로'를 막는다) */
     busy: () => playing,
     /**
@@ -233,10 +278,10 @@ export function createEvents({ onChange = () => {} } = {}) {
       if (week >= LAST_WEEK) return;
       const moments = [...WEEKS[week].steps.map(step => step.id), ...(week + 1 < LAST_WEEK ? ['end'] : [])];
       // 후속 사건(follow)은 조용한 주에도 나온다
-      const count = activeWeeks.has(week + 1) || follow ? 1 + (rand() < (data.secondChance ?? 0) ? 1 : 0) : 0;
+      const count = activeWeeks.has(week + 1) || follow ? 1 + (rand() < (rules.secondChance ?? 0) ? 1 : 0) : 0;
       scheduled[week + 1] = [];
       for (let k = 0; k < count && moments.length; k++) {
-        const next = pickEvent(selection, used, seen, rand, follow);
+        const next = pickEvent(selection, used, seen, rand, follow, { kind: kinds[week + 1] ?? null, week: week + 1 });
         follow = null;
         if (!next) break;
         const at = moments.splice(Math.floor(rand() * moments.length), 1)[0];

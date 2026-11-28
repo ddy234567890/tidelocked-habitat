@@ -1,0 +1,48 @@
+/* 돌발상황 견본 화면. 색은 CLAUDE.md 화면 토큰만 쓴다 */
+body.lab{height:100vh;overflow:hidden;background:#000;color:#DCE6FF;font-size:18px;line-height:26px}
+#lab-stage{position:fixed;inset:0}
+#lab-stage canvas{display:block}
+#lab-alert{position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 0 4px #F2B84B,inset 0 0 90px rgba(242,184,75,.3);opacity:0}
+body.alarm #lab-alert{animation:lab-pulse 1.2s ease-in-out infinite}
+@keyframes lab-pulse{50%{opacity:1}}
+#lab-top{position:fixed;top:16px;left:16px;right:16px;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none}
+#lab-tabs{display:flex;flex-wrap:wrap;gap:8px}
+#lab-top a,#lab-top button{pointer-events:auto;background:#03081A;border:1px solid #1E4FB0;color:#DCE6FF;padding:6px 14px;text-decoration:none}
+#lab-top a.on{background:#0A1A44;border-color:#8FC1FF;color:#8FC1FF}
+#lab-status{position:fixed;left:16px;bottom:16px;margin:0}
+#lab-mark{position:fixed;top:0;left:0;pointer-events:none;z-index:5}
+#lab-mark b{position:absolute;bottom:14px;left:0;transform:translateX(-50%);white-space:nowrap;background:#F2B84B;color:#000;padding:4px 12px;font-weight:400;font-size:20px}
+#lab-mark i{position:absolute;bottom:0;left:-8px;border:8px solid transparent;border-top:14px solid #F2B84B;border-bottom:0}
+#lab-card{position:fixed;z-index:10;right:24px;top:50%;transform:translateY(-50%);width:356px;max-height:calc(100vh - 32px);overflow:auto;background:rgba(3,8,26,.94);border:2px solid #F2B84B;padding:20px;display:flex;flex-direction:column;gap:14px}
+#lab-card h2{margin:0;font-weight:400;font-size:28px;line-height:34px;color:#F2B84B}
+#lab-card p{margin:0}
+#lab-card .head{display:flex;gap:14px;align-items:center}
+.ico{display:inline-flex;width:22px;height:22px;flex:none}
+.ico svg{width:100%;height:100%}
+.ico.big{width:60px;height:60px;color:#F2B84B;border:2px solid #F2B84B;padding:8px}
+.timer{display:flex;gap:10px;align-items:center}
+.timer span{flex:1;height:10px;background:#0A1A44;border:1px solid #3D8BFF}
+.timer i{display:block;height:100%;background:#F2B84B;transform-origin:left}
+.timer b{min-width:3em;text-align:right;font-weight:400;font-size:22px;color:#F2B84B}
+#lab-card.urgent{animation:lab-edge .7s steps(2,start) infinite}
+@keyframes lab-edge{50%{border-color:#E8DFC8}}
+.options{display:flex;flex-direction:column;gap:10px}
+.options button{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;text-align:left;background:#0A1A44;border:1px solid #3D8BFF;color:#DCE6FF;padding:12px}
+.options button:hover,.options button:focus-visible{background:#1450D8;border-color:#8FC1FF;outline:none}
+.options kbd{border:1px solid #8FC1FF;color:#8FC1FF;padding:0 7px;align-self:start}
+.options .name{font-weight:400;font-size:20px}
+.options .fx-chips{grid-column:2}
+.fx-chips{display:flex;flex-wrap:wrap;gap:6px 16px}
+.chip-fx{display:inline-flex;gap:5px;align-items:center;color:#F2B84B}
+.chip-fx.up{color:#E8DFC8}
+.chip-fx b{font-weight:400}
+#lab-card.result{border-color:#3D8BFF}
+#lab-card.result h2{color:#8FC1FF}
+#lab-card.result.bad{border-color:#F2B84B}
+#lab-card.result.bad h2{color:#F2B84B}
+.again{align-self:flex-start;background:#1450D8;border:1px solid #3D8BFF;color:#DCE6FF;padding:8px 16px}
+@media (max-width:760px){
+  #lab-card{right:12px;left:12px;width:auto;top:auto;bottom:12px;transform:none;max-height:56vh;padding:14px;gap:10px}
+  .options button{padding:8px 10px}
+}
+@media (prefers-reduced-motion:reduce){body.alarm #lab-alert{animation:none;opacity:.8}#lab-card.urgent{animation:none}}

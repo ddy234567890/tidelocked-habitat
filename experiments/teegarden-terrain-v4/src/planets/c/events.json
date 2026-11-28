@@ -1,0 +1,912 @@
+{
+  "notes": {
+    "source": "Teegarden c 선지 설계안(https://claude.ai/artifact/8Q4jb8aMPK8rhXvXwTDTsG)과 플레이테스트 페이지 c 사건에 대응 카드를 더했다 (2026-11-24). 숫자는 모두 [설정] 값",
+    "format": "형식은 planets/b/events.json notes 와 같다. 아래만 더 있다",
+    "later": "대응·ignore·adjust 의 later: 한 주 늦게 오는 효과. 5주차에는 미룰 곳이 없어 바로 들어온다. laterText 는 다음 주 브리핑에 붙는다. 대응에 later 가 없으면 adjust 의 later 도 쓰지 않는다",
+    "excludes": "이 사건이 이미 나온 판에는 나오지 않는다 (배관 동결과 난방 정지)",
+    "maxWeek": "이 주차까지만 나온다 (한파 예보는 다음 주가 있어야 한다)",
+    "ease": "고장 시험 피해를 이만큼 덜어 준다 (엔딩 판정)"
+  },
+  "events": [
+    {
+      "id": "freeze",
+      "name": "배관 동결",
+      "kind": "bad",
+      "when": [],
+      "weight": 2,
+      "excludes": [
+        "heatfail"
+      ],
+      "hint": "관측 메모: 물관 겉면에 서리가 두꺼워지고 있어요.",
+      "lockedHint": "추운 기지라면 어디서나 만날 수 있어요.",
+      "text": "한파로 물관이 얼어 터졌어요. 물이 새기 전에 손을 써야 해요.",
+      "adjust": [
+        {
+          "requires": {
+            "module": [
+              "buffer",
+              "stilt"
+            ]
+          },
+          "now": {
+            "water": -3
+          },
+          "text": "밖으로 길게 나간 배관이 더 많이 얼었어요."
+        },
+        {
+          "requires": {
+            "keep": [
+              "warm"
+            ]
+          },
+          "now": {
+            "water": -4
+          },
+          "text": "따뜻한 물탱크의 배관이 터졌어요."
+        },
+        {
+          "requires": {
+            "module": [
+              "shell"
+            ]
+          },
+          "now": {
+            "water": 3
+          },
+          "text": "이중 단열이 배관을 지켜 줬어요."
+        },
+        {
+          "requires": {
+            "source": [
+              "closed"
+            ]
+          },
+          "now": {
+            "water": 3
+          },
+          "text": "기지 안에서 물을 돌려 써서 바깥 배관이 적어요."
+        }
+      ],
+      "ignore": {
+        "now": {
+          "water": -16,
+          "power": -5
+        },
+        "result": "터진 물관에서 물이 계속 새어 나가 얼어붙었어요."
+      },
+      "responses": [
+        {
+          "id": "thaw",
+          "label": "전기로 급히 녹이기",
+          "line": "물은 지키지만 전력을 많이 써요.",
+          "now": {
+            "power": -7,
+            "water": -4
+          },
+          "result": "배관을 녹였어요. 대신 전력이 크게 줄었어요."
+        },
+        {
+          "id": "cut",
+          "label": "얼어붙은 구간 버리기",
+          "line": "밸브를 잠그고 그 안의 물을 포기해요.",
+          "now": {
+            "water": -11
+          },
+          "result": "더 번지지 않았지만 관 안의 물을 잃었어요."
+        },
+        {
+          "id": "icebox",
+          "label": "얼음 창고 열기",
+          "line": "비축해 둔 얼음을 조금씩 녹여 써요.",
+          "requires": {
+            "keep": [
+              "ice"
+            ]
+          },
+          "now": {
+            "water": -3,
+            "power": -2
+          },
+          "result": "얼음 상태로 비축해 두어 물이 얼지 않았어요."
+        }
+      ]
+    },
+    {
+      "id": "coldwave",
+      "name": "한파 예보",
+      "kind": "bad",
+      "when": [],
+      "weight": 2,
+      "maxWeek": 4,
+      "hint": "관측 메모: 밤 쪽에서 찬 공기 덩어리가 움직이고 있어요.",
+      "lockedHint": "추운 기지라면 어디서나 만날 수 있어요.",
+      "text": "다음 주에 밤 쪽의 찬 공기가 밀려온다는 예보예요. 지금 준비할 수 있어요.",
+      "laterText": "예보대로 한파가 왔어요. 준비한 만큼만 난방 전력이 더 들었어요.",
+      "adjust": [
+        {
+          "requires": {
+            "heat": [
+              "resist"
+            ]
+          },
+          "later": {
+            "power": -1
+          },
+          "text": "전기 히터는 추울수록 전기를 더 먹어요."
+        },
+        {
+          "requires": {
+            "module": [
+              "stilt"
+            ]
+          },
+          "later": {
+            "power": -2
+          },
+          "text": "기둥 위 기지는 바람에 열을 뺏겨요."
+        },
+        {
+          "requires": {
+            "heat": [
+              "shrink"
+            ]
+          },
+          "later": {
+            "power": 3
+          },
+          "text": "데울 공간이 작아 부담이 덜해요."
+        }
+      ],
+      "ignore": {
+        "now": {
+          "air": -4
+        },
+        "later": {
+          "power": -18
+        },
+        "result": "아무 준비도 못 했어요. 다음 주에 한파를 그대로 맞아요."
+      },
+      "responses": [
+        {
+          "id": "preheat",
+          "label": "미리 난방 올리기",
+          "line": "지금 전력을 써서 기지를 데워 둬요.",
+          "now": {
+            "power": -8
+          },
+          "later": {
+            "power": -3
+          },
+          "result": "기지가 따뜻해졌어요. 다음 주 부담이 줄어요."
+        },
+        {
+          "id": "brace",
+          "label": "아껴 두고 버티기",
+          "line": "지금은 아끼고 다음 주에 한꺼번에 써요.",
+          "later": {
+            "power": -13
+          },
+          "result": "전력을 아꼈어요. 다음 주에 난방 부담이 크게 와요."
+        },
+        {
+          "id": "store",
+          "label": "축열조에 열 담기",
+          "line": "남는 열을 미리 모아 둬요.",
+          "requires": {
+            "storage": [
+              "thermal"
+            ]
+          },
+          "now": {
+            "power": -3
+          },
+          "later": {
+            "power": -2
+          },
+          "result": "축열조가 데워졌어요. 한파를 거의 그대로 넘길 수 있어요."
+        }
+      ]
+    },
+    {
+      "id": "dust",
+      "name": "분지 먼지 폭풍",
+      "kind": "bad",
+      "when": [
+        {
+          "location": [
+            "A"
+          ]
+        }
+      ],
+      "weight": 2,
+      "hint": "관측 메모: 분지 가장자리에 먼지 구름이 쌓이고 있어요.",
+      "lockedHint": "별 바로 아래 분지에 기지를 세우면 만날 수 있어요.",
+      "text": "먼지 폭풍이 분지를 덮었어요. 빛이 흐려지고 설비에 먼지가 쌓여요.",
+      "laterText": "먼지 폭풍이 한 주 더 이어졌어요.",
+      "adjust": [
+        {
+          "requires": {
+            "module": [
+              "dome"
+            ]
+          },
+          "now": {
+            "power": -3
+          },
+          "text": "집광 돔에 먼지가 쌓였어요."
+        },
+        {
+          "requires": {
+            "power": [
+              "csp"
+            ]
+          },
+          "now": {
+            "power": -4
+          },
+          "text": "집광 거울이 먼지로 덮였어요."
+        }
+      ],
+      "ignore": {
+        "now": {
+          "power": -8,
+          "air": -4
+        },
+        "later": {
+          "power": -6
+        },
+        "result": "먼지가 두껍게 쌓여 빛이 거의 들어오지 않아요."
+      },
+      "responses": [
+        {
+          "id": "clean",
+          "label": "거울과 돔 닦기",
+          "line": "대원을 내보내 먼지를 쓸어 내요.",
+          "now": {
+            "air": -4,
+            "power": -2
+          },
+          "result": "빛은 돌아왔지만 바깥 작업에 우주복 산소를 썼어요."
+        },
+        {
+          "id": "saver",
+          "label": "걷힐 때까지 절전",
+          "line": "덜 급한 설비를 끄고 기다려요.",
+          "now": {
+            "power": -5
+          },
+          "later": {
+            "power": -4
+          },
+          "result": "아무도 나가지 않았어요. 전력은 한 주 더 부족해요."
+        },
+        {
+          "id": "rtg",
+          "label": "핵전지로 버티기",
+          "line": "빛과 상관없는 전기로 기지를 돌려요.",
+          "requires": {
+            "power": [
+              "rtg"
+            ]
+          },
+          "now": {
+            "power": -2
+          },
+          "result": "동위원소 발전기는 먼지와 상관없이 돌아갔어요."
+        }
+      ]
+    },
+    {
+      "id": "gas",
+      "name": "열곡 화산 가스",
+      "kind": "bad",
+      "when": [
+        {
+          "location": [
+            "B"
+          ]
+        }
+      ],
+      "weight": 2,
+      "hint": "관측 메모: 열곡 바닥의 틈에서 나오는 김이 짙어졌어요.",
+      "lockedHint": "지열 열곡에 기지를 세우면 만날 수 있어요.",
+      "text": "땅속 가스가 기지로 스며들고 있어요. 숨 쉴 공기를 지켜야 해요.",
+      "laterText": "열곡의 가스가 한 주 더 이어졌어요.",
+      "adjust": [
+        {
+          "requires": {
+            "module": [
+              "direct"
+            ]
+          },
+          "now": {
+            "air": -4
+          },
+          "text": "열원 바로 위라 가스가 진해요."
+        },
+        {
+          "requires": {
+            "source": [
+              "hydro"
+            ]
+          },
+          "now": {
+            "water": -3
+          },
+          "text": "시추한 물에 가스가 섞였어요."
+        }
+      ],
+      "ignore": {
+        "now": {
+          "air": -11,
+          "power": -4
+        },
+        "later": {
+          "air": -5
+        },
+        "result": "가스가 온 기지에 퍼져 공기를 크게 잃었어요."
+      },
+      "responses": [
+        {
+          "id": "shut",
+          "label": "환기 멈추고 대피",
+          "line": "문을 닫고 안쪽 공기로 버텨요.",
+          "now": {
+            "air": -5
+          },
+          "later": {
+            "air": -4
+          },
+          "result": "가스는 막았지만 안쪽 공기가 줄고 있어요."
+        },
+        {
+          "id": "filter",
+          "label": "걸러 내기 최대로",
+          "line": "여과 장치를 전력으로 세게 돌려요.",
+          "now": {
+            "power": -7,
+            "air": -2
+          },
+          "result": "공기는 깨끗해졌어요. 대신 전력을 많이 썼어요."
+        },
+        {
+          "id": "distance",
+          "label": "열 배관 잠그기",
+          "line": "떨어진 거리 덕분에 배관만 잠가도 돼요.",
+          "requires": {
+            "module": [
+              "buffer"
+            ]
+          },
+          "now": {
+            "air": -2,
+            "power": -1
+          },
+          "result": "멀리 지어 둔 덕분에 가스가 거의 닿지 않았어요."
+        }
+      ]
+    },
+    {
+      "id": "sink",
+      "name": "해안 지반 침하",
+      "kind": "bad",
+      "when": [
+        {
+          "location": [
+            "C"
+          ]
+        }
+      ],
+      "weight": 2,
+      "hint": "관측 메모: 기지 아래 얼음이 조금씩 물러지고 있어요.",
+      "lockedHint": "얼음 해안에 기지를 세우면 만날 수 있어요.",
+      "text": "기지의 열로 얼음이 녹아 바닥이 기울고 있어요.",
+      "laterText": "얼음 바닥이 한 주 더 내려앉았어요.",
+      "adjust": [
+        {
+          "requires": {
+            "module": [
+              "bury"
+            ]
+          },
+          "now": {
+            "water": -4
+          },
+          "text": "얼음 속에 묻은 기지라 더 많이 기울었어요."
+        }
+      ],
+      "ignore": {
+        "now": {
+          "water": -9,
+          "air": -5,
+          "power": -4
+        },
+        "later": {
+          "water": -4
+        },
+        "result": "이음새가 벌어져 물과 공기가 함께 새었어요."
+      },
+      "responses": [
+        {
+          "id": "prop",
+          "label": "받침 보강하기",
+          "line": "전력을 써서 바닥을 다시 얼리고 받쳐요.",
+          "now": {
+            "power": -7,
+            "water": -2
+          },
+          "result": "기울기가 멈췄어요. 전력이 크게 줄었어요."
+        },
+        {
+          "id": "tilt",
+          "label": "기운 채로 쓰기",
+          "line": "새는 곳만 막고 그대로 지내요.",
+          "now": {
+            "water": -4,
+            "air": -3
+          },
+          "later": {
+            "water": -3
+          },
+          "result": "당장은 버텼지만 이음새에서 물이 조금씩 새요."
+        },
+        {
+          "id": "legs",
+          "label": "기둥 높이 맞추기",
+          "line": "기둥 길이를 조절해 수평을 잡아요.",
+          "requires": {
+            "module": [
+              "stilt"
+            ]
+          },
+          "now": {
+            "power": -2
+          },
+          "result": "기둥 위에 띄워 둔 덕분에 금방 바로잡았어요."
+        }
+      ]
+    },
+    {
+      "id": "heatfail",
+      "name": "난방 계통 정지",
+      "kind": "bad",
+      "when": [],
+      "weight": 2,
+      "excludes": [
+        "freeze"
+      ],
+      "hint": "관측 메모: 난방 장치의 진동이 평소보다 커요.",
+      "lockedHint": "추운 기지라면 어디서나 만날 수 있어요.",
+      "text": "난방 장치가 멈췄어요. 이대로면 다음 주에 배관까지 얼어요.",
+      "laterText": "난방이 멈췄던 사이 배관 일부가 얼었어요.",
+      "adjust": [
+        {
+          "requires": {
+            "heat": [
+              "hp"
+            ]
+          },
+          "now": {
+            "power": -2
+          },
+          "text": "히트펌프 하나에 난방을 맡겨 피해가 커요."
+        },
+        {
+          "requires": {
+            "oxygen": [
+              "waste"
+            ]
+          },
+          "now": {
+            "air": -6
+          },
+          "text": "폐열 연계형이라 산소 장치도 함께 멈췄어요."
+        },
+        {
+          "requires": {
+            "growTemp": [
+              "optimal"
+            ]
+          },
+          "now": {
+            "food": -4
+          },
+          "text": "따뜻하게 키우던 작물이 냉해를 입었어요."
+        },
+        {
+          "requires": {
+            "melt": [
+              "wmelt"
+            ]
+          },
+          "later": {
+            "water": -3
+          },
+          "text": "남는 열로 녹이던 얼음도 멈췄어요."
+        },
+        {
+          "requires": {
+            "keep": [
+              "ice"
+            ]
+          },
+          "later": {
+            "water": 2
+          },
+          "text": "얼음 비축분은 영향을 받지 않았어요."
+        }
+      ],
+      "ignore": {
+        "now": {
+          "power": -9,
+          "air": -4
+        },
+        "later": {
+          "water": -10
+        },
+        "result": "기지가 얼어붙기 시작했어요. 다음 주에는 배관도 위험해요."
+      },
+      "responses": [
+        {
+          "id": "restart",
+          "label": "비상 전력으로 다시 켜기",
+          "line": "전력을 쏟아 난방을 살려요.",
+          "now": {
+            "power": -9
+          },
+          "later": {
+            "water": -3
+          },
+          "result": "난방이 돌아왔어요. 배관은 조금 얼었어요."
+        },
+        {
+          "id": "small",
+          "label": "거주 구역만 데우기",
+          "line": "나머지 구역은 얼도록 둬요.",
+          "now": {
+            "power": -3,
+            "water": -3,
+            "food": -4
+          },
+          "later": {
+            "water": -3
+          },
+          "result": "사람은 지켰지만 식량과 물이 얼어 버렸어요."
+        },
+        {
+          "id": "shell",
+          "label": "단열로 버티며 고치기",
+          "line": "열이 천천히 빠지는 동안 고쳐요.",
+          "requires": {
+            "module": [
+              "shell"
+            ]
+          },
+          "now": {
+            "power": -3
+          },
+          "later": {
+            "water": -1
+          },
+          "result": "이중 단열 덕분에 식기 전에 고쳤어요."
+        }
+      ]
+    },
+    {
+      "id": "culture",
+      "name": "배양조 오염",
+      "kind": "bad",
+      "when": [
+        {
+          "crop": [
+            "hydroponic",
+            "microbe",
+            "fungi"
+          ]
+        }
+      ],
+      "weight": 2,
+      "hint": "관측 메모: 생산 시설의 냄새와 색이 조금 달라졌어요.",
+      "lockedHint": "식량 생산을 시작하면 만날 수 있어요.",
+      "text": "생산 시설에 잡균이 퍼지고 있어요. 더 번지기 전에 정해야 해요.",
+      "adjust": [
+        {
+          "requires": {
+            "crop": [
+              "microbe"
+            ]
+          },
+          "now": {
+            "food": -6
+          },
+          "text": "발효조 전체가 오염됐어요."
+        },
+        {
+          "requires": {
+            "waste": [
+              "compost"
+            ]
+          },
+          "now": {
+            "food": -3
+          },
+          "text": "재순환한 영양분을 타고 잡균이 퍼졌어요."
+        },
+        {
+          "requires": {
+            "crop": [
+              "fungi"
+            ]
+          },
+          "now": {
+            "food": 3
+          },
+          "text": "버섯·곤충 사육장은 영향이 적어요."
+        }
+      ],
+      "ignore": {
+        "now": {
+          "food": -12,
+          "power": -3
+        },
+        "result": "잡균이 모두 퍼져 생산 시설을 통째로 비워야 했어요."
+      },
+      "responses": [
+        {
+          "id": "dump",
+          "label": "모두 버리고 다시 시작",
+          "line": "오염된 것을 다 버려요.",
+          "now": {
+            "food": -7
+          },
+          "result": "잡균은 사라졌지만 식량을 많이 잃었어요."
+        },
+        {
+          "id": "heat",
+          "label": "높은 열로 살균",
+          "line": "전력을 써서 살릴 수 있는 것을 살려요.",
+          "now": {
+            "power": -6,
+            "food": -2
+          },
+          "result": "대부분 살렸어요. 전력이 크게 줄었어요."
+        },
+        {
+          "id": "seal",
+          "label": "밀봉 구역만 남기기",
+          "line": "깨끗한 구역을 나눠 지켜요.",
+          "requires": {
+            "waste": [
+              "seal"
+            ]
+          },
+          "now": {
+            "food": -2,
+            "power": -1
+          },
+          "result": "찌꺼기를 밀봉해 둔 덕분에 오염이 번지지 않았어요."
+        }
+      ]
+    },
+    {
+      "id": "groundwater",
+      "name": "지하 온수층 발견",
+      "kind": "good",
+      "when": [],
+      "weight": 1,
+      "hint": "관측 메모: 얼음 아래에서 따뜻한 신호가 잡혔어요.",
+      "lockedHint": "추운 기지에서 가끔 만날 수 있어요.",
+      "text": "정찰 드론이 얼음 아래에서 얼지 않은 물을 찾았어요.",
+      "adjust": [
+        {
+          "requires": {
+            "location": [
+              "B"
+            ]
+          },
+          "now": {
+            "water": 5
+          },
+          "text": "열곡이라 온수층이 가까워요."
+        },
+        {
+          "requires": {
+            "source": [
+              "mine"
+            ]
+          },
+          "now": {
+            "water": 2
+          },
+          "text": "채굴 장비로 바로 퍼 올릴 수 있어요."
+        }
+      ],
+      "responses": [
+        {
+          "id": "pump",
+          "label": "물로 퍼 올리기",
+          "line": "물탱크를 채워요.",
+          "now": {
+            "water": 8
+          },
+          "result": "물이 넉넉해졌어요."
+        },
+        {
+          "id": "warm",
+          "label": "물의 열을 쓰기",
+          "line": "물은 조금만 쓰고 열로 난방을 도와요.",
+          "now": {
+            "water": 3,
+            "power": 5
+          },
+          "result": "물도 조금 얻고 난방 전력도 아꼈어요."
+        }
+      ]
+    },
+    {
+      "id": "volatiles",
+      "name": "얼음 속 기체 발견",
+      "kind": "good",
+      "when": [],
+      "weight": 1,
+      "hint": "관측 메모: 캐낸 얼음에서 기포가 많이 나와요.",
+      "lockedHint": "추운 기지에서 가끔 만날 수 있어요.",
+      "text": "얼음에 갇혀 있던 질소와 이산화탄소를 찾았어요. 공기 재료로 쓸 수 있어요.",
+      "adjust": [
+        {
+          "requires": {
+            "location": [
+              "C"
+            ]
+          },
+          "now": {
+            "air": 3
+          },
+          "text": "해안은 얼음이 많아 더 많이 모았어요."
+        }
+      ],
+      "responses": [
+        {
+          "id": "rest",
+          "label": "산소 장치 쉬게 하기",
+          "line": "공기를 채우고 전력도 아껴요.",
+          "now": {
+            "air": 6,
+            "power": 4
+          },
+          "result": "공기가 늘고 산소 장치의 전력도 아꼈어요."
+        },
+        {
+          "id": "fill",
+          "label": "공기통에 채우기",
+          "line": "공기를 가득 모아 둬요.",
+          "now": {
+            "air": 10
+          },
+          "result": "공기가 크게 늘었어요."
+        }
+      ]
+    },
+    {
+      "id": "quietstar",
+      "name": "조용한 별",
+      "kind": "good",
+      "when": [],
+      "weight": 1,
+      "hint": "관측 메모: 별의 밝기가 고르게 이어지고 있어요.",
+      "lockedHint": "어느 기지에서나 가끔 만날 수 있어요.",
+      "text": "별이 한동안 잠잠해서 빛이 안정적으로 들어와요.",
+      "adjust": [
+        {
+          "requires": {
+            "power": [
+              "csp"
+            ]
+          },
+          "now": {
+            "power": 6
+          },
+          "text": "집광 발전 출력이 올라갔어요."
+        },
+        {
+          "requires": {
+            "module": [
+              "dome"
+            ]
+          },
+          "now": {
+            "power": 2
+          },
+          "text": "집광 돔 난방이 잘 돼요."
+        }
+      ],
+      "responses": [
+        {
+          "id": "charge",
+          "label": "에너지 모아 두기",
+          "line": "저장 설비를 채워요.",
+          "now": {
+            "power": 8
+          },
+          "result": "전력에 여유가 생겼어요."
+        },
+        {
+          "id": "survey",
+          "label": "바깥 작업 나가기",
+          "line": "맑은 날에 얼음을 캐 와요.",
+          "now": {
+            "power": 3,
+            "water": 6
+          },
+          "result": "물을 넉넉히 캐 왔어요."
+        }
+      ]
+    },
+    {
+      "id": "supply",
+      "name": "보급 캡슐 조기 도착",
+      "kind": "good",
+      "when": [],
+      "weight": 1,
+      "hint": "관측 메모: 궤도의 우주선이 낙하 준비 신호를 보냈어요.",
+      "lockedHint": "어느 기지에서나 가끔 만날 수 있어요.",
+      "text": "궤도의 우주선이 남는 물자를 먼저 내려 보냈어요.",
+      "adjust": [],
+      "responses": [
+        {
+          "id": "lowest",
+          "label": "가장 부족한 것 채우기",
+          "line": "지금 가장 모자란 자원에 써요.",
+          "now": {
+            "lowest": 12
+          },
+          "result": "가장 모자랐던 자원이 크게 채워졌어요."
+        },
+        {
+          "id": "spread",
+          "label": "골고루 나누기",
+          "line": "네 가지를 조금씩 채워요.",
+          "now": {
+            "air": 4,
+            "water": 4,
+            "food": 4,
+            "power": 4
+          },
+          "result": "모든 자원이 조금씩 늘었어요."
+        }
+      ]
+    },
+    {
+      "id": "parts",
+      "name": "현지 자재 발견",
+      "kind": "good",
+      "when": [],
+      "weight": 1,
+      "hint": "관측 메모: 기지 근처 바위에서 금속 반응이 나왔어요.",
+      "lockedHint": "어느 기지에서나 가끔 만날 수 있어요.",
+      "text": "부품으로 쓸 수 있는 금속 광석을 찾았어요.",
+      "adjust": [],
+      "responses": [
+        {
+          "id": "spare",
+          "label": "예비 부품 만들기",
+          "line": "큰 고장에 대비해 둬요.",
+          "now": {
+            "power": 5
+          },
+          "ease": 8,
+          "result": "예비 부품이 생겨 큰 고장이 나도 피해가 줄어요."
+        },
+        {
+          "id": "sell",
+          "label": "설비 손보기",
+          "line": "지금 쓰는 설비의 효율을 높여요.",
+          "now": {
+            "power": 10
+          },
+          "result": "설비가 매끄럽게 돌아 전력에 여유가 생겼어요."
+        }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { PLANET } from './planets/index.js';
 // 칸의 창 버튼 (PLANET_DATA, CREW_LINK): _ · × 는 칸을 접고 펴고, □ 는 자세한 내용을 큰 창으로 띄운다.
 // CREW_LINK 의 큰 창은 crew.js 의 대원 상태 창을 그대로 연다.
 // PLANET_DATA 의 수치는 칸(#planet-facts)의 값을 읽고, MEANING 은 그 뜻을 쉬운 말로 적은 것이다.
@@ -17,7 +18,7 @@ collapsible($('.p-crew'), [$('#crew-min'), $('#crew-close-panel')], '대원 상�
 $('#crew-max').addEventListener('click', () => $('#crew-open').click());
 
 // PLANET_DATA 큰 창
-const MEANING = {
+const MEANING = PLANET.ui?.meaning ?? {
   '최소질량': '지구 질량(M⊕)의 1.16배 이상이에요. 관측으로는 가장 작은 값만 알 수 있어요.',
   '추정 반지름': '지구 반지름(R⊕)의 약 1.04배예요. 크기는 지구와 거의 같아요.',
   '공전주기': '별을 한 바퀴 도는 시간, 곧 이 행성의 1년이에요.',
@@ -38,7 +39,7 @@ dialog.innerHTML = `
      <li>행성이 늘 같은 면만 별을 향해요.</li>
      <li>낮 쪽은 계속 낮, 밤 쪽은 계속 밤이에요.</li>
      <li>그 사이, 해가 지평선에 걸린 곳이 황혼 지대예요.</li>
-     <li>현무암 평원과 용암동굴은 낮 쪽에, 황혼 능선은 그 경계에 있어요.</li>
+     <li>${PLANET.ui?.sitesLine ?? '현무암 평원과 용암동굴은 낮 쪽에, 황혼 능선은 그 경계에 있어요.'}</li>
     </ul>
    </section>
   </div>

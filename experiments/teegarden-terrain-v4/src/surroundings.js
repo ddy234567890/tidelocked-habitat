@@ -3,6 +3,7 @@ import { shade } from './palette.js';
 import { plainSurface } from './plain.js';
 import { ridgeSurface, ridgeFrame, ICE_U } from './ridge.js';
 import { tubeSurface } from './lavaTube.js';
+import { COLD } from './coldLands.js';
 
 // 지정 지형 바깥의 주변 지형. 같은 지표 함수를 이어 쓰되 점 간격을 넓히고, 멀수록 어둡게 사라진다.
 // 반지름은 지정 지형 타원(EXTENT)을 1로 잰 값이다. 지정 지형의 가장자리(0.70~1)와 겹치며 들어온다.
@@ -20,28 +21,29 @@ const SURFACES = {
 };
 
 /**
- * @param {string} name  plain | ridge | lavaTube
+ * @param {string} name  plain | ridge | lavaTube | basin | rift | shore
  * @param {object} def   sites.json 의 지역 정의
  * @param {boolean} half 절개면 앞쪽(z > 0)을 비운다 (용암동굴 전체·단면 보기)
  */
 export function buildSurroundings(name, def, half = false, count = SURROUND_COUNT) {
-  const random = mulberry32(def.seed + 7001), out = output(count), surface = SURFACES[name](def);
+  const random = mulberry32(def.seed + 7001), out = output(count), cold = COLD[name], surface = (SURFACES[name] ?? cold.surface)(def);
   const extent = { x: EXTENT.x * OUTER, z: EXTENT.z * OUTER };
   const grid = surfaceGrid(surface, starDirection(def.star), extent, GRID_SIZE);
   const b = 2 - DENSITY_FALLOFF, lo = INNER ** b, hi = OUTER ** b;
   for (let i = 0; i < count; i++) {
-    let r, angle;
+    let r, angle, tries = 0;
     do {
       r = (lo + random() * (hi - lo)) ** (1 / b);
       angle = random() * Math.PI * 2;
-    } while (random() > smooth(INNER, 1.05, r)); // 지정 지형 가장자리에서 서서히 들어온다
+    } while (random() > smooth(INNER, 1.05, r) || (cold?.keep && tries++ < 8 && random() > cold.keep(Math.cos(angle) * r * EXTENT.x, Math.sin(angle) * r * EXTENT.z))); // 지정 지형 가장자리에서 서서히 들어온다
     const x = Math.cos(angle) * r * EXTENT.x;
     const z = (half ? -Math.abs(Math.sin(angle)) : Math.sin(angle)) * r * EXTENT.z;
     const d2 = x * x + z * z;
-    const y = grid.ground(x, z) - d2 / (2 * PLANET_RADIUS) * smooth(0.8, 1.6, r);
+    const y = (cold?.exact ? surface(x, z) : grid.ground(x, z)) - d2 / (2 * PLANET_RADIUS) * smooth(0.8, 1.6, r);
     const ice = name === 'ridge' && Math.abs(ridgeFrame(x, z).u - ICE_U) < 0.4 + noise(z * 0.5, 3) * 0.1;
     const fade = 1 - smooth(OUTER * 0.5, OUTER, r);
-    put(out, i, x, y, z, shade(groundColor(def, grid.light(x, z), ice), 0.12 + 0.78 * fade));
+    const color = cold ? cold.color(def, grid.light(x, z), x, z) : groundColor(def, grid.light(x, z), ice);
+    put(out, i, x, y, z, shade(color, 0.12 + 0.78 * fade));
   }
   return out;
 }

@@ -1,0 +1,175 @@
+{
+  "notes": {
+    "fx": "연출 종류 (eventFx.js FX). 사건마다 새 연출을 만들지 않고 이 이름과 대상만 바꾼다",
+    "target": "고장 나는 선지 단계 (그 단계에서 고른 선지의 장치가 대상이 된다)",
+    "flows": "함께 끊기는 흐름 종류 (flows.js FLOW_KINDS)",
+    "heal": "대응별로 얼마나 되돌아오나 (0 그대로 ~ 1 다 고침). timeout 은 시간 초과"
+  },
+  "samples": [
+    {
+      "id": "o2fail",
+      "planet": "b",
+      "site": "plain",
+      "week": 2,
+      "name": "산소 장치 고장",
+      "fx": "powerdown",
+      "target": "oxygen",
+      "flows": [
+        "oxygen"
+      ],
+      "icon": "air",
+      "tag": "산소 장치 정지",
+      "short": "산소가 끊겼어요",
+      "selection": {
+        "location": "A",
+        "module": "A1",
+        "oxygen": "O1",
+        "power": "P1",
+        "storage": "S1"
+      },
+      "heal": {
+        "parts": 1,
+        "tank": 0.45,
+        "timeout": 0
+      }
+    },
+    {
+      "id": "freeze",
+      "planet": "c",
+      "site": "basin",
+      "week": 3,
+      "name": "배관 동결",
+      "fx": "pipeBurst",
+      "target": "keep",
+      "flows": [
+        "water"
+      ],
+      "icon": "water",
+      "tag": "물관 파열",
+      "short": "물이 얼어 새고 있어요",
+      "selection": {
+        "location": "A",
+        "module": "shell",
+        "oxygen": "stdp",
+        "source": "mine",
+        "melt": "emelt",
+        "keep": "ice"
+      },
+      "heal": {
+        "thaw": 1,
+        "cut": 0.35,
+        "icebox": 0.75,
+        "timeout": 0
+      }
+    },
+    {
+      "id": "dust",
+      "planet": "c",
+      "site": "basin",
+      "week": 2,
+      "name": "먼지 폭풍",
+      "fx": "storm",
+      "target": "power",
+      "flows": [
+        "power"
+      ],
+      "icon": "power",
+      "tag": "집광 거울 덮임",
+      "short": "먼지가 빛을 막고 있어요",
+      "selection": {
+        "location": "A",
+        "module": "dome",
+        "oxygen": "stdp",
+        "power": "csp",
+        "storage": "thermal"
+      },
+      "heal": {
+        "clean": 1,
+        "saver": 0.35,
+        "rtg": 0.6,
+        "timeout": 0
+      }
+    },
+    {
+      "id": "crack",
+      "planet": "b",
+      "site": "ridge",
+      "week": 2,
+      "name": "비탈 균열",
+      "fx": "quake",
+      "target": "module",
+      "flows": [],
+      "icon": "home",
+      "tag": "건물 기초 흔들림",
+      "short": "땅이 갈라져 건물이 기울어요",
+      "selection": {
+        "location": "C",
+        "module": "C1",
+        "oxygen": "O1"
+      },
+      "heal": {
+        "brace": 1,
+        "move": 0.25,
+        "timeout": 0
+      }
+    },
+    {
+      "id": "culture",
+      "planet": "c",
+      "site": "basin",
+      "week": 5,
+      "name": "배양조 오염",
+      "fx": "spread",
+      "target": "crop",
+      "flows": [],
+      "icon": "food",
+      "tag": "생산 시설 오염",
+      "short": "잡균이 번지고 있어요",
+      "selection": {
+        "location": "A",
+        "module": "shell",
+        "oxygen": "stdp",
+        "power": "csp",
+        "storage": "thermal",
+        "heat": "resist",
+        "source": "mine",
+        "melt": "emelt",
+        "keep": "ice",
+        "crop": "hydroponic",
+        "growTemp": "lowtemp",
+        "waste": "seal"
+      },
+      "heal": {
+        "dump": 1,
+        "heat": 0.85,
+        "seal": 0.75,
+        "timeout": 0
+      }
+    },
+    {
+      "id": "overwork",
+      "planet": "b",
+      "site": "plain",
+      "week": 2,
+      "name": "대원 과로",
+      "fx": "crew",
+      "target": "oxygen",
+      "flows": [],
+      "icon": "people",
+      "tag": "쓰러지기 직전",
+      "short": "대원들이 너무 지쳤어요",
+      "selection": {
+        "location": "A",
+        "module": "A1",
+        "oxygen": "O3",
+        "power": "P1",
+        "storage": "S2"
+      },
+      "heal": {
+        "rest": 1,
+        "push": 0.15,
+        "timeout": 0
+      }
+    }
+  ]
+}

@@ -189,6 +189,34 @@
 
 - 글꼴은 OFL이라 그대로 쓰고 나눠 줄 수 있어요. 다만 글꼴 파일을 바꿔 다시 배포할 때는 예약 이름 「TERRARUM」을 쓰면 안 되고, 라이선스 전문을 함께 두어야 해요.
 
+## Teegarden c 선지용 (2026-11-25, experiments/teegarden-terrain-v4/src/models)
+
+점 선으로 그리므로 삼각형 수보다 **꺾인 모서리 선 수**(14° 이상)가 적은 것을 골랐어요. 모두 선 410개 이하예요. `node scripts/model-lines.mjs 파일.glb` 로 재요.
+
+### 받은 모델 (Poly Pizza, CC0)
+
+| 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 삼각형 | 선 | 쓰는 선지 |
+|---|---|---|---|---|---|---|---|
+| ice-block.glb | Ice Block | https://poly.pizza/m/dEY0gPZNzG | Quaternius | CC0 | 36 | 24 | 얼음 상태 비축 · 표면 얼음 채굴 |
+| ice-crystal.glb | Crystal | https://poly.pizza/m/Ftu5CcnxFZ | iPoly3D | CC0 | 116 | 85 | 빙상 매설형 · 표면 얼음 채굴 |
+| ice-shards.glb | Crystal | https://poly.pizza/m/ySa8IekR6i | iPoly3D | CC0 | 292 | 200 | 빙상 매설형 |
+| rock-snow.glb | Rock Snow | https://poly.pizza/m/eZRzCg5BcR | Quaternius | CC0 | 118 | 143 | 빙상 매설형 |
+| antenna-mast.glb | Antenna | https://poly.pizza/m/l5Oc9swvKk | Quaternius | CC0 | 88 | 116 | 고상 거치형 |
+| antenna-dish.glb | Antenna | https://poly.pizza/m/OuHQCigiUR | Quaternius | CC0 | 412 | 156 | 집광 돔형 · 이중 단열 셸형 |
+| mushroom-a.glb | Mushroom | https://poly.pizza/m/db1tjMhmiA | Quaternius | CC0 | 138 | 119 | 버섯·곤충 사육 |
+| mushroom-b.glb | Mushroom | https://poly.pizza/m/A2rwQyfqYG | Kenney | CC0 | 80 | 72 | 버섯·곤충 사육 |
+| lantern.glb | Lantern | https://poly.pizza/m/CtHBJ1ufeW | Kay Lousberg | CC0 | 264 | 245 | 난방 우선 |
+| landing-pad.glb | Landing Pad | https://poly.pizza/m/QpDGgpHcH2 | Kay Lousberg | CC0 | 454 | 410 | 정원 그대로 수용 · 선발대 우선 |
+| tent-small.glb | Tent | https://poly.pizza/m/LrTs3hVGXv | Kenney | CC0 | 352 | 280 | 선발대 우선 수용 |
+| crate-flat.glb | Crate | https://poly.pizza/m/yCBoU0iyOk | Kay Lousberg | CC0 | 132 | 132 | 밀봉·보관 처리 |
+| iron-sheet.glb | Corrugated Iron Sheet | https://poly.pizza/m/XbTpa4CwVl | Kenney | CC0 | 180 | 156 | 단열 재시공 |
+
+- 받은 날 2026-11-25. 라이선스는 모델 페이지마다 CC0 1.0 으로 확인했어요. 원본은 `public/models/raw`, 정리본은 `public/models` 와 `src/models` 에 있어요.
+
+### 팀 제작 (CC0)
+
+`scripts/make-cold-models.mjs` 가 만드는 로우폴리 37개예요 (괄호 안은 선 수): cold-airheat (120) · cold-airlow (100) · cold-airpost (105) · cold-airstd (75) · cold-auxgen (47) · cold-bioreactor (104) · cold-coldframe (30) · cold-compost (108) · cold-derrick (261) · cold-doubleshell (148) · cold-foldwall (28) · cold-geodome (94) · cold-geoplant (122) · cold-growrack (162) · cold-heater (120) · cold-heathut (108) · cold-heatpump (236) · cold-heatstore (107) · cold-heliostat (33) · cold-hothouse (165) · cold-icecutter (64) · cold-icestack (60) · cold-igloo (115) · cold-insulation (97) · cold-lander (170) · cold-loop (180) · cold-melter (57) · cold-meltpan (45) · cold-mushrack (370) · cold-pipeloop (144) · cold-polarpod (138) · cold-rtg (83) · cold-sealed (108) · cold-spheretank (84) · cold-suntower (54) · cold-warmpost (88) · cold-warmtank (264)
+
 ## 사람 배치 실험 (experiments/teegarden-terrain-v4/src/models)
 
 | 파일명 | 원래 이름 | 출처 URL | 작가 | 라이선스 | 쓰는 곳 |

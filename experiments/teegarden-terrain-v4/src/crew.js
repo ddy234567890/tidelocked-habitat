@@ -9,7 +9,8 @@ import { fromGameStats } from './face/envInput.js';
 import faceUrl from './assets/face/face.glb';
 import landmarks from './assets/face/face.landmarks.json' with { type: 'json' };
 import credit from './assets/face/face.credit.json' with { type: 'json' };
-import hud from './hud.json' with { type: 'json' };
+import { PLANET } from './planets/index.js';
+const { hud } = PLANET;
 
 const $ = (s) => document.querySelector(s);
 const SEVERITY = [['hypoxia', '호흡곤란'], ['heat', '열 스트레스'], ['cold', '추위'], ['pressure', '압력 불편'], ['fatigue', '피로']];
@@ -20,7 +21,7 @@ let siteTempC = null;
 const extra = {}; // 개발용으로 덮어쓰는 값 (window.crew.setEnv)
 // 산소 방식을 결정한 뒤에는 실내 기본값에 결정한 선지들의 stats(weeks/weekN.json)를 더한 값이 계속 유지된다
 const INDOOR = { tempC: 22, oxygenPct: 20.9, activityMET: 1.5 };
-const OUTSIDE_O2 = hud.outsideOxygen ?? 14; // 바깥 공기의 산소 %: 1주차 행성 강의와 같은 약 14% (지구보다 조금 부족해 숨이 찬 정도, 2026-11-13 사용자 요청). hud.json oxygen 이 정해지면 그 값이 먼저다
+const OUTSIDE_O2 = hud.outsideOxygen === null ? 20.9 : hud.outsideOxygen ?? 14; // 바깥 공기의 산소 %: 1주차 행성 강의와 같은 약 14% (지구보다 조금 부족해 숨이 찬 정도, 2026-11-13 사용자 요청). hud.json oxygen 이 정해지면 그 값이 먼저다
 // 산소 방식을 정하기 전 대원은 바깥에서 기지 공사를 하고 있다: 활동량 4 MET (짐을 들고 빠르게 걷는 정도).
 // 산소 14% 에서 이만큼 움직이면 호흡곤란·피로가 '경미'로 떠서 힘들어 보인다 (2026-11-13 사용자: 좀 더 힘들어 보이게). 얼굴 엔진 기준은 그대로 둔다
 const OUTSIDE_MET = 4;

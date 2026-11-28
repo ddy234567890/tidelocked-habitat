@@ -3,7 +3,7 @@
   "version": "4.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "vite --host 127.0.0.1", "build": "vite build", "open-file": "node scripts/open-file.mjs", "test": "node tests/terrain.test.js && node tests/navigation.test.js && node tests/effects.test.js && node tests/choices.test.js && node tests/face.test.js && node tests/flows.test.js && node tests/gauges.test.js && node tests/people.test.js && node tests/events.test.js && node tests/ending.test.js" },
+  "scripts": { "dev": "vite --host 127.0.0.1", "build": "vite build", "open-file": "node scripts/open-file.mjs", "test": "node tests/terrain.test.js && node tests/navigation.test.js && node tests/effects.test.js && node tests/choices.test.js && node tests/face.test.js && node tests/flows.test.js && node tests/gauges.test.js && node tests/people.test.js && node tests/events.test.js && node tests/ending.test.js && node tests/planets.test.js && node tests/planetC.test.js && node tests/eventsC.test.js && node tests/sceneC.test.js && node tests/relations.test.js b && node tests/relations.test.js c && node tests/eventStage.test.js b && node tests/eventStage.test.js c && node scripts/balance.mjs b 4000 check && node scripts/balance.mjs c 4000 check" },
   "dependencies": { "three": "0.180.0" },
   "devDependencies": { "vite": "7.1.7" }
 }

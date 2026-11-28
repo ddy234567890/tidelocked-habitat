@@ -17,7 +17,7 @@ html = html.replace('<link rel="stylesheet" href="/src/style.css">', () => `<sty
 html = html.replace('<script type="module" src="/src/main.js"></script>', () => `<script>${result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script')}</script>`);
 await writeFile(new URL('Teegarden-terrain.html', target), html);
 
-const definitions = JSON.parse(await readFile(new URL('src/sites.json', root), 'utf8'));
+const definitions = JSON.parse(await readFile(new URL('src/planets/b/sites.json', root), 'utf8'));
 for (const [name, builder] of Object.entries({ planet: buildPlanet, plain: buildPlain, lavaTube: buildLavaTube, lavaTubeInterior: buildLavaTube, ridge: buildRidge })) {
   const def = name === 'lavaTubeInterior' ? { ...definitions.lavaTube, view: 'interior' } : definitions[name];
   const data = builder(30000, def);
@@ -29,7 +29,7 @@ for (const [name, builder] of Object.entries({ planet: buildPlanet, plain: build
   }
   await writeFile(new URL(`${name}.ply`, target), lines.join('\n'));
 }
-const files = ['package.json', 'index.html', 'src/sites.json', 'src/palette.js', 'src/terrain.js', 'src/plain.js', 'src/lavaTube.js', 'src/ridge.js', 'src/planet.js', 'src/surroundings.js', 'src/weeks/week1.json', 'src/choices.js', 'src/placement.js', 'src/navigation.js', 'src/effects.js', 'src/main.js', 'src/style.css', 'tests/terrain.test.js', 'tests/navigation.test.js', 'tests/effects.test.js', 'scripts/deliver.mjs'];
+const files = ['package.json', 'index.html', 'src/planets/b/sites.json', 'src/palette.js', 'src/terrain.js', 'src/plain.js', 'src/lavaTube.js', 'src/ridge.js', 'src/planet.js', 'src/surroundings.js', 'src/planets/b/weeks/week1.json', 'src/choices.js', 'src/placement.js', 'src/navigation.js', 'src/effects.js', 'src/main.js', 'src/style.css', 'tests/terrain.test.js', 'tests/navigation.test.js', 'tests/effects.test.js', 'scripts/deliver.mjs'];
 let source = '# Teegarden b 독립 프로토타입 전체 코드\n\n2026-10-30 · v4.0 · 카메라 이동 후 홀로그램 구성. 각 파일의 전체 내용입니다.\n';
 for (const file of files) {
   const language = file.endsWith('.css') ? 'css' : file.endsWith('.html') ? 'html' : file.endsWith('.json') ? 'json' : 'js';

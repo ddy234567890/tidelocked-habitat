@@ -7,7 +7,7 @@ import { buildLavaTube, tubeFrame, tubeWall, tubeBackWall, caveSection, CAVE_PAR
 import { buildPlanet, planetRadius } from '../src/planet.js';
 import { starDirection, EXTENT } from '../src/terrain.js';
 import { buildSurroundings, SURROUND_COUNT } from '../src/surroundings.js';
-const definitions = JSON.parse(readFileSync(new URL('../src/sites.json', import.meta.url)));
+const definitions = JSON.parse(readFileSync(new URL('../src/planets/b/sites.json', import.meta.url)));
 const builders = { plain: buildPlain, lavaTube: buildLavaTube, ridge: buildRidge };
 const results = [];
 for (const [name, build] of Object.entries(builders)) {

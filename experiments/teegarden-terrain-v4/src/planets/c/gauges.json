@@ -1,0 +1,524 @@
+{
+  "notes": {
+    "source": "플레이테스트 페이지의 c 값에서 시작해 돌발 사건까지 넣고 scripts/balance.mjs 로 맞춘 값 (2026-11-24). 모두 [설정] 값. 바꾼 목록은 HANDOFF.md 「Teegarden c 돌발 사건」",
+    "harvestAdd": "앞서 정한 마지막 수확에 더한다 (저온 −1, 적정 온도 +1)",
+    "fixed": "harvest 에 fixed 가 있으면 harvestScale 을 곱하지 않는다"
+  },
+  "labels": {
+    "air": "공기",
+    "water": "물",
+    "food": "식량",
+    "power": "전력"
+  },
+  "start": {
+    "air": 60,
+    "water": 60,
+    "food": 60,
+    "power": 42
+  },
+  "warn": 20,
+  "clamp": [
+    -50,
+    100
+  ],
+  "weekly": {
+    "air": -2,
+    "water": -2,
+    "food": -3,
+    "power": -3
+  },
+  "choices": {
+    "A": [
+      {
+        "now": {
+          "power": -2
+        },
+        "weekly": {
+          "power": 1
+        }
+      }
+    ],
+    "B": [
+      {
+        "now": {
+          "power": -8
+        },
+        "weekly": {
+          "power": 2
+        }
+      }
+    ],
+    "C": [
+      {
+        "now": {
+          "power": -2
+        },
+        "weekly": {
+          "water": 2,
+          "power": 1
+        }
+      }
+    ],
+    "dome": [
+      {
+        "now": {
+          "power": -2
+        },
+        "weekly": {
+          "power": 2
+        }
+      }
+    ],
+    "shell": [
+      {
+        "now": {
+          "power": -7
+        },
+        "weekly": {
+          "power": 1
+        }
+      }
+    ],
+    "direct": [
+      {
+        "now": {
+          "power": -1
+        },
+        "weekly": {
+          "power": 2
+        }
+      }
+    ],
+    "buffer": [
+      {
+        "now": {
+          "power": -6
+        },
+        "weekly": {
+          "power": 1
+        }
+      }
+    ],
+    "bury": [
+      {
+        "now": {
+          "power": -5
+        },
+        "weekly": {
+          "power": 3
+        }
+      }
+    ],
+    "stilt": [
+      {
+        "now": {
+          "power": -2
+        },
+        "weekly": {
+          "power": 2
+        }
+      }
+    ],
+    "stdp": [
+      {
+        "weekly": {
+          "air": 3,
+          "water": -1
+        }
+      }
+    ],
+    "lowp": [
+      {
+        "weekly": {
+          "air": 3,
+          "power": 1
+        }
+      }
+    ],
+    "waste": [
+      {
+        "now": {
+          "power": -6
+        },
+        "weekly": {
+          "air": 3,
+          "water": -1,
+          "power": 3
+        }
+      }
+    ],
+    "csp": [
+      {
+        "now": {
+          "power": -7
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "A"
+          ]
+        },
+        "weekly": {
+          "power": 19
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "B"
+          ]
+        },
+        "weekly": {
+          "power": 13
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "C"
+          ]
+        },
+        "weekly": {
+          "power": 10
+        }
+      }
+    ],
+    "geo": [
+      {
+        "requires": {
+          "location": [
+            "B"
+          ]
+        },
+        "now": {
+          "power": -4
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "A",
+            "C"
+          ]
+        },
+        "now": {
+          "power": -16
+        }
+      },
+      {
+        "weekly": {
+          "power": 17
+        }
+      }
+    ],
+    "rtg": [
+      {
+        "now": {
+          "power": -8
+        },
+        "weekly": {
+          "power": 15
+        }
+      }
+    ],
+    "thermal": [
+      {
+        "now": {
+          "power": -6
+        }
+      }
+    ],
+    "h2": [
+      {
+        "now": {
+          "power": -5
+        },
+        "weekly": {
+          "air": 1
+        }
+      }
+    ],
+    "resist": [
+      {
+        "now": {
+          "power": -2
+        },
+        "weekly": {
+          "power": -1
+        }
+      }
+    ],
+    "hp": [
+      {
+        "now": {
+          "power": -7
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "B"
+          ]
+        },
+        "weekly": {
+          "power": 3
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "A"
+          ]
+        },
+        "weekly": {
+          "power": 2
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "C"
+          ]
+        },
+        "weekly": {
+          "power": 1
+        }
+      }
+    ],
+    "shrink": [
+      {
+        "weekly": {
+          "power": 1
+        },
+        "harvestScale": 0.75,
+        "now": {
+          "power": -3
+        }
+      }
+    ],
+    "mine": [
+      {
+        "requires": {
+          "location": [
+            "C"
+          ]
+        },
+        "now": {
+          "power": -2
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "B"
+          ]
+        },
+        "now": {
+          "power": -4
+        }
+      },
+      {
+        "requires": {
+          "location": [
+            "A"
+          ]
+        },
+        "now": {
+          "power": -7
+        }
+      },
+      {
+        "weekly": {
+          "water": 6
+        }
+      }
+    ],
+    "hydro": [
+      {
+        "now": {
+          "power": -6
+        },
+        "weekly": {
+          "water": 9
+        }
+      }
+    ],
+    "closed": [
+      {
+        "now": {
+          "power": -6
+        },
+        "weekly": {
+          "water": 4
+        },
+        "harvestScale": 0.9
+      }
+    ],
+    "emelt": [
+      {
+        "now": {
+          "power": -2
+        }
+      },
+      {
+        "requires": {
+          "source": [
+            "hydro",
+            "closed"
+          ]
+        },
+        "weekly": {
+          "power": -1
+        }
+      },
+      {
+        "requires": {
+          "source": [
+            "mine"
+          ]
+        },
+        "weekly": {
+          "power": -2
+        }
+      }
+    ],
+    "wmelt": [
+      {
+        "now": {
+          "power": -2
+        }
+      },
+      {
+        "requires": {
+          "storage": [
+            "h2"
+          ],
+          "power": [
+            "csp",
+            "geo"
+          ],
+          "source": [
+            "mine",
+            "closed"
+          ]
+        },
+        "weekly": {
+          "water": -2
+        }
+      }
+    ],
+    "ice": [
+      {
+        "weekly": {
+          "power": -1
+        }
+      }
+    ],
+    "warm": [
+      {
+        "weekly": {
+          "power": -1,
+          "air": 1
+        }
+      }
+    ],
+    "hydroponic": [
+      {
+        "now": {
+          "power": -6
+        },
+        "weekly": {
+          "power": -4
+        },
+        "harvest": {
+          "from": 5,
+          "food": 13
+        }
+      }
+    ],
+    "microbe": [
+      {
+        "now": {
+          "power": -6
+        },
+        "weekly": {
+          "power": -1
+        },
+        "harvest": {
+          "from": 4,
+          "food": 13
+        }
+      }
+    ],
+    "fungi": [
+      {
+        "now": {
+          "power": -2
+        },
+        "harvest": {
+          "from": 4,
+          "food": 5
+        }
+      }
+    ],
+    "lowtemp": [
+      {
+        "weekly": {
+          "power": 1
+        },
+        "harvestAdd": {
+          "food": -1
+        },
+        "harvest": {
+          "from": 7,
+          "food": 4,
+          "fixed": true
+        }
+      }
+    ],
+    "optimal": [
+      {
+        "weekly": {
+          "power": -2
+        },
+        "harvestAdd": {
+          "food": 1
+        }
+      }
+    ],
+    "compost": [
+      {
+        "weekly": {
+          "food": 2,
+          "water": 1
+        }
+      }
+    ],
+    "seal": [],
+    "insulate": [
+      {
+        "now": {
+          "power": -6
+        },
+        "weekly": {
+          "power": 3
+        }
+      }
+    ],
+    "generator": [
+      {
+        "now": {
+          "power": -3
+        },
+        "weekly": {
+          "power": 4
+        }
+      }
+    ],
+    "heatfirst": [],
+    "airfirst": [],
+    "full": [],
+    "elite": []
+  }
+}

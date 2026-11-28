@@ -3,7 +3,11 @@
 // 행성 정보 · 대원 상태는 □ 확대 버튼을 직접 눌러 보게 하고(press), 뜬 큰 창을 밝혀 무엇이 나오는지 알려 준 뒤 닫는다(close).
 // main.js 는 건드리지 않는다: #intro 가 닫히는 순간(브리핑 끝)을 지켜보다가 한 번만 띄운다.
 // 주소 뒤 ?intro=0 이면 브리핑이 없으므로 안내도 없다 (?guide=1 을 함께 붙이면 바로 띄운다).
+import { PLANET } from './planets/index.js';
 import './guide.css';
+
+const cold = PLANET.climate === 'cold';
+const airName = PLANET.weeks[0].steps[2].boardName ?? '산소';
 
 const $ = selector => document.querySelector(selector);
 
@@ -28,14 +32,14 @@ const STEPS = [
   },
   {
     target: ['.data-modal:not([hidden]) .data-card'], title: '행성 정보 큰 창', close: '#data-close',
-    list: ['수치마다 뜻을 쉬운 말로 풀어 줘요.', '낮 · 밤 · 황혼 지대가 왜 생기는지 알려 줘요.'],
+    list: ['수치마다 뜻을 쉬운 말로 풀어 줘요.', cold ? '왜 이렇게 추운 행성인지 알려 줘요.' : '낮 · 밤 · 황혼 지대가 왜 생기는지 알려 줘요.'],
   },
   {
     target: ['.p-crew'], title: '대원 상태',
     say: [
       '아직 아무도 이주하지 않았어요.',
       '이 얼굴은 “우주복 없이 이 행성에 서 있다면 어떤 상태일까”를 보여 줘요.',
-      '산소 방식을 정하기 전에는 바깥 공기 그대로라 힘들어 보여요.',
+      cold ? '실내 공기를 정하기 전에는 바깥 추위를 그대로 겪어 힘들어 보여요.' : '산소 방식을 정하기 전에는 바깥 공기 그대로라 힘들어 보여요.',
     ],
   },
   {
@@ -48,13 +52,19 @@ const STEPS = [
   },
   {
     target: ['.hb-head', '.p-decision .step-title'], title: '지금 할 일',
-    say: ['1 위치 → 2 짓는 방식 → 3 산소 순서로 정해요.'],
-    todo: '▤ 메모장에서 고른 길을 다시 볼 수 있어요.',
+    say: ['1 위치 → 2 짓는 방식 → 3 ' + airName + ' 순서로 정해요.'],
   },
   {
     target: ['.hb-view', '.p-decision .sites'], title: '선지',
     say: ['육각형 하나가 선지 하나예요.'],
     todo: '결정하기 전까지는 마음껏 눌러 봐도 돼요.',
+  },
+  {
+    // 2026-11-28: 노드 아이콘 단추. 처음엔 고른 게 없어 창이 비어 있으니 누르게 하지 않고 무엇을 보여 주는지만 알린다
+    target: ['.fn-open'], title: '지난 선택 돌아보기',
+    say: ['지금까지 고른 선택을 한 화면에 펼쳐 보여 줘요.'],
+    list: ['왼쪽 → 오른쪽: 고른 차례', '선: 앞 선택이 뒤 선택에 준 영향 (굵을수록 큼)', '파랑은 얻은 게 많은 선택, 주황은 잃은 게 많은 선택', '좌우로 끌어 둘러보고, 휠로 주차마다 당겨 봐요.'],
+    todo: '몇 가지 결정한 뒤에 눌러 보세요.',
   },
   {
     target: ['.hb-decide'], title: '결정 버튼',

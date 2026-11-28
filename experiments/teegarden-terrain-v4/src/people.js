@@ -7,6 +7,7 @@
 //   숨이 막히거나 더우면 움찔 → 집으로 후다닥 뛰어감(문은 서둘러 염) → 거의 쓰러질 지경이면 기어감 → 쓰러짐.
 //   쓰러진 사람이 있으면 근처의 괜찮은 사람이 달려가 옆에 무릎 꿇고 돌본다. 환경이 나아지면 숨을 고르고 다시 일어난다.
 // 색은 palette.js 함수로만, 무작위는 mulberry32 (Math.random 금지).
+import { PLANET } from './planets/index.js';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
@@ -34,7 +35,7 @@ const CREW_R = [1.6, 3.6];
 //   평원 20초: 60°C 라 냉각이 금방 한계 → 10초쯤 힘들어하고 15초쯤부터 쓰러진다
 //   능선 40초: 덜 더워서 천천히, 힘들어하기만 한다 / 동굴: 바위가 열을 막아 한계 없음 (null)
 // 집 안에 들어가면 우주복이 다시 채워진다 (바깥에 있던 시간이 SUIT_RECHARGE 배 빠르게 줄어든다)
-const SUIT_TIME = { plain: 20, ridge: 40, lavaTube: null };
+const SUIT_TIME = PLANET.suitTime ?? { plain: 20, ridge: 40, lavaTube: null };
 const SUIT_RECHARGE = 2;
 // 대원마다 기본 표정 (얼굴 모델은 하나라서 눈썹·눈·입꼬리 기본값으로 사람을 구별한다)
 const FACES = [
@@ -616,5 +617,7 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
   let evacuated = false;
   const evacuate = () => { evacuated = true; clear(); };
   window.people = { focused: () => focused, pinned: () => pinned, pin, add, addGroup, clear, evacuate, list: people, screenOf, advance, resumeClock, devices: () => devices };
-  return { frame, add, addGroup, clear };
+  // 지금 서 있는 사람 자리 (지역 좌표). 돌발 사건 연출(eventStage.js)이 대원 위에 땀·숨을 띄울 때 쓴다
+  const spots = () => people.filter(o => o.status !== 'down').map(o => ({ x: o.x, z: o.z }));
+  return { frame, add, addGroup, clear, spots };
 }

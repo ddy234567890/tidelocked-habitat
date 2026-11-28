@@ -1,0 +1,53 @@
+{
+  "basin": {
+    "seed": 24601,
+    "temperature": [
+      -64,
+      -58
+    ],
+    "star": {
+      "azimuth": -72,
+      "elevation": 62
+    },
+    "relief": 1.6,
+    "rocks": 0.9,
+    "colorRange": [
+      -80,
+      -30
+    ]
+  },
+  "rift": {
+    "seed": 13579,
+    "temperature": [
+      -66,
+      -60
+    ],
+    "star": {
+      "azimuth": -72,
+      "elevation": 34
+    },
+    "relief": 1.6,
+    "rocks": 1.1,
+    "colorRange": [
+      -80,
+      -30
+    ]
+  },
+  "shore": {
+    "seed": 86420,
+    "temperature": [
+      -75,
+      -68
+    ],
+    "star": {
+      "azimuth": -72,
+      "elevation": 9
+    },
+    "relief": 1.5,
+    "rocks": 0.7,
+    "colorRange": [
+      -80,
+      -30
+    ]
+  }
+}

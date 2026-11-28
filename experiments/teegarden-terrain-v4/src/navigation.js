@@ -3,13 +3,15 @@ import { PLANET_SUN, planetRadius } from './planet.js';
 import { starDirection } from './terrain.js';
 
 // 첨부 이미지의 행성 원판 중심과 반지름을 기준으로 읽은 목표 위치다.
-export const PIN_DISK = { plain: [-0.43, 0.52], lavaTube: [-0.30, -0.19] };
+export const PIN_DISK = { plain: [-0.43, 0.52], lavaTube: [-0.30, -0.19], basin: [-0.60, 0.30], rift: [-0.34, -0.24], shore: [0.10, 0.20] };
 export const LOCAL_SCALE = 0.025;
 export const LOCAL_VIEWS = {
-  plain: [10.8, 12.8, 19.2], ridge: [10.8, 12.8, 19.2], lavaTube: [8.5, 3.6, 18.5],
+  plain: [10.8, 12.8, 19.2], ridge: [10.8, 12.8, 19.2], lavaTube: [8.5, 3.6, 18.5], basin: [9.5, 14, 20], rift: [-13, 15, 13], shore: [-13.5, 12.5, 15.5],
   // 동굴 안쪽 수평 구간에서 입구 쪽(빛이 드는 쪽)을 바라본다.
   inside: [9.6, -2.6, 0.15], insideTarget: [0.5, -2.9, -0.45]
 };
+// 처음 바라보는 곳 (없으면 지역 가운데). 해안은 기지와 바다가 함께 보이게 바다 쪽으로 옮긴다
+export const LOCAL_TARGETS = { shore: [2.6, -1, -3] };
 export function siteFrame(name, def) {
   const sun = new THREE.Vector3(PLANET_SUN.x, PLANET_SUN.y, PLANET_SUN.z).normalize();
   const front = new THREE.Vector3(0, 0, 1).addScaledVector(sun, -sun.z).normalize();
@@ -28,8 +30,8 @@ export function siteFrame(name, def) {
   return { normal, position, rotation };
 }
 export function surfacePose(name, info, aspect, section = false, caveInterior = false) {
-  const y = name === 'plain' ? 0 : -1.5, inside = name === 'lavaTube' && caveInterior && !section;
-  const target = inside ? new THREE.Vector3(...LOCAL_VIEWS.insideTarget) : new THREE.Vector3(0, y, 0);
+  const y = ['plain', 'basin', 'rift', 'shore'].includes(name) ? 0 : -1.5, inside = name === 'lavaTube' && caveInterior && !section;
+  const target = LOCAL_TARGETS[name] && !section ? new THREE.Vector3(...LOCAL_TARGETS[name]) : inside ? new THREE.Vector3(...LOCAL_VIEWS.insideTarget) : new THREE.Vector3(0, y, 0);
   const view = section ? new THREE.Vector3(0, y + 1.5, 25) : new THREE.Vector3(...LOCAL_VIEWS[inside ? 'inside' : name]);
   view.sub(target).multiplyScalar(inside ? 1 : Math.max(1, 1.12 / aspect)).add(target);
   const transform = p => p.multiplyScalar(LOCAL_SCALE).applyQuaternion(info.rotation).add(info.position);

@@ -1,7 +1,7 @@
 {
   "notes": {
     "source": "숫자는 팀 플레이테스트 페이지 「기지 5주 플레이테스트」(https://claude.ai/artifact/24Cr489hQUyHoz1W29BB8f)의 가정값을 그대로 옮겼다. 돌발 사건·엔딩 판정은 아직 옮기지 않았다 (2026-11-13 사용자: 게이지만)",
-    "gauges": "air 공기 · water 물 · food 식량 · power 전력. 모두 start 에서 시작하고, 하나라도 0 이하가 되면 실패다. warn 이하면 주황으로 보인다",
+    "gauges": "air 공기 · water 물 · food 식량 · power 전력. start 값에서 시작하고 (게이지마다 따로), 하나라도 0 이하가 되면 실패다. warn 이하면 주황으로 보인다",
     "weekly": "아무것도 고르기 전 매주 줄어드는 양. 선지의 weekly 가 여기에 더해진다. '다음 주로'를 누를 때 한 주치가 반영된다",
     "choices": "선지 id 마다 효과 목록. requires 가 맞는 항목만 쓴다 (형식은 weeks/weekN.json 의 requires 와 같다). now = 결정하자마자, weekly = 다음 주부터 매주",
     "lowest": "그 순간 가장 낮은 게이지 하나에 더한다 (5주 '가장 부족한 것 채우기')",
@@ -9,7 +9,7 @@
     "clamp": "게이지는 -50 ~ 100 사이로 자른다 (플레이테스트와 같다)"
   },
   "labels": { "air": "공기", "water": "물", "food": "식량", "power": "전력" },
-  "start": 60,
+  "start": { "air": 60, "water": 60, "food": 60, "power": 60 },
   "warn": 20,
   "clamp": [-50, 100],
   "weekly": { "air": -2, "water": -2, "food": -3, "power": -2 },

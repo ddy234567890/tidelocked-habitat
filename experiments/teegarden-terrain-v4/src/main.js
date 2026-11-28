@@ -1,37 +1,37 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import definitions from './sites.json' with { type: 'json' };
+import './planet-ui.js';
 import { buildPlain } from './plain.js';
+import { buildBasin, buildRift, buildShore } from './coldLands.js';
 import { buildLavaTube } from './lavaTube.js';
 import { buildRidge } from './ridge.js';
 import { buildSurroundings, joinPoints } from './surroundings.js';
-import { availableChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor, flowsFor, roomAirFor, floorAt, surfaceSpot } from './choices.js';
+import { availableChoices, lockedChoices, choose, resolve, siteLetter, choiceData, WEEKS, ALL_STEPS, textsFor, flowsFor, roomAirFor, floorAt, surfaceSpot } from './choices.js';
 import { buildFlowPoints, pairSpots, outSpots, waterSources } from './flows.js';
-import hud from './hud.json' with { type: 'json' };
+import { PLANET, restartQuery } from './planets/index.js';
 import { openBriefing } from './intro.js';
 import { createHexBoard, shortName } from './hexBoard.js';
 import { setCrewSite, setCrewStats } from './crew.js';
 import { createPeople } from './people.js';
 import { gaugeState, GAUGE_KEYS, GAUGE_LABELS, GAUGE_WARN } from './gauges.js';
 import { createEvents } from './events.js'; // 돌발 사건 (체험판)
+import { createEventStage } from './eventStage.js'; // 돌발 사건 3D 연출 (2026-11-27)
 import { buildModule, buildOverlay, tintLayer, TINT, faceColors } from './placement.js';
 import { buildPlanet, PLANET_SUN } from './planet.js';
 import { smooth, clamp, mulberry32 } from './terrain.js';
 import { orange } from './palette.js';
 import { siteFrame, surfacePose, LOCAL_SCALE, poseQuaternion, prepareFlight, flightSample } from './navigation.js';
 import { buildStarfield, buildTransitSurface, transitionTiming, assemblyBrightness } from './effects.js';
+const definitions = PLANET.sites;
+const { hud } = PLANET;
 
 const POINT_COUNT = 30000;
 const POINT_SIZE = 0.075;
 const LINE_NEAR = 16; // 에셋 선 점: 카메라가 이 거리(지역 단위)보다 가까우면 점을 거리에 비례해 줄인다
 const LINE_BASE = 0.5; // 에셋 선 점은 지형 점의 이 비율로 늘 가늘게 그린다
 const LINE_MIN = 0.5; // 가까이에서 더 줄이는 가장 작은 비율. LINE_BASE × LINE_MIN × POINT_SIZE 가 placement.js EDGE_SPACING 의 1.5배보다 커야 선이 끊기지 않는다
-const BUILDERS = { plain: buildPlain, lavaTube: buildLavaTube, ridge: buildRidge };
-const COPY = {
-  plain: { letter: 'A', title: '현무암 평원', text: '낮게 겹친 용암엽과 오래된 충돌 흔적. 중앙의 평탄면을 거주 후보지로 남겼습니다.', tag: '주거 후보지', sub: '중앙 평탄면', position: [0, 0, 0] },
-  lavaTube: { letter: 'B', title: '용암동굴', text: '아치 입구에서 내려가 큰 방과 좁은 목이 번갈아 이어지고, 옆 굴이 갈라집니다. 천장에서 떨어진 바위가 큰 방 바닥에 쌓여 있습니다.', tag: '용암 유동 통로', sub: '아치 입구 · 큰 방 · 옆 굴 · 바위 더미', position: [2, -2, -0.5] },
-  ridge: { letter: 'C', title: '황혼 능선', text: '굽이치는 마루에서 마른 완사면과 곁가지 능선이 갈라져 내려가고, 반대편은 침식 홈과 퇴적 부채, 얼음 골짜기와 낮은 지맥으로 이어집니다.', tag: '거주 가능한 정상 띠', sub: '', position: [0, 0, 0] }
-};
+const BUILDERS = { plain: buildPlain, lavaTube: buildLavaTube, ridge: buildRidge, basin: buildBasin, rift: buildRift, shore: buildShore };
+const COPY = PLANET.siteCopy;
 const $ = selector => document.querySelector(selector);
 const host = $('#canvas-host'), stage = $('#stage');
 
@@ -54,7 +54,8 @@ for (const choice of choiceData.steps[0].choices) {
   if (button) fillCard(button, choice);
 }
 $('#hud-year').textContent = 'YEAR ' + hud.year;
-$('#fact-day').textContent = hud.temperature.day + '°C'; $('#fact-night').textContent = hud.temperature.night + '°C';
+if ($('#fact-day')) $('#fact-day').textContent = hud.temperature.day + '°C';
+if ($('#fact-night')) $('#fact-night').textContent = hud.temperature.night + '°C';
 let mode = 'planet', currentSite = null, transition = null, localPoints = null, localSection = false, caveInterior = false;
 const cache = new Map();
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -200,7 +201,7 @@ try {
       if (!choice) continue;
       const id = layer === moduleLayer ? null : [...overlayLayers].find(([, l]) => l === layer)?.[0];
       if (id ? choice.overlays?.includes(id) : choice.module && layer === moduleLayer) {
-        const short = { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[step.id] ?? step.short ?? step.label;
+        const short = step.boardName ?? { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[step.id] ?? step.short ?? step.label;
         return { week: w + 1, short, label: choice.label, line: choice.line };
       }
     }
@@ -305,7 +306,7 @@ try {
     const points = new THREE.Points(geometry, material);
     points.frustumCulled = false; // 흐르는 점이 움직이므로 처음 경계 구로 자르지 않는다
     assetGroup.add(points);
-    flowLayer = { key, points, animate: data.animate, start: performance.now() };
+    flowLayer = { key, points, animate: data.animate, start: performance.now(), flows };
     if (window.terrainDiagnostics) window.terrainDiagnostics.flows = flows.map(f => ({ kind: f.kind, amount: f.amount, past: f.past, segments: f.segments.length }));
     if (window.terrainDiagnostics) window.terrainDiagnostics.sources = sources.map(source => ({ type: source.type, r: source.r, center: source.center }));
   }
@@ -378,6 +379,7 @@ try {
   }
   // 엔딩(src/ending.js)이 부른다: 5주차까지 지은 건물을 모두 지난 주차처럼 면으로 바꾼다 (5주차에는 '다음 주로'가 없어 선으로 남았다).
   // 2026-11-23 사용자 허락으로 main.js 에 이 연결만 더함
+  window.terrainEvents = { play: id => events.trial(id, week, selection), stage: () => eventStage.active }; // 확인용: 콘솔에서 terrainEvents.play('freeze') 로 돌발 사건 연출을 바로 본다
   window.terrainEnding = {
     settleAll() { [moduleLayer, ...overlayLayers.values()].filter(Boolean).forEach(layer => showPast(layer, true)); },
   };
@@ -405,7 +407,7 @@ try {
     if (transition || selection[stepId] === choiceId) return;
     selection = choose(selection, stepId, choiceId); renderSteps(true); syncAssets();
   }
-  const DECIDE_SHORT = { location: '위치', module: '건설 방식', oxygen: '산소 방식' };
+  const DECIDE_SHORT = { location: '위치', module: '건설 방식', oxygen: '산소 방식', ...Object.fromEntries(ALL_STEPS.filter(step => step.boardName).map(step => [step.id, step.boardName])) };
   function decideStep(stepId) {
     if (transition || !selection[stepId]) return;
     decided[stepId] = true; renderSteps(true);
@@ -422,8 +424,9 @@ try {
       if (!done && !opened && (k === 0 || (local && decided[steps[k - 1].id]))) { status = 'open'; opened = true; }
       const isLocation = step.id === 'location';
       const choices = isLocation ? step.choices : status === 'locked' ? [] : availableChoices(step.id, selection);
+      const locked = isLocation || status === 'locked' ? [] : lockedChoices(step.id, selection);
       const selected = isLocation ? (local ? selection.location : null) : selection[step.id] ?? null;
-      return { id: step.id, label: step.label, short: shortName(step), status, selected, choices };
+      return { id: step.id, label: step.label, short: shortName(step), status, selected, choices, locked };
     });
   }
   function updateBoard(local) {
@@ -431,7 +434,7 @@ try {
     const steps = boardSteps(local), open = steps.find(step => step.status === 'open');
     const nextWeek = !$('#next-week').hidden;
     board.update({
-      steps, busy: Boolean(transition),
+      steps, busy: Boolean(transition), history: { selection, decided }, // 메모장(지난 선택 돌아보기)이 지난 주차 선택을 읽는다
       decide: open ? { label: '▶ ' + (DECIDE_SHORT[open.id] ?? open.short) + ' 결정', disabled: !open.selected || (open.id === 'location' && !local) }
         : nextWeek ? { label: '▶ 다음 주로' } : { hidden: true }
     });
@@ -440,7 +443,7 @@ try {
   function decideButton(stepId) {
     const button = document.createElement('button');
     button.className = 'decide'; button.disabled = !selection[stepId];
-    const short = { location: '위치', module: '건설 방식', oxygen: '산소 방식' }[stepId] ?? ALL_STEPS.find(step => step.id === stepId).short;
+    const short = DECIDE_SHORT[stepId] ?? ALL_STEPS.find(step => step.id === stepId).short;
     button.textContent = '▶ ' + short + ' 결정';
     button.addEventListener('click', () => decideStep(stepId));
     return button;
@@ -478,8 +481,8 @@ try {
     setText($('#hud-temp-out'), range ? range[0] + '° ~ ' + range[1] + '°' : hud.temperature.night + '° ~ ' + hud.temperature.day + '°');
     setText($('#hud-temp'), base ? value('tempC') + '°' : '—');
     // 바깥 산소: 1주차 행성 강의(planet-brief.json)와 같은 약 14% (지구 20.9% 보다 조금 부족해 숨이 찬 정도). hud.json outsideOxygen
-    const outsideO2 = hud.outsideOxygen;
-    setText($('#hud-o2-out'), outsideO2 + '%');
+    const outsideO2 = hud.outsideOxygen ?? '—';
+    setText($('#hud-o2-out'), outsideO2 === '—' ? outsideO2 : outsideO2 + '%');
     setText($('#hud-o2'), indoor ? value('oxygenPct') + '%' : '—');
     renderGauges(local);
     renderWeekSummary(local);
@@ -520,7 +523,7 @@ try {
       $('#fail').hidden = false; $('#fail-restart').focus();
     }
   }
-  $('#fail-restart').addEventListener('click', () => { location.href = location.pathname; });
+  $('#fail-restart').addEventListener('click', () => { location.href = location.pathname + restartQuery; });
   // 왼쪽 주차 탭을 누르면 '현재' 칸 자리에 그 주 요약이 뜬다: 주제 · 목표 · 단계마다 고른 선지 (변화량은 적지 않는다).
   // '현재' 탭을 누르면 게이지·기온·산소 칸으로 돌아온다
   function renderWeekSummary(local) {
@@ -599,7 +602,7 @@ try {
     // 2주차부터는 방금 더한 장치만 비춘다
     const overlays = [...overlayLayers.values()].slice(week > 1 ? -1 : 0);
     const shown = whole ? [moduleLayer, ...overlayLayers.values()] : week > 1 && overlays.length ? overlays : decided.oxygen ? [moduleLayer, ...overlays] : selection.oxygen && overlays.length ? overlays : [moduleLayer];
-    const [anchor, size] = FOCUS[currentSite], center = new THREE.Vector3(...anchor);
+    const [anchor, size] = FOCUS[currentSite] ?? FOCUS.plain, center = new THREE.Vector3(...anchor);
     let radius = size;
     const box = new THREE.Box3();
     for (const layer of shown) if (layer) box.union(new THREE.Box3().setFromBufferAttribute(layer.points.geometry.getAttribute('position')));
@@ -632,7 +635,7 @@ try {
     // 기지 전체 보기: 감싸는 구가 세로·가로 시야 중 좁은 쪽에 여유 15% 를 두고 꼭 들어오는 거리 (멀리 빠져 작아지지 않게)
     const half = Math.min(camera.fov / 2, THREE.MathUtils.radToDeg(Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect))) * Math.PI / 180;
     const distance = whole && !box.isEmpty() ? Math.max(box.getSize(new THREE.Vector3()).length() / 2, 2) * 1.15 / Math.sin(half) : radius * 2.3;
-    const position = target.clone().addScaledVector(direction, distance * FOCUS_ZOOM[currentSite] * LOCAL_SCALE);
+    const position = target.clone().addScaledVector(direction, distance * (FOCUS_ZOOM[currentSite] ?? 1) * LOCAL_SCALE);
     focusTween = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
     controls.autoRotate = false;
   }
@@ -759,12 +762,15 @@ try {
     if (!data) {
       data = BUILDERS[name](POINT_COUNT, { ...definitions[name], view: inside ? 'interior' : 'section' });
       // 동굴 내부에서는 주변 지형이 보이지 않으므로 붙이지 않는다.
+      const { animate } = data; // 얼음 해안처럼 스스로 움직이는 지형 (coldLands.js iceMotion)
       if (!inside) data = joinPoints(data, buildSurroundings(name, definitions[name])); // 동굴도 주변 땅은 앞쪽까지 다 그린다 (2026-11-11)
+      if (animate) data.animate = animate;
       cache.set(key, data);
     }
     const total = data.positions.length / 3, elapsed = performance.now() - start;
     if (localPoints) { localGroup.remove(localPoints); localPoints.geometry.dispose(); }
     localPoints = new THREE.Points(geometryFrom(data), material); localGroup.add(localPoints);
+    localPoints.userData.animate = data.animate;
     const site = sites[name]; localGroup.position.copy(site.position); localGroup.quaternion.copy(site.rotation);
     localGroup.visible = true; fadePoints(localPoints, 0);
     $('#build-time').textContent = '';
@@ -845,7 +851,7 @@ try {
   });
   new ResizeObserver(() => {
     const w = host.clientWidth, h = host.clientHeight;
-    renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+    renderer.setSize(w, h); camera.aspect = w / h; camera.clearViewOffset(); camera.updateProjectionMatrix(); // 사건 연출 중 밀어 둔 시야도 창 크기가 바뀌면 푼다
     if (!transition) setPose(mode === 'planet' ? overviewPose() : localPose(localSection));
   }).observe(host);
   // 주소 뒤에 ?week=2&site=lavaTube 를 붙이면 그 주차부터 바로 본다. 앞 주차는 단계마다 첫 선지를 고른 것으로 친다
@@ -859,7 +865,7 @@ try {
     week = startWeek; startWeek = 1;
     renderSteps(true); syncAssets(); showBrief(week);
   }
-  if (WEEKS[startWeek - 1] && startWeek > 1) selectSite(jump.get('site') ?? 'plain');
+  if (WEEKS[startWeek - 1] && startWeek > 1) selectSite(COPY[jump.get('site')] ? jump.get('site') : Object.keys(COPY)[0]);
   const projected = new THREE.Vector3(), temporary = new THREE.Vector3();
   function labels() {
     if (!transition && mode === 'planet') {
@@ -892,6 +898,68 @@ try {
   const people = createPeople({ host, camera, parent: localGroup, material, geometryFrom,
     getState: () => ({ site: currentSite, active: mode === 'local' && !transition, homes: moduleLayer?.data.homes ?? [], stats: sumStats(), decided, week,
       devices: [...overlayLayers].map(([id, layer]) => ({ id, week: layer.week, spots: layer.data.spots ?? [], radii: (layer.data.footprints ?? []).map(f => f.r) })) }) });
+  // 돌발 사건 3D 연출 (src/eventStage.js, 2026-11-27): 장면 손잡이만 건네고, 사건 창(events.js)이 시작·대응·끝을 알린다
+  let flowDim = 1, terrainDim = 1, stageReturn = null;
+  const eventStage = createEventStage({
+    reducedMotion,
+    ready: () => mode === 'local' && !transition && Boolean(moduleLayer),
+    // 사건 직전에 기다린다: 브리핑 창이 열려 있으면 닫힐 때까지(blocked), 카메라 이동·건물이 나타나는 중이면 멈출 때까지(idle)
+    blocked: () => !$('#intro').hidden,
+    idle: () => mode !== 'local' || (!transition && !focusTween && !reveals.length),
+    layers: () => [moduleLayer && { id: 'module', ...moduleLayer }, ...[...overlayLayers].map(([id, layer]) => ({ id, ...layer }))].filter(Boolean),
+    flows: () => flowLayer?.flows ?? [],
+    ground: (x, z) => floorAt(currentSite, x, z),
+    people: () => people.spots(),
+    tint: tintLayer,
+    linear(srgb) {
+      const out = new Float32Array(srgb.length);
+      for (let i = 0; i < out.length; i += 3) { color.setRGB(srgb[i], srgb[i + 1], srgb[i + 2], THREE.SRGBColorSpace); color.toArray(out, i); }
+      return out;
+    },
+    addPoints(data, weight = 0) {
+      const geometry = geometryFrom({ ...data, positions: data.positions.slice() }, weight);
+      if (data.weights) geometry.setAttribute('lineWeight', new THREE.BufferAttribute(data.weights, 1));
+      const points = new THREE.Points(geometry, material);
+      points.frustumCulled = false; points.visible = false; assetGroup.add(points);
+      return points;
+    },
+    removePoints(points) { assetGroup.remove(points); points.geometry.dispose(); },
+    dimFlows(k) { flowDim = k; },
+    dimFaces(k) { faceMaterial.opacity = FACE_OPACITY * k; },
+    dimTerrain(k) {
+      if (!localPoints || k === terrainDim || Math.abs(k - terrainDim) < 0.004 && k !== 1) return;
+      terrainDim = k; fadePoints(localPoints, k);
+    },
+    // 고장 난 곳으로: 지금 보는 방위는 두고 비스듬히 내려다본다. 넓은 화면에서는 카드가 오른쪽을 가리므로 장면을 왼쪽으로 민다
+    focus(center, distance) {
+      stageReturn ??= { position: camera.position.clone(), target: controls.target.clone() };
+      const target = localGroup.localToWorld(new THREE.Vector3(...center)), up = sites[currentSite].normal;
+      const flat = camera.position.clone().sub(controls.target); flat.addScaledVector(up, -flat.dot(up)).normalize();
+      const direction = flat.multiplyScalar(Math.cos(FOCUS_ELEVATION)).addScaledVector(up, Math.sin(FOCUS_ELEVATION));
+      const position = target.clone().addScaledVector(direction, distance * (host.clientWidth > 760 ? 1 : 1.5) * (FOCUS_ZOOM[currentSite] ?? 1) * LOCAL_SCALE);
+      focusTween = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position, target, start: performance.now() };
+      controls.autoRotate = false;
+      if (host.clientWidth > 760) camera.setViewOffset(host.clientWidth, host.clientHeight, Math.min(230, host.clientWidth * 0.17), 0, host.clientWidth, host.clientHeight);
+      else camera.setViewOffset(host.clientWidth, host.clientHeight, 0, host.clientHeight * 0.18, host.clientWidth, host.clientHeight);
+    },
+    restore() {
+      camera.clearViewOffset();
+      if (stageReturn && mode === 'local' && !transition)
+        focusTween = { fromPosition: camera.position.clone(), fromTarget: controls.target.clone(), position: stageReturn.position, target: stageReturn.target, start: performance.now() };
+      stageReturn = null;
+    },
+    toward(local) { // 그 자리에서 카메라 쪽 (지역 좌표 바닥 방향). 낙석이 건물 뒤에 가려지지 않게
+      const c = localGroup.worldToLocal(camera.position.clone()), dx = c.x - local[0], dz = c.z - local[2], l = Math.hypot(dx, dz) || 1;
+      return [dx / l, dz / l];
+    },
+    project(local) {
+      const v = localGroup.localToWorld(new THREE.Vector3(...local)).project(camera);
+      if (v.z > 1) return null;
+      const rect = host.getBoundingClientRect();
+      return [rect.left + (v.x + 1) / 2 * rect.width, rect.top + (1 - v.y) / 2 * rect.height];
+    }
+  });
+  events.setStage(eventStage);
   function frame(time) {
     requestAnimationFrame(frame);
     let backgroundAmount = mode === 'planet' ? 1 : 0;
@@ -952,10 +1020,15 @@ try {
           if (progress >= 1) { pastFades.delete(layer); delete layer.fade; fadePoints(layer.points, 1); showPast(layer, true); }
         }
       }
+      // 움직이는 지형 (얼음 해안의 빙산·유빙)
+      if (mode === 'local' && localPoints?.userData.animate && !reducedMotion) {
+        localPoints.userData.animate(localPoints.geometry.getAttribute('position').array, time / 1000);
+        localPoints.geometry.getAttribute('position').needsUpdate = true;
+      }
       if (flowLayer) {
         const geometry = flowLayer.points.geometry, position = geometry.getAttribute('position'), colorAttr = geometry.getAttribute('color');
         const appear = clamp((time - flowLayer.start) / FLOW_APPEAR_MS);
-        flowLayer.animate(position.array, colorAttr.array, geometry.userData.baseColor, reducedMotion ? 0 : time / 1000, appear);
+        flowLayer.animate(position.array, colorAttr.array, geometry.userData.baseColor, reducedMotion ? 0 : time / 1000, appear * flowDim);
         position.needsUpdate = true; colorAttr.needsUpdate = true;
       }
       for (const [points, motion] of motions) {
@@ -977,6 +1050,7 @@ try {
     stage.dataset.mode = transition ? transition.kind === 'site' ? 'travelling' : 'flying' : mode;
     stage.dataset.site = currentSite ?? '';
     people.frame(time);
+    eventStage.frame(time);
     renderer.render(scene, camera); labels(); pickPast();
   }
   requestAnimationFrame(frame);

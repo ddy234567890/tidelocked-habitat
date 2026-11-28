@@ -1,0 +1,258 @@
+{
+  "week": 5,
+  "brief": "드디어 마지막 주예요!\n긴 밤을 버틸 준비를 해요.",
+  "goal": "이주민이 오기 전 마지막 주예요. 지난 결정은 되돌릴 수 없어요.",
+  "situation": [
+    {
+      "requires": {
+        "heat": [
+          "shrink"
+        ]
+      },
+      "text": "생활 구역을 줄여서 정원을 다 받을 공간이 없어요."
+    }
+  ],
+  "source": "플레이테스트 페이지 「행성 기지 플레이테스트」(https://claude.ai/artifact/2pRJeLi6RBUSQpfzbH3aoX) c 행성. 3D 장치(module·overlays)는 c 화면을 만들 때 더한다",
+  "layers": {
+    "overlay": {
+      "insulate": {
+        "label": "단열 재시공",
+        "parts": [
+          {
+            "asset": "cold-insulation",
+            "offset": [
+              0,
+              0.2
+            ]
+          },
+          {
+            "asset": "iron-sheet",
+            "offset": [
+              0,
+              -0.8
+            ]
+          }
+        ]
+      },
+      "generator": {
+        "label": "보조 발전기",
+        "parts": [
+          {
+            "asset": "cold-auxgen",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "heatfirst": {
+        "label": "난방 우선",
+        "parts": [
+          {
+            "asset": "cold-warmpost",
+            "offset": [
+              0,
+              0
+            ]
+          },
+          {
+            "asset": "lantern",
+            "offset": [
+              1,
+              0.3
+            ]
+          }
+        ]
+      },
+      "airfirst": {
+        "label": "공기 우선",
+        "parts": [
+          {
+            "asset": "cold-airpost",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "full": {
+        "label": "정원 그대로 수용",
+        "parts": [
+          {
+            "asset": "landing-pad",
+            "offset": [
+              -0.6,
+              0
+            ]
+          },
+          {
+            "asset": "cold-lander",
+            "offset": [
+              -0.6,
+              0
+            ],
+            "lift": 0.3
+          },
+          {
+            "asset": "cold-geodome",
+            "offset": [
+              2.2,
+              -0.6
+            ],
+            "scale": 0.4
+          },
+          {
+            "asset": "cold-geodome",
+            "offset": [
+              2,
+              1.3
+            ],
+            "scale": 0.34,
+            "rotation": 30
+          }
+        ]
+      },
+      "elite": {
+        "label": "선발대 우선 수용",
+        "parts": [
+          {
+            "asset": "landing-pad",
+            "offset": [
+              -0.6,
+              0
+            ]
+          },
+          {
+            "asset": "cold-lander",
+            "offset": [
+              -0.6,
+              0
+            ],
+            "lift": 0.3,
+            "scale": 0.8
+          },
+          {
+            "asset": "tent-small",
+            "offset": [
+              1.5,
+              -0.6
+            ]
+          },
+          {
+            "asset": "tent-small",
+            "offset": [
+              1.6,
+              0.8
+            ],
+            "rotation": 40
+          },
+          {
+            "asset": "spaceship",
+            "offset": [
+              0,
+              0
+            ],
+            "scale": 3,
+            "lift": 4.2
+          }
+        ]
+      }
+    }
+  },
+  "flows": [],
+  "steps": [
+    {
+      "id": "fix",
+      "label": "마지막으로 투자할 곳을 골라 주세요",
+      "choices": [
+        {
+          "id": "insulate",
+          "label": "단열 재시공",
+          "line": "기지 전체의 열 손실을 줄여요",
+          "gain": "매주 전력 절약, 고장 피해 감소",
+          "cost": "초기 전력 큼",
+          "overlays": [
+            "insulate"
+          ]
+        },
+        {
+          "id": "generator",
+          "label": "보조 발전기",
+          "line": "발전기를 하나 더",
+          "gain": "매주 전력 증가",
+          "cost": "고장 대비는 그대로",
+          "overlays": [
+            "generator"
+          ]
+        }
+      ],
+      "boardName": "마지막 투자",
+      "short": "마지막 투자"
+    },
+    {
+      "id": "priority",
+      "label": "전기가 모자랄 때 먼저 살릴 것을 골라 주세요",
+      "choices": [
+        {
+          "id": "heatfirst",
+          "label": "난방 우선",
+          "line": "얼지 않는 것부터",
+          "gain": "고장 때 물·식량 피해 감소",
+          "cost": "고장 때 공기 피해 증가",
+          "overlays": [
+            "heatfirst"
+          ]
+        },
+        {
+          "id": "airfirst",
+          "label": "공기 우선",
+          "line": "숨 쉬는 것부터",
+          "gain": "고장 때 공기 피해 감소",
+          "cost": "고장 때 물·식량 피해 증가",
+          "overlays": [
+            "airfirst"
+          ]
+        }
+      ],
+      "boardName": "먼저 살릴 것",
+      "short": "먼저 살릴 것"
+    },
+    {
+      "id": "arrive",
+      "label": "이주민을 받을 방법을 골라 주세요",
+      "choices": [
+        {
+          "id": "full",
+          "label": "정원 그대로 수용",
+          "line": "예정된 인원 모두",
+          "gain": "모두 함께 정착",
+          "cost": "입주 후 수요 100%",
+          "requires": {
+            "heat": [
+              "resist",
+              "hp"
+            ]
+          },
+          "lockHint": "2주차에 생활 구역을 줄이면 모두 받을 공간이 없어요",
+          "overlays": [
+            "full"
+          ]
+        },
+        {
+          "id": "elite",
+          "label": "선발대 우선 수용",
+          "line": "일부는 우주선에서 대기",
+          "gain": "입주 후 수요 75%",
+          "cost": "모두를 데려오지 못했다는 대가",
+          "overlays": [
+            "elite"
+          ]
+        }
+      ],
+      "boardName": "입주",
+      "short": "입주"
+    }
+  ]
+}

@@ -1,0 +1,268 @@
+{
+  "week": 4,
+  "brief": "이번 주에는 식량을 조사할게요.",
+  "goal": "빛이 약해 온실은 거의 소용없어요. 무엇으로 먹을 것을 만들지 골라요.",
+  "situation": [
+    {
+      "text": "착륙선 식량이 매주 줄고 있어요."
+    },
+    {
+      "requires": {
+        "storage": [
+          "h2"
+        ]
+      },
+      "text": "2주차에 모아 둔 수소로 미생물 단백질을 만들 수 있어요."
+    }
+  ],
+  "source": "플레이테스트 페이지 「행성 기지 플레이테스트」(https://claude.ai/artifact/2pRJeLi6RBUSQpfzbH3aoX) c 행성. 3D 장치(module·overlays)는 c 화면을 만들 때 더한다",
+  "layers": {
+    "overlay": {
+      "hydroponic": {
+        "label": "인공광 수경 재배",
+        "parts": [
+          {
+            "asset": "cold-growrack",
+            "offset": [
+              0,
+              -0.5
+            ]
+          },
+          {
+            "asset": "cold-growrack",
+            "offset": [
+              0,
+              0.5
+            ]
+          }
+        ]
+      },
+      "microbe": {
+        "label": "미생물 단백질 발효",
+        "parts": [
+          {
+            "asset": "cold-bioreactor",
+            "offset": [
+              -0.95,
+              0
+            ]
+          },
+          {
+            "asset": "cold-bioreactor",
+            "offset": [
+              0,
+              0
+            ]
+          },
+          {
+            "asset": "cold-bioreactor",
+            "offset": [
+              0.95,
+              0
+            ]
+          }
+        ]
+      },
+      "fungi": {
+        "label": "버섯·곤충 사육",
+        "parts": [
+          {
+            "asset": "cold-mushrack",
+            "offset": [
+              0,
+              -0.4
+            ]
+          },
+          {
+            "asset": "mushroom-a",
+            "offset": [
+              -0.6,
+              0.5
+            ]
+          },
+          {
+            "asset": "mushroom-b",
+            "offset": [
+              0,
+              0.6
+            ]
+          },
+          {
+            "asset": "mushroom-a",
+            "offset": [
+              0.6,
+              0.5
+            ],
+            "scale": 0.8
+          }
+        ]
+      },
+      "lowtemp": {
+        "label": "저온 운영",
+        "parts": [
+          {
+            "asset": "cold-coldframe",
+            "offset": [
+              0,
+              -0.6
+            ]
+          },
+          {
+            "asset": "cold-coldframe",
+            "offset": [
+              0,
+              0.6
+            ]
+          }
+        ]
+      },
+      "optimal": {
+        "label": "적정 온도 운영",
+        "parts": [
+          {
+            "asset": "cold-hothouse",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "compost": {
+        "label": "퇴비·영양분 재순환",
+        "parts": [
+          {
+            "asset": "cold-compost",
+            "offset": [
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "seal": {
+        "label": "밀봉·보관 처리",
+        "parts": [
+          {
+            "asset": "cold-sealed",
+            "offset": [
+              -0.5,
+              0
+            ]
+          },
+          {
+            "asset": "crate-flat",
+            "offset": [
+              0.8,
+              0
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "flows": [],
+  "steps": [
+    {
+      "id": "crop",
+      "label": "먹을 것을 만들 방법을 골라 주세요",
+      "choices": [
+        {
+          "id": "hydroponic",
+          "label": "인공광 수경 재배",
+          "line": "LED로 작물을 키워요",
+          "gain": "식량 많이",
+          "cost": "매주 전력 크게 소모",
+          "overlays": [
+            "hydroponic"
+          ]
+        },
+        {
+          "id": "microbe",
+          "label": "미생물 단백질 발효",
+          "line": "빛 없이 세균으로 단백질",
+          "gain": "식량 많이, 전력 적게",
+          "cost": "오염되면 전부 잃음",
+          "signature": true,
+          "requires": {
+            "storage": [
+              "h2"
+            ]
+          },
+          "lockHint": "2주차에 수소 저장을 골라야 열려요",
+          "overlays": [
+            "microbe"
+          ]
+        },
+        {
+          "id": "fungi",
+          "label": "버섯·곤충 사육",
+          "line": "찌꺼기로 버섯, 버섯으로 곤충",
+          "gain": "전력 거의 안 듦, 사건에 강함",
+          "cost": "생산량 적음",
+          "overlays": [
+            "fungi"
+          ]
+        }
+      ],
+      "boardName": "식량 생산",
+      "short": "식량 생산"
+    },
+    {
+      "id": "growTemp",
+      "label": "생산 시설의 온도를 골라 주세요",
+      "choices": [
+        {
+          "id": "lowtemp",
+          "label": "저온 운영",
+          "line": "추위에 강한 것만",
+          "gain": "전력 절약",
+          "cost": "지금 생산량 조금 감소",
+          "overlays": [
+            "lowtemp"
+          ]
+        },
+        {
+          "id": "optimal",
+          "label": "적정 온도 운영",
+          "line": "잘 자라게 데워요",
+          "gain": "생산 빠름",
+          "cost": "매주 전력, 난방 정지 때 피해",
+          "overlays": [
+            "optimal"
+          ]
+        }
+      ],
+      "boardName": "재배 온도",
+      "short": "재배 온도"
+    },
+    {
+      "id": "waste",
+      "label": "찌꺼기를 처리할 방법을 골라 주세요",
+      "choices": [
+        {
+          "id": "compost",
+          "label": "퇴비·영양분 재순환",
+          "line": "찌꺼기를 비료로",
+          "gain": "매주 식량·물 조금 증가",
+          "cost": "오염 사건에 약함",
+          "overlays": [
+            "compost"
+          ]
+        },
+        {
+          "id": "seal",
+          "label": "밀봉·보관 처리",
+          "line": "말려서 밖에 쌓아요",
+          "gain": "오염 사건에 강함",
+          "cost": "추가 효과 없음",
+          "overlays": [
+            "seal"
+          ]
+        }
+      ],
+      "boardName": "찌꺼기",
+      "short": "찌꺼기"
+    }
+  ]
+}

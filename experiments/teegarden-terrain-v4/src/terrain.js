@@ -118,7 +118,7 @@ export function put(out, i, x, y, z, color, shake = 0) {
 export function groundColor(def, light, ice = false) {
   if (ice) return blue(0.85);
   const temperature = def.temperature[0] + (def.temperature[1] - def.temperature[0]) * clamp(light);
-  return shade(temperatureColor(temperature, def.temperature), 0.5 + light * 0.5);
+  return shade(temperatureColor(temperature, def.colorRange ?? def.temperature), 0.5 + light * 0.5);
 }
 export function rockCount(count, def) { return Math.floor(count * ROCK_FRACTION * clamp(def.rocks ?? 1, 0, 2)); }
 export function addRocks(out, start, count, def, grid, random, allowed, half = false) {

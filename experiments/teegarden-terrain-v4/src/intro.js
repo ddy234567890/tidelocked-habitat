@@ -1,7 +1,8 @@
-import hud from './hud.json' with { type: 'json' };
+import { PLANET } from './planets/index.js';
 import { WEEKS } from './choices.js';
 import { lecture, showPlanetMarks, resetPlanetMarks } from './planet-brief.js';
 import { openPrologue } from './prologue.js';
+const { hud } = PLANET;
 
 // 시작 화면: ⓪ 이동 중 → ① 브리핑(탐사 로봇 보고) → 결정 화면. 팀 디자인 캔버스 「1주차 화면 3종」을 따른다.
 // 브리핑은 주차마다 다시 뜨고, 주차 탭으로 지난 주 브리핑을 다시 본다 (openBriefing).

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as THREE from 'three';
 import { PIN_DISK, pinNormalFromImage, siteFrame, surfacePose, poseQuaternion, prepareFlight, flightSample } from '../src/navigation.js';
-const definitions = JSON.parse(readFileSync(new URL('../src/sites.json', import.meta.url)));
+const definitions = JSON.parse(readFileSync(new URL('../src/planets/b/sites.json', import.meta.url)));
 const camera = new THREE.PerspectiveCamera(43, 820 / 540, 0.01, 200);
 camera.position.set(0, 2, 29); camera.lookAt(-3.2, 0, 0); camera.updateMatrixWorld();
 const center = new THREE.Vector3().project(camera);

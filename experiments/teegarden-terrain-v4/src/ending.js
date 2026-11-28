@@ -7,25 +7,19 @@
 //   아래에는 그날 장면이 자막으로 뜨고 기지에서 그 장면이 벌어진다(이주민 도착, 힘들어함·쓰러짐·부축, 고장, 깜빡임 등).
 //   마지막에는 카메라가 기지에서 조금 물러나고, 기지가 그 결말의 모습(밝음·빈 기지 등)으로 남은 채 오른쪽에 결말 칸이 뜬다. 그림은 없다.
 // 지난 선택은 '몇 주차에 골랐다'고 말하지 않고 결과로만 보여 준다(사용자: 브리핑 느낌은 재미없다). 말투는 담담한 기록체.
-// 이야기 문구는 src/ending-story.json. main.js 는 건드리지 않는다: 화면(DOM)에서 고른 선지·게이지를 읽고,
+// 이야기 문구는 src/planets/<행성>/ending-story.json. main.js 는 건드리지 않는다: 화면(DOM)에서 고른 선지·게이지를 읽고,
 //   사람은 window.people 과 peopleSim.js 의 Person.step 에 끼워 넣은 환경 덮어쓰기로만 움직인다 (엔딩 때만 켜진다).
 import { WEEKS } from './choices.js';
 import { effectsFor, GAUGE_KEYS, GAUGE_LABELS } from './gauges.js';
 import { Person, INDOOR } from './peopleSim.js';
 import { judge, ENDINGS, strategy } from './endingJudge.js';
-import STORY from './ending-story.json' with { type: 'json' };
+import { stressEase } from './events.js';
+import { PLANET, restartQuery } from './planets/index.js';
 import './ending.css';
 
-const SCENE = {
-  water: '빈 물탱크 앞에서 마지막 인원이 철수를 준비한다.',
-  food: '빈 식량 선반을 뒤로하고 마지막 인원이 철수를 준비한다.',
-  power: '전력이 끊긴 기지에서 손전등을 든 인원이 철수를 준비한다.',
-  air: '마지막 산소통을 나눠 쓰며 인원이 철수를 준비한다.',
-};
-const MOVE = {
-  M1: { line: '전원이 한꺼번에 입주했던 기지에서, 전원이 다시 이주선에 오른다.', cost: '기지에는 불이 켜진 채 아무도 남지 않았다.' },
-  M2: { line: '먼저 온 절반은 이주선으로 돌아가고, 2주 늦게 지구를 떠난 나머지 절반은 도착을 앞두고 착륙 중지 신호를 받는다.', cost: '늦게 떠난 절반은 아직 돌아갈 곳 없이 항해 중이다.' },
-};
+const STORY = PLANET.story;
+
+const { leaveScene: SCENE, leaveMove: MOVE } = STORY; // 철수 장면 글
 // 바닥난 게이지에 따라 사람들이 겪는 환경 (peopleSim 의 envFor 결과를 덮어쓴다). 수치는 게임용 근사값.
 // 세기 1 이면 약 2초 뒤 힘들어하고 4~8초 사이에 저마다 다른 때 쓰러진다. 0.75 면 힘들어하기만 한다 (16초까지 확인)
 const HARDSHIP = {
@@ -34,7 +28,13 @@ const HARDSHIP = {
   water: env => ({ ...env, tempC: Math.max(env.tempC, 45), activityMET: env.activityMET + 2.5 }),       // 물이 모자라 더위를 못 견딤
   food: env => ({ ...env, tempC: Math.max(env.tempC, 42), activityMET: env.activityMET + 4.5 }),      // 먹지 못해 쉽게 지침
 };
-const ARRIVALS = { M1: 14, M2: 6 };
+// 추운 행성: 전력이 끊기면 난방이 멈춰 얼고, 물·식량이 모자라면 추위를 버티지 못한다
+if (PLANET.climate === 'cold') Object.assign(HARDSHIP, {
+  power: env => ({ ...env, tempC: Math.min(env.tempC, -12) }),
+  water: env => ({ ...env, tempC: Math.min(env.tempC, -7) }),
+  food: env => ({ ...env, tempC: Math.min(env.tempC, -7) }),
+});
+const ARRIVALS = { M1: 14, M2: 6, full: 14, elite: 8 };
 
 // 받침에 맞는 조사: 괄호 등 한글이 아닌 끝 글자는 건너뛰고 마지막 한글 글자로 정한다
 function particle(word, yes, no) {
@@ -119,7 +119,7 @@ function valueAt(trace, key, d) {
  * selection: 고른 선지, start: 입주 날(또는 실패한 날) 게이지, failed: { key, week } | null, move: 'M1' | 'M2'
  */
 export function buildStory({ selection, start, failed = null, move = selection.arrive ?? 'M1' }) {
-  const j = judge(selection, start, failed), key = j.key, g = GAUGE_LABELS[key] ?? '물';
+  const j = judge(selection, start, failed, stressEase()), key = j.key, g = GAUGE_LABELS[key] ?? '물';
   const label = id => choiceOf(id, selection)?.label ?? '';
   const beats = [];
   // 위 시계에 뜰 게이지 4개: 운영 검증 기록(trace)의 d 일째 값 (기록이 없으면 그날 값 그대로). 중심 게이지는 value, 고장 장면은 고장 난 게이지를 덮어쓴다
@@ -367,7 +367,7 @@ function playSubtitles(beats, key) {
 }
 
 // 결말 모으기: 이 브라우저에서 본 결말을 남긴다 (저장이 막혀 있으면 이번 결말만 보인다)
-const SEEN_KEY = 'tidelocked.endings.seen';
+const SEEN_KEY = PLANET.storage.endings;
 function rememberEnding(code) {
   let seen = [];
   try { seen = JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]'); } catch { seen = []; }
@@ -382,11 +382,10 @@ function badgesFor(selection, st) {
   if (down === 0 && code !== 'E1' && code !== 'E3') out.push(B.noDown);
   if (down > 0) out.push(B.helpers);
   if (code === 'E5') out.push(B.harvest);
-  if ((code === 'E4' || code === 'E5') && selection.fix === 'U2') out.push(B.sturdy);
-  if (selection.oxygen === 'O2' && selection.reuse === 'R2') out.push(B.loop);
-  if (selection.power === 'P2') out.push(B.reactor);
-  if (selection.arrive === 'M2' && code !== 'E1') out.push(B.staged);
-  out.push({ A: B.plain, B: B.cave, C: B.ridge }[selection.location] ?? B.plain);
+  for (const rule of STORY.badgeRules) {
+    if (rule.codes && !rule.codes.includes(code)) continue;
+    if (Object.entries(rule.requires).every(([step, ids]) => ids.includes(selection[step]))) out.push(B[rule.badge]);
+  }
   return out.filter(Boolean);
 }
 // 이번 판 기록의 숫자와 막대가 0 에서 차오른다
@@ -463,7 +462,7 @@ async function showEnding({ move = 'M1', start, failed = null, selection = readS
   document.body.append(root);
   countUp(root);
   const button = root.querySelector('#ending-restart');
-  button.addEventListener('click', () => { location.href = location.pathname; });
+  button.addEventListener('click', () => { location.href = location.pathname + restartQuery; });
   button.focus({ preventScroll: true });
 }
 

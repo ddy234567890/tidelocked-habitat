@@ -360,7 +360,8 @@ const nearFrom=origin=>NEAR.map(s=>{const P=mul(dirRD(s.ra,s.dec),s.ly);return {
 const GAL=dirRD(192.86,27.13); // 은하수 띠의 기준 방향
 
 const EARTH_L=norm([-.7,.12,.7]), TEEG_L=norm([.25,.42,-.87]);
-const cFromB=mul(norm(add(mul(TEEG_L,-1),[.95,.15,0])),10), bFromC=mul(norm(add(TEEG_L,[.7,-.25,.35])),10);
+// b·c 는 한 좌표계를 옮겨 쓴다 (c 에서 본 b = b 에서 본 c 의 반대): b↔c 이동이 한 화면에서 이어지게 (2026-11-27)
+const cFromB=mul(norm(add(mul(TEEG_L,-1),[.95,.15,0])),10), bFromC=mul(cFromB,-1);
 const SCN={
  earth:{type:0,pos:0,en:'EARTH · 7777',ko:'지구',L:EARTH_L,sunR:.022,
   sph:[{p:[0,0,0],r:1,t:0},{p:mul(norm([.35,.32,.88]),7),r:.27,t:3,id:'moon'}],
@@ -379,7 +380,7 @@ const SCN={
  c:{type:2,pos:100,en:"TEEGARDEN'S STAR c",ko:'티가든 c',level:'어려움',L:TEEG_L,sunR:.045,
   sph:[{p:[0,0,0],r:1,t:2},{p:bFromC,r:1,t:1,id:'b'}],
   rows:[['ESI','지구와 닮은 정도 (0~1)','0.66'],['LIGHT','받는 빛 (지구 = 1)','0.35'],['TEMP','온도','약 -52°C'],['LEVEL','난이도','어려움']],
-  text:'b와 같은 주성을 공전하는 외곽 행성. 받는 빛이 지구의 약 3분의 1에 그쳐 혹한이 예상된다.'}
+  text:'b와 같은 주성을 공전하는 외곽 행성. 받는 빛이 지구의 약 3분의 1에 그쳐 혹한이 예상된다. 첫 탐사라면 티가든 b를 먼저 권한다.'}
 };
 const teegObjs=other=>()=>[
  {id:'teegL',ko:'티가든 별',en:"TEEGARDEN'S STAR",kind:'sys',dir:TEEG_L,rows:[['TYPE','종류','적색왜성']],note:'b와 c의 주성(主星). 붉고 어두운 적색왜성이다.'},
@@ -490,14 +491,14 @@ function resize(){CW=innerWidth;CH=innerHeight;S=Math.max(2,Math.round(Math.min(
 addEventListener('resize',resize);
 
 /* ───────── 5. 상태 ───────── */
-const st={tour:null,phase:'idle',scene:'earth',yaw:0,pitch:0,dist:4.3,vy:0,vp:0,look:null,anim:null,travel:null,sel:null,
+const st={ctr:[0,0,0],tour:null,phase:'idle',scene:'earth',yaw:0,pitch:0,dist:4.3,vy:0,vp:0,look:null,anim:null,travel:null,sel:null,
   dim:.6,rev:0,trev:0,cx:null,cy:0,F:0,ship:0,name:'',spin0:2.2,coast:0,tcoast:0};
 {const h=ypOf(SCN.earth.home);st.yaw=h.yaw;st.pitch=h.pitch;}
 const DMIN=1.9,DMAX=40,DHOME=3.4;
 function stopTour(){if(st.tour){st.tour=null;$('#hint').textContent='드래그: 시점 회전 · 휠: 거리 조절';}}
 function animCam(dir,dist,dur){stopTour();const t=ypOf(dir);let dy=Math.atan2(Math.sin(t.yaw-st.yaw),Math.cos(t.yaw-st.yaw));
   st.anim={t:performance.now(),dur:RM?1:dur,y0:st.yaw,p0:st.pitch,d0:st.dist,y1:st.yaw+dy,p1:clamp(t.pitch,-1.35,1.35),d1:dist};st.vy=st.vp=0;}
-const camPos=()=>mul(orbit(st.yaw,st.pitch),st.dist);
+const camPos=()=>add(st.ctr,mul(orbit(st.yaw,st.pitch),st.dist)); // ctr: 카메라가 도는 중심 (b↔c 이동 중에만 움직인다)
 
 /* ───────── 6. 프롤로그 → 로그인 ───────── */
 let loginSeq=0;
@@ -508,7 +509,7 @@ async function enterLogin(){ // 프롤로그 종료·건너뛰기·접속 종료
   if(st.phase==='login'||st.phase==='auth'||st.phase==='open')return;
   const my=++loginSeq;
   $$('video,audio').forEach(m=>{try{m.pause();m.muted=true;}catch(_){}});
-  Object.assign(st,{tour:null,phase:'login',scene:'earth',travel:null,look:null,sel:null,anim:null,trev:0,rev:0,dim:.6,cx:null,dist:4.3});
+  Object.assign(st,{ctr:[0,0,0],tour:null,phase:'login',scene:'earth',travel:null,look:null,sel:null,anim:null,trev:0,rev:0,dim:.6,cx:null,dist:4.3});
   {const h=ypOf(SCN.earth.home);st.yaw=h.yaw;st.pitch=h.pitch;}
   buildMarks();
   openInfo(false);document.body.classList.remove('explore','loginOn','frame');$('#endv').classList.remove('show');
@@ -602,6 +603,10 @@ function travel(to){
   const dir=far?(a.type?norm(mul(Tpos,-1)):dT):norm(a.sph[1].p);
   if(RM){setScene(to);const h=ypOf(b.home);st.yaw=h.yaw;st.pitch=h.pitch;st.dist=DHOME;return;}
   st.sel=null;st.anim=null;stopTour();
+  if(!far){ // 같은 항성계(b↔c): 빨려 들어가는 효과 없이 한 화면에서 물러났다가 다음 행성으로 부드럽게 다가간다
+    st.travel={glide:true,from:st.scene,to,t:performance.now(),dur:3800,y0:st.yaw,p0:st.pitch,d0:st.dist,c1:a.sph[1].p,o0:orbit(st.yaw,st.pitch)};
+    openInfo(false);$$('.stop').forEach(s=>s.disabled=true);
+    $('#warp').textContent=a.ko+' → '+b.ko;$('#warp').classList.add('on');return;}
   st.travel={from:st.scene,to,t:performance.now(),dur:far?6400:4200,dir,far,sw:false,
     y0:st.yaw,p0:st.pitch,d0:st.dist,tg:ypOf(norm(add(dir,[0,.35,0])))};
   st.travel.tg.yaw=st.yaw+Math.atan2(Math.sin(st.travel.tg.yaw-st.yaw),Math.cos(st.travel.tg.yaw-st.yaw));
@@ -613,7 +618,22 @@ $('#infoBtn').onclick=()=>{st.sel=null;renderInfo();openInfo(true);$('#info .x')
 $('#endBack').onclick=()=>$('#endv').classList.remove('show');
 $('#logout').onclick=()=>{st.phase='idle';enterLogin();};
 const ease=(a,b,k)=>a+(b-a)*k, eio=u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;
+function stepGlide(now){ // b↔c: 출발 행성 둘레에서 살짝 물러나며 다음 행성 쪽으로 몸을 돌리고, 그 행성을 보며 곧장 다가간다 (출발 행성 좌표)
+  const tr=st.travel,u=clamp((now-tr.t)/tr.dur,0,1),e=eio(u),b=SCN[tr.to],sph=SCN[tr.from].sph,C=tr.c1;
+  const start=mul(tr.o0,tr.d0),end=add(C,mul(b.home,DHOME)),side=norm(add(tr.o0,b.home));
+  let cam=add(add(start,mul(sub(end,start),e)),mul(side,3.2*Math.sin(Math.PI*u))); // 가운데쯤 옆으로 비켜 두 행성이 함께 보인다
+  for(const o of sph){const v=sub(cam,o.p),l=len(v);if(l<o.r*1.6)cam=add(o.p,mul(norm(v),o.r*1.6));} // 행성 속을 지나가지 않게
+  const aim=mul(C,eio(clamp(u/.45,0,1))); // 처음엔 출발 행성을 보다가 다음 행성으로 시선을 옮긴다
+  st.look=norm(sub(aim,cam));
+  const h=ypOf(b.home);st.yaw=h.yaw;st.pitch=h.pitch;st.dist=DHOME;st.ctr=sub(cam,mul(b.home,DHOME));
+  st.sunR=ease(SCN[tr.from].sunR,b.sunR,e);
+  st.ship=ease(SCN[tr.from].pos,b.pos,e);
+  if(u>.82)$('#warp').classList.remove('on');
+  if(u>=1){setScene(tr.to);st.ctr=[0,0,0];st.sunR=null;st.travel=null;st.look=null;$$('.stop').forEach(s=>s.disabled=false);
+    setTimeout(()=>{if(!st.travel&&st.phase==='explore'&&!isMobile())openInfo(true);},900);}
+  return [0,1];}
 function stepTravel(now){
+  if(st.travel.glide)return stepGlide(now);
   const tr=st.travel,u=clamp((now-tr.t)/tr.dur,0,1);let warp=0;
   const shipA=SCN[tr.from].pos,shipB=SCN[tr.to].pos;st.ship=ease(shipA,shipB,eio(clamp((u-.3)/.45,0,1)));let fade=1;
   if(u<.35){const e=(1-Math.cos(Math.PI*u/.35))/2;st.yaw=ease(tr.y0,tr.tg.yaw,e);st.pitch=ease(tr.p0,tr.tg.pitch,e);st.dist=Math.exp(ease(Math.log(tr.d0),Math.log(3.6),e));
@@ -697,7 +717,7 @@ function frame(now){
     const a=st.spin0+T*(RM?0:.035),c=Math.cos(a),s=Math.sin(a);gl.uniformMatrix3fv(U.uSpin,false,new Float32Array([c,0,-s,0,1,0,s,0,c]));
     const sp=new Float32Array(12),ty=new Float32Array([-1,-1,-1]);sph.forEach((o,i)=>{sp.set([...o.p,o.r],i*4);ty[i]=o.t;});
     gl.uniform4fv(U.uSph,sp);gl.uniform1fv(U.uTy,ty);
-    gl.uniform4f(U.uSun,sc.L[0],sc.L[1],sc.L[2],sc.sunR);
+    gl.uniform4f(U.uSun,sc.L[0],sc.L[1],sc.L[2],st.sunR??sc.sunR);
     const ns=new Float32Array(32);sc.list.filter(o=>o.kind==='star').slice(0,8).forEach((o,i)=>ns.set([...o.dir,o.mag],i*4));gl.uniform4fv(U.uNS,ns);
     gl.drawArrays(gl.TRIANGLES,0,3);
   }

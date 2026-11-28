@@ -1,0 +1,117 @@
+{
+  "notes": {
+    "ready": "false 면 화면에서 고를 수 없다",
+    "difficulty": "설명은 planets/b/planet.json notes. 두 행성은 사건 기본 피해가 달라 배수를 서로 비교하지 않는다. scripts/balance.mjs 로 잰 값: 아무거나 생존 실패 약 13%, 신중 안정적 이주 약 7%"
+  },
+  "id": "c",
+  "name": "Teegarden c",
+  "level": "어려움",
+  "ready": true,
+  "target": {
+    "아무거나": {
+      "E1": [
+        10,
+        20
+      ]
+    },
+    "신중": {
+      "E5": [
+        5,
+        10
+      ]
+    }
+  },
+  "events": {
+    "severity": 1.6,
+    "eventsPerGame": 3,
+    "goodPerGame": 1,
+    "secondChance": 0,
+    "timerSeconds": 15
+  },
+  "storage": {
+    "events": "tidelocked.c.events.seen",
+    "endings": "tidelocked.c.endings.seen"
+  },
+  "climate": "cold",
+  "suitTime": {
+    "basin": 600,
+    "rift": 600,
+    "shore": 420
+  },
+  "siteCopy": {
+    "basin": {
+      "letter": "A",
+      "title": "별 바로 아래 분지",
+      "en": "SUBSTELLAR BASIN",
+      "text": "별이 늘 머리 위에 떠 있는 움푹한 땅.",
+      "tag": "주거 후보지",
+      "sub": "분지 바닥",
+      "position": [
+        0,
+        0,
+        0
+      ]
+    },
+    "rift": {
+      "letter": "B",
+      "title": "지열 열곡",
+      "en": "GEOTHERMAL RIFT",
+      "text": "땅이 갈라져 열이 올라오는 곳.",
+      "tag": "주거 후보지",
+      "sub": "열곡 서쪽 언덕",
+      "position": [
+        0,
+        0,
+        0
+      ]
+    },
+    "shore": {
+      "letter": "C",
+      "title": "얼음 해안",
+      "en": "ICE SHORE",
+      "text": "얼어붙은 바다가 시작되는 곳.",
+      "tag": "주거 후보지",
+      "sub": "해안 평지",
+      "position": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "ui": {
+    "title": "TEEGARDEN c",
+    "target": "TEEGARDEN'S STAR c",
+    "news": "Breaking News: 별빛이 3분의 1뿐인 행성에서 얼음이 발견돼...",
+    "facts": [
+      [
+        "최소질량",
+        "1.05 M⊕"
+      ],
+      [
+        "추정 반지름",
+        "1.01 R⊕"
+      ],
+      [
+        "공전주기",
+        "11.416일"
+      ],
+      [
+        "받는 빛",
+        "지구의 0.35배"
+      ],
+      [
+        "평형 온도",
+        "−64°C"
+      ]
+    ],
+    "meaning": {
+      "최소질량": "지구 질량(M⊕)의 1.05배 이상이에요. 관측으로는 가장 작은 값만 알 수 있어요.",
+      "추정 반지름": "질량으로 어림한 값이에요. 바위 행성이라면 지구와 거의 같아요.",
+      "공전주기": "별을 한 바퀴 도는 시간, 곧 이 행성의 1년이에요.",
+      "받는 빛": "지구가 해에게 받는 빛을 1로 본 값이에요.",
+      "평형 온도": "대기가 없다고 보고 빛만으로 계산한 온도예요. 실제 기온과는 다를 수 있어요."
+    },
+    "sitesLine": "별 바로 아래 분지는 낮 쪽 한가운데에, 얼음 해안은 그 경계 가까이에 있어요."
+  }
+}

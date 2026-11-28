@@ -1,0 +1,47 @@
+{
+  "notes": {
+    "demand": "입주 후 이주민이 매주 더 쓰는 양",
+    "verify": "입주 후 4주 운영 검증. requires 가 맞는 항목만 쓴다. demandScale 은 처음 weeks 주 동안 demand 에 곱하고, add 는 4주 내내, demandAdd 는 demandScale 만큼 줄어들며, lowest 는 그 주에 가장 낮은 게이지에 더한다",
+    "tests": "고장 시험. damage(기본 피해)에 requires 가 맞는 adjust 의 add 를 더한 만큼 줄어든다",
+    "reinforce": "requires 가 맞으면 가장 나쁜 시험의 피해를 ease 만큼 덜어 준다",
+    "strategies": "any 조건 중 하나라도 맞으면 text 를 안정적 이주 이야기에 쓴다. 하나도 안 맞으면 fallback"
+  },
+  "demand": { "air": -8, "water": -13, "food": -15, "power": -12 },
+  "verify": [
+    { "requires": { "arrive": ["M2"] }, "demandScale": 0.5, "weeks": 2, "add": { "food": -1, "power": -1 } },
+    { "requires": { "reuse": ["R2"] }, "demandAdd": { "water": 2 } },
+    { "requires": { "oxygen": ["O2"] }, "demandAdd": { "water": 1 } },
+    { "requires": { "pool": ["X1"] }, "lowest": 3 }
+  ],
+  "tests": [
+    {
+      "name": "주 전원 정지",
+      "damage": { "power": 34, "air": 24 },
+      "adjust": [
+        { "requires": { "storage": ["S2"] }, "add": { "power": -6, "air": -4 } },
+        { "requires": { "power": ["P2"] }, "add": { "power": 6 } },
+        { "requires": { "pool": ["X2"] }, "add": { "power": -6, "air": -4 } },
+        { "requires": { "pool": ["X1"] }, "add": { "power": 4, "air": 4 } },
+        { "requires": { "oxygen": ["O3"] }, "add": { "air": -7 } },
+        { "requires": { "heat": ["T2"] }, "add": { "air": 4 } }
+      ]
+    },
+    {
+      "name": "주 정수 설비 고장",
+      "damage": { "water": 33, "food": 0 },
+      "adjust": [
+        { "requires": { "share": ["D2"] }, "add": { "water": -7 } },
+        { "requires": { "oxygen": ["O2"] }, "add": { "water": -4 } },
+        { "requires": { "pool": ["X2"] }, "add": { "water": -3 } },
+        { "requires": { "crop": ["C_leaf", "C_staple", "C_algae"] }, "add": { "food": 4 } }
+      ]
+    }
+  ],
+  "reinforce": { "requires": { "fix": ["U2"] }, "ease": 12 },
+  "strategies": [
+    { "any": [{ "oxygen": ["O2"] }, { "reuse": ["R2"] }], "text": "물을 되살려 쓰는 회수 설비" },
+    { "any": [{ "module": ["C2"] }, { "oxygen": ["O3"] }, { "storage": ["S2"] }, { "share": ["D2"] }, { "pool": ["X2"] }], "text": "구역을 나눠 피해를 막는 분산 설계" },
+    { "any": [{ "power": ["P2"] }], "text": "일정한 원자로 전력" }
+  ],
+  "fallback": "단순하고 가벼운 설비"
+}

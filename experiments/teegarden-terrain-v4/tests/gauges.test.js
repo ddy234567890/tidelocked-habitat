@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { gaugeState, GAUGE_KEYS } from '../src/gauges.js';
 import { ALL_STEPS } from '../src/choices.js';
 
-const data = JSON.parse(readFileSync(new URL('../src/gauges.json', import.meta.url)));
+const data = JSON.parse(readFileSync(new URL('../src/planets/b/gauges.json', import.meta.url)));
 
 // 게임의 모든 선지에 게이지 효과 항목이 있다 (없는 선지는 빈 목록 [])
 for (const step of ALL_STEPS) for (const choice of step.choices) assert.ok(Array.isArray(data.choices[choice.id]), `gauges.json 에 ${choice.id} 가 있다`);
