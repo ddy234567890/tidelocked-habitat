@@ -195,5 +195,35 @@ const join = (a, b) => { const all = new Float32Array(a.length + b.length); all.
 export const buildBasin = build('basin'), buildRift = build('rift');
 export const buildShore = (count, def) => {
   const ground = build('shore')(count, def), lines = shoreLines(def);
-  return Object.fromEntries(['positions', 'colors', 'shake'].map(key => [key, join(ground[key], lines[key])]));
+  const out = Object.fromEntries(['positions', 'colors', 'shake'].map(key => [key, join(ground[key], lines[key])]));
+  out.animate = iceMotion(out.positions);
+  return out;
 };
+
+// 바다의 얼음이 천천히 움직인다: 빙산은 크게 오르내리며 살짝 기울고, 유빙 판은 판마다 따로 출렁이며 떠밀린다.
+// 점 위치만 바꾼다 (같은 머티리얼). 땅·절벽·물길 점은 그대로다. animate(positions, 초) 는 main.js 가 매 장면 부른다
+// 2026-11-27 사용자 요청으로 약 3배 키움 (기지 거리에서 보이게): 오르내림 · 옆으로 밀림 · 기울기
+const BOB = { berg: [0.22, 0.45], floe: [0.1, 0.75] }, DRIFT = { berg: 0.16, floe: 0.12 }, LEAN = 0.04;
+export function iceMotion(positions) {
+  const moving = [], groups = [], kinds = [], heights = [];
+  for (let i = 0; i < positions.length / 3; i++) {
+    const x = positions[i * 3], y = positions[i * 3 + 1], z = positions[i * 3 + 2];
+    if (offshore(x, z) < LEAD[1] - 0.05 || y < SEA - 0.03) continue; // 땅·절벽·물길·금(물)은 움직이지 않는다
+    const berg = BERGS.findIndex(([bx, bz, r]) => Math.hypot(x - bx, z - bz) < r * 1.45 && y > SEA + 0.05);
+    if (berg >= 0 && (bergAt(x, z) > 0 || y > SEA + 0.12)) { moving.push(i); groups.push(berg + 1); kinds.push(1); heights.push(y - SEA); continue; }
+    const f = floeAt(x, z);
+    if (f.edge < 0.16) continue;
+    moving.push(i); groups.push(100 + f.i * 31 + f.j); kinds.push(2); heights.push(0);
+  }
+  const base = Float32Array.from(moving.flatMap(i => [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]]));
+  const phase = Float32Array.from(groups, g => rnd(g, 7, 3) * 6.28), dir = Float32Array.from(groups, g => rnd(g, 11, 5) * 6.28);
+  return (pos, t) => {
+    for (let k = 0; k < moving.length; k++) {
+      const i = moving[k] * 3, berg = kinds[k] === 1, [amp, speed] = berg ? BOB.berg : BOB.floe, p = phase[k];
+      const drift = (berg ? DRIFT.berg : DRIFT.floe) * Math.sin(t * 0.22 + p), lean = berg ? heights[k] * LEAN * Math.sin(t * 0.37 + p) : 0;
+      pos[i] = base[k * 3] + Math.cos(dir[k]) * drift + lean;
+      pos[i + 1] = base[k * 3 + 1] + amp * Math.sin(t * speed + p);
+      pos[i + 2] = base[k * 3 + 2] + Math.sin(dir[k]) * drift;
+    }
+  };
+}

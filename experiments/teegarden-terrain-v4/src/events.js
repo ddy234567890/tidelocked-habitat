@@ -82,11 +82,13 @@ const make = (tag, className, text) => {
 
 /** onChange: 대응을 고를 때마다 불린다 (게이지 다시 그리기) */
 export function createEvents({ onChange = () => {} } = {}) {
-  let rand, scheduled, used, results, follow, activeWeeks, kinds, pending = null, playing = false;
+  let rand, scheduled, used, results, follow, activeWeeks, kinds, pending = null, playing = false, stage = null, veil = null;
   const seen = loadSeen();
   function reset() {
     rand = mulberry32((Date.now() ^ 0x5eed) >>> 0);
     if (pending) clearTimeout(pending.timer);
+    stage?.end(true);
+    if (veil) veil.hidden = true;
     scheduled = {}; used = new Set(); results = []; current = results; follow = null; pending = null;
     // 사건이 나올 주차: 2~5주차 중 eventsPerGame 개를 무작위로 고른다 (나머지 주는 조용히 지나간다)
     const weeks = [2, 3, 4, 5];
@@ -105,6 +107,17 @@ export function createEvents({ onChange = () => {} } = {}) {
   const card = make('div', 'event-card');
   modal.append(card);
   document.body.append(modal);
+  // 사건 직전 (2026-11-27): 게임을 멈추고(화면을 덮어 누를 수 없게) 테두리가 주황(좋은 소식은 민트)으로 몇 번 깜빡인 뒤 사건으로 들어간다.
+  // 덮개는 '계속'을 누를 때까지 남아 사건 중에도 선지판·다음 주 버튼을 막는다 (사건 카드는 그 위에 뜬다)
+  veil = make('div', 'event-veil');
+  veil.hidden = true; veil.setAttribute('aria-hidden', 'true');
+  document.body.append(veil);
+  const FLASH_MS = 1500, calm = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  function warn(kind) {
+    veil.className = 'event-veil ' + kind; veil.hidden = false;
+    void veil.offsetWidth; veil.classList.add('flash');
+    return new Promise(done => setTimeout(() => { veil.classList.remove('flash'); done(); }, calm() ? 400 : FLASH_MS));
+  }
 
   function footer(onBook) {
     const foot = make('p', 'event-foot');
@@ -199,6 +212,7 @@ export function createEvents({ onChange = () => {} } = {}) {
         if (answered) return;
         answered = true; stopClock(); view = null;
         document.removeEventListener('keydown', onKey);
+        stage?.answer(event, response);
         results.push(...outcome(event, response, selection, week));
         follow = response.follow ?? null;
         onChange();
@@ -207,23 +221,31 @@ export function createEvents({ onChange = () => {} } = {}) {
           const parts = [make('p', 'event-code', event.name + ' · 결과'), make('h2', null, response.timeout ? '시간 초과 · 아무 조치도 못 했어요' : response.label), make('p', 'event-text', response.result)];
           if (response.aftermath) parts.push(make('p', 'event-cause', response.aftermath));
           const next = make('button', 'decide', '▶ 계속'); next.type = 'button';
-          next.addEventListener('click', () => { modal.hidden = true; playing = false; document.body.classList.remove('event-alert'); resolve(); });
+          next.addEventListener('click', () => { modal.hidden = true; playing = false; document.body.classList.remove('event-alert'); stage?.end(); veil.hidden = true; resolve(); });
           parts.push(next, footer(() => showBook(done)));
           card.replaceChildren(...parts);
           next.focus();
         };
         done();
       };
+      // 3D 연출(src/eventStage.js)이 있으면 경보와 함께 카메라가 고장 난 곳으로 다가간 뒤 카드가 뜬다. 카드는 옆으로 비켜 장면이 보이게 한다
       playing = true;
       document.body.classList.add('event-alert');
-      document.addEventListener('keydown', onKey);
-      modal.hidden = false;
-      ask();
+      Promise.resolve(stage?.settle?.()).then(() => warn(event.kind)).then(() => (stage ? stage.start(event, selection) : false)).catch(() => false).then(staged => {
+        modal.classList.toggle('staged', Boolean(staged));
+        document.addEventListener('keydown', onKey);
+        modal.hidden = false;
+        ask();
+      });
     });
   }
 
   return {
     reset,
+    /** 3D 연출 (src/eventStage.js 의 createEventStage). 없으면 카드만 뜬다 */
+    setStage(next) { stage = next; },
+    /** 확인용: 그 사건을 지금 바로 띄운다 (콘솔에서 terrainEvents.play('freeze')). 결과는 게이지에 그대로 들어간다 */
+    trial(id, week, selection) { return byId[id] && !playing ? play(byId[id], week, selection) : Promise.resolve(); },
     /** gaugeState 의 extras */
     effects: () => results,
     /** 그 주 브리핑에 붙일 예고 문장 */

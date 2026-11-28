@@ -15,6 +15,18 @@ for (const [name, build] of Object.entries({ basin: buildBasin, rift: buildRift,
   // 장치 놓을 자리를 찾을 수 있다
   assert.ok(findSpot(name, [0, 0, 3.6], { r: 1.2, h: 1 }, new Map(), true), name + ' 장치 자리');
 }
+// 얼음 해안: 빙산·유빙 점만 움직이고 땅은 그대로
+{
+  const shore = buildShore(4000, PLANET.sites.shore), before = shore.positions.slice();
+  shore.animate(shore.positions, 3.7);
+  let moved = 0, landMoved = 0;
+  for (let i = 0; i < before.length; i += 3) {
+    const d = Math.hypot(shore.positions[i] - before[i], shore.positions[i + 1] - before[i + 1], shore.positions[i + 2] - before[i + 2]);
+    if (d > 1e-6) { moved++; assert.ok(d < 0.6, '크게 넘치지 않는다'); }
+    if (Math.hypot(before[i], before[i + 2]) < 4 && d > 1e-6) landMoved++;
+  }
+  assert.ok(moved > 3000, '얼음 점이 움직인다 ' + moved); assert.equal(landMoved, 0, '기지 자리는 그대로');
+}
 assert.ok(COLD.rift.surface(PLANET.sites.rift)(8, 0) < -3, '열곡은 깊다');
 const placement = ['placement', 'coldModels'].map(f => readFileSync(new URL(`../src/${f}.js`, import.meta.url), 'utf8')).join('');
 const { layers } = choiceData;

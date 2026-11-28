@@ -1,0 +1,301 @@
+{
+  "notes": {
+    "what": "돌발 사건마다 3D 장면 연출 (src/eventStage.js). fx 는 eventFx.js 의 연출 종류, target 은 고장 나는 선지 단계 (그 단계에서 고른 장치가 대상, 없으면 집), flows 는 함께 끊기는 흐름 종류, tag 는 대상 위에 뜨는 짧은 표지. style 은 같은 연출의 변형 (storm: flare 별 입자 폭풍 · dim 별빛 약해짐 / crew: dizzy 배탈 / cracks: ring 건물 둘레), motion 은 대상 건물의 움직임 (tilt 기울기 · quiver 떨림 · sink 내려앉기)",
+    "source": "돌발상황 견본(event-lab.html, src/lab)에서 시험한 6가지 연출을 게임의 모든 나쁜 사건에 나눠 붙였다 (2026-11-27). 좋은 소식은 같은 흐름에 민트색 연출 4가지(drop 보급 캡슐 · spring 솟는 물 · surge 빛기둥과 오르는 고리 · bloom 피어오르는 반딧불)",
+    "heal": "나쁜 사건: 대응을 고르면 고장이 얼마나 되돌아오나는 사건 데이터에서 계산한다: 1 − (그 대응의 손해 ÷ 시간 초과의 손해). 시간 초과는 0. 좋은 소식: 고르면 연출이 절반 세기로 잔잔해진다",
+    "fallback": "fx 가 pipeBurst 인데 끊길 물관이 없으면 powerdown, crew 인데 대원이 없으면 powerdown",
+    "dedicated": "2026-11-28: 공용 연출과 어울리지 않던 사건에 전용 연출을 붙였다 — heat 과열(냉방 정지·배터리 과열) · rockfall 낙석 · signal 통신 두절 · cracks 땅 갈라짐(흙 마름·얼음층 바닥남·지반 침하) · frost 성에·눈발·입김(한파·난방 정지) · vent 화산 가스"
+  },
+  "events": {
+    "flare": {
+      "fx": "storm",
+      "target": "power",
+      "flows": [
+        "power"
+      ],
+      "tag": "별빛 입자 폭풍",
+      "style": "flare"
+    },
+    "overheat": {
+      "fx": "heat",
+      "target": "heat",
+      "flows": [
+        "power",
+        "cool"
+      ],
+      "tag": "냉방 정지"
+    },
+    "shared_stop": {
+      "fx": "powerdown",
+      "target": "oxygen",
+      "flows": [
+        "oxygen",
+        "power",
+        "water"
+      ],
+      "tag": "공용 설비 정지"
+    },
+    "contam": {
+      "fx": "spread",
+      "target": "source",
+      "flows": [
+        "water"
+      ],
+      "tag": "수원 오염"
+    },
+    "sick": {
+      "fx": "crew",
+      "target": "module",
+      "flows": [],
+      "tag": "대원 배탈",
+      "style": "dizzy"
+    },
+    "rockfall": {
+      "fx": "rockfall",
+      "target": "module",
+      "flows": [],
+      "tag": "입구 낙석"
+    },
+    "crack": {
+      "fx": "quake",
+      "target": "module",
+      "flows": [],
+      "tag": "건물 기초 흔들림"
+    },
+    "dust": {
+      "fx": "storm",
+      "target": "power",
+      "flows": [
+        "power"
+      ],
+      "tag": "먼지 폭풍"
+    },
+    "o2fail": {
+      "fx": "powerdown",
+      "target": "oxygen",
+      "flows": [
+        "oxygen"
+      ],
+      "tag": "산소 장치 정지"
+    },
+    "quake": {
+      "fx": "quake",
+      "target": "module",
+      "flows": [],
+      "tag": "땅 흔들림"
+    },
+    "algae": {
+      "fx": "spread",
+      "target": "crop",
+      "flows": [],
+      "tag": "배양액 오염"
+    },
+    "sunspot": {
+      "fx": "storm",
+      "target": "power",
+      "flows": [
+        "power"
+      ],
+      "tag": "별빛 약해짐",
+      "style": "dim"
+    },
+    "comms": {
+      "fx": "signal",
+      "target": "module",
+      "flows": [],
+      "tag": "통신 두절"
+    },
+    "heatwave": {
+      "fx": "crew",
+      "target": "module",
+      "flows": [],
+      "tag": "열파"
+    },
+    "reactor": {
+      "fx": "powerdown",
+      "target": "power",
+      "flows": [
+        "power"
+      ],
+      "tag": "원자로 정지"
+    },
+    "battery_hot": {
+      "fx": "heat",
+      "target": "storage",
+      "flows": [
+        "power"
+      ],
+      "tag": "배터리 과열"
+    },
+    "clog": {
+      "fx": "powerdown",
+      "target": "oxygen",
+      "flows": [
+        "oxygen",
+        "water"
+      ],
+      "tag": "회수 장치 막힘"
+    },
+    "pipe_block": {
+      "fx": "pipeBurst",
+      "target": "share",
+      "flows": [
+        "water"
+      ],
+      "tag": "배관 막힘"
+    },
+    "ice_low": {
+      "fx": "cracks",
+      "target": "source",
+      "flows": [
+        "water"
+      ],
+      "tag": "얼음층 바닥남"
+    },
+    "dry_soil": {
+      "fx": "cracks",
+      "target": "source",
+      "flows": [
+        "water"
+      ],
+      "tag": "흙이 말라 물 줄어듦"
+    },
+    "blight": {
+      "fx": "spread",
+      "target": "crop",
+      "flows": [],
+      "tag": "작물 병"
+    },
+    "grow_light": {
+      "fx": "powerdown",
+      "target": "farm",
+      "flows": [],
+      "tag": "재배 조명 고장"
+    },
+    "damp": {
+      "fx": "spread",
+      "target": "balance",
+      "flows": [],
+      "tag": "창고 습기"
+    },
+    "overwork": {
+      "fx": "crew",
+      "target": "module",
+      "flows": [],
+      "tag": "쓰러지기 직전"
+    },
+    "stranded": {
+      "fx": "storm",
+      "target": "farm",
+      "flows": [],
+      "tag": "온실 길 고립",
+      "style": "flare"
+    },
+    "freeze": {
+      "fx": "pipeBurst",
+      "target": "keep",
+      "flows": [
+        "water"
+      ],
+      "tag": "물관 파열"
+    },
+    "coldwave": {
+      "fx": "frost",
+      "target": "module",
+      "flows": [
+        "heat"
+      ],
+      "tag": "한파 예보"
+    },
+    "gas": {
+      "fx": "vent",
+      "target": "module",
+      "flows": [
+        "oxygen"
+      ],
+      "tag": "화산 가스"
+    },
+    "sink": {
+      "fx": "cracks",
+      "target": "module",
+      "flows": [],
+      "tag": "지반 침하",
+      "style": "ring",
+      "motion": "sink"
+    },
+    "heatfail": {
+      "fx": "frost",
+      "target": "heat",
+      "flows": [
+        "heat"
+      ],
+      "tag": "난방 정지"
+    },
+    "culture": {
+      "fx": "spread",
+      "target": "crop",
+      "flows": [],
+      "tag": "생산 시설 오염"
+    },
+    "water_loop": {
+      "fx": "spring",
+      "target": "reuse",
+      "flows": [],
+      "tag": "물 순환 완성"
+    },
+    "sprout": {
+      "fx": "bloom",
+      "target": "crop",
+      "flows": [],
+      "tag": "첫 수확"
+    },
+    "cargo": {
+      "fx": "drop",
+      "target": "module",
+      "flows": [],
+      "tag": "남은 화물"
+    },
+    "deep_pool": {
+      "fx": "spring",
+      "target": "source",
+      "flows": [],
+      "tag": "깊은 물웅덩이"
+    },
+    "reactor_spare": {
+      "fx": "surge",
+      "target": "power",
+      "flows": [],
+      "tag": "여유 전력"
+    },
+    "groundwater": {
+      "fx": "spring",
+      "target": "source",
+      "flows": [],
+      "tag": "지하 온수층"
+    },
+    "volatiles": {
+      "fx": "bloom",
+      "target": "oxygen",
+      "flows": [],
+      "tag": "얼음 속 기체"
+    },
+    "quietstar": {
+      "fx": "surge",
+      "target": "power",
+      "flows": [],
+      "tag": "조용한 별"
+    },
+    "supply": {
+      "fx": "drop",
+      "target": "module",
+      "flows": [],
+      "tag": "보급 캡슐"
+    },
+    "parts": {
+      "fx": "bloom",
+      "target": "module",
+      "flows": [],
+      "tag": "현지 자재"
+    }
+  }
+}

@@ -617,5 +617,7 @@ export function createPeople({ host, camera, parent, material, geometryFrom, get
   let evacuated = false;
   const evacuate = () => { evacuated = true; clear(); };
   window.people = { focused: () => focused, pinned: () => pinned, pin, add, addGroup, clear, evacuate, list: people, screenOf, advance, resumeClock, devices: () => devices };
-  return { frame, add, addGroup, clear };
+  // 지금 서 있는 사람 자리 (지역 좌표). 돌발 사건 연출(eventStage.js)이 대원 위에 땀·숨을 띄울 때 쓴다
+  const spots = () => people.filter(o => o.status !== 'down').map(o => ({ x: o.x, z: o.z }));
+  return { frame, add, addGroup, clear, spots };
 }

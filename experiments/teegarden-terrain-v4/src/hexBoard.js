@@ -96,7 +96,7 @@ function ribbon(p, t0, scale, prog = 1) {
 export function createHexBoard(root, { onPick, onDecide }) {
   root.classList.add('hexboard');
   root.innerHTML = `
-    <div class="hb-head"><p class="hb-prompt"><b></b><span></span></p><nav class="hb-steps" aria-label="단계"></nav><span class="hb-count"></span><button type="button" class="hb-notes" aria-haspopup="dialog">▤ 메모장</button></div>
+    <div class="hb-head"><p class="hb-prompt"><b></b><span></span></p><nav class="hb-steps" aria-label="단계"></nav><span class="hb-count"></span></div>
     <div class="hb-body">
       <div class="hb-view"><svg class="hb-map" role="group" aria-label="선지 토큰" xmlns="${SVG}">
         <defs>
@@ -113,7 +113,12 @@ export function createHexBoard(root, { onPick, onDecide }) {
   const tip = root.querySelector('.hb-tip'), decideButton = root.querySelector('.hb-decide');
   const viewBox = root.querySelector('.hb-view'), stepNav = root.querySelector('.hb-steps');
   // 메모장 창: 주차별로 이어 온 노드만 모아 보는 창 (src/fieldNotes.js)
-  const notes = createFieldNotes(), notesButton = root.querySelector('.hb-notes');
+  // 지난 선택 돌아보기 단추 (2026-11-28): 노드 셋이 이어진 아이콘. 현장 화면 오른쪽 아래(예전 단면 보기 자리)에 두고, 단면 보기 줄은 그 왼쪽으로 비킨다
+  const notes = createFieldNotes(), notesButton = document.createElement('button');
+  notesButton.type = 'button'; notesButton.className = 'fn-open'; notesButton.setAttribute('aria-haspopup', 'dialog');
+  notesButton.setAttribute('aria-label', '지난 선택 돌아보기'); notesButton.title = '지난 선택 돌아보기';
+  notesButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 16.4 10.6 8.2M13.6 7.9l4 7.2M7.6 18.2h8.8"/><circle cx="5.2" cy="18.2" r="2.4"/><circle cx="12" cy="5.8" r="2.4"/><circle cx="18.8" cy="17.6" r="2.4"/></svg>';
+  (document.querySelector('#local-nav')?.parentElement ?? root).append(notesButton);
   notesButton.addEventListener('click', () => notes.open());
   let state = null, lastOpen = null;
   // 카메라: 판 좌표에서 지금 비추는 가운데 x 와 위아래 흔들림 y
@@ -208,7 +213,7 @@ export function createHexBoard(root, { onPick, onDecide }) {
     const wasDone = allDone(state);
     state = next;
     hideTip();
-    notes.record(next.steps);   // 메모장에 주차별 결정을 적어 둔다
+    notes.record(next.steps, next.history);   // 메모장에 주차별 결정을 적어 둔다
     if (!wasDone && allDone(next)) { notesButton.classList.remove('new'); void notesButton.offsetWidth; notesButton.classList.add('new'); }  // 한 주를 다 적으면 단추가 두 번 반짝
 
     if (cheering) { renderHead(); return; }   // 다음 주로 넘어가는 강조 연출 중에는 판 그림을 그대로 둔다
@@ -353,10 +358,17 @@ export function createHexBoard(root, { onPick, onDecide }) {
   });
 
   // ---- 마우스를 올리면 뜨는 설명 팝업 ----
-  function showTip(node) {
+  // at: 커서(또는 손가락) 위치 [x, y]. 없으면(키보드) 토큰 옆
+  function showTip(node, at) {
     const f = node && findChoice(node.dataset.id);
     if (!f) return;
     const { step, choice: c } = f, k = state.steps.indexOf(step), chosen = step.selected === c.id;
+    if (f.locked) {
+      tip.innerHTML = `<div class="t-lock">잠긴 선택지입니다</div><div class="t-name">${esc(c.label)}</div>${c.lockHint ? `<div class="t-hint">${esc(c.lockHint)}</div>` : ''}`;
+      tip.classList.add('on', 'locked');
+      return placeTip(node, at);
+    }
+    tip.classList.remove('locked');
     const hint = step.status !== 'open' || state.busy ? '' : chosen ? '' : step.selected ? '누르면 이걸로 바꿔요.' : '누르면 이걸로 골라요.';
     tip.innerHTML = `<div class="t-step">STEP ${k + 1} · ${esc(step.short)}${chosen ? ' · <b>고름</b>' : ''}</div>
       <div class="t-name">${esc(c.label)}</div>
@@ -365,30 +377,46 @@ export function createHexBoard(root, { onPick, onDecide }) {
       ${c.cost ? `<div class="t-row cost"><span>감수</span><span>${esc(c.cost)}</span></div>` : ''}
       ${f.locked ? `<div class="t-hint">잠김 · ${esc(c.lockHint)}</div>` : hint ? `<div class="t-hint">${hint}</div>` : ''}`;
     tip.classList.add('on');
-    const b = root.getBoundingClientRect(), r = node.getBoundingClientRect();
-    let left = r.right - b.left + 8;
-    if (left + tip.offsetWidth > b.width - 8) left = r.left - b.left - tip.offsetWidth - 8;
-    if (left < 8) left = Math.max(8, (b.width - tip.offsetWidth) / 2);
-    // 판 아래쪽이 화면 끝이라, 팝업은 토큰 위쪽에 맞춰 띄운다 (넘치면 위로 올린다)
-    let top = r.top - b.top;
-    if (b.top + top + tip.offsetHeight > window.innerHeight - 8) top = window.innerHeight - 8 - tip.offsetHeight - b.top;
-    tip.style.left = `${left}px`; tip.style.top = `${top}px`;
+    placeTip(node, at);
   }
-  function hideTip() { tip.classList.remove('on'); }
+  // 설명은 커서 오른쪽 아래에 붙어 다닌다. 화면 밖으로 넘치면 커서 왼쪽·위로 넘긴다 (화면 좌표, position: fixed)
+  const CURSOR_GAP = 16;
+  function placeTip(node, at) {
+    if (!at) { const r = node.getBoundingClientRect(); at = [r.right - 6, r.top + 6]; }
+    tip.classList.add('at-cursor');
+    const w = tip.offsetWidth, h = tip.offsetHeight, [x, y] = at;
+    let left = x + CURSOR_GAP, top = y + CURSOR_GAP;
+    if (left + w > innerWidth - 8) left = x - CURSOR_GAP - w;
+    if (top + h > innerHeight - 8) top = y - CURSOR_GAP - h;
+    tip.style.setProperty('--tx', `${Math.max(8, left)}px`); tip.style.setProperty('--ty', `${Math.max(8, top)}px`);
+  }
+  let touchTimer = 0;
+  function hideTip() { tip.classList.remove('on'); clearTimeout(touchTimer); }
 
   const pick = node => {
     if (!node?.classList.contains('can') || state.busy) return;
-    hideTip();
+    if (node.matches(':hover')) hideTip(); else tip.classList.remove('on');
     onPick(node.dataset.step, node.dataset.id);
   };
   svg.addEventListener('click', e => pick(e.target.closest('.hb-node')));
   svg.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e.target.closest('.hb-node')); } });
-  svg.addEventListener('pointerover', e => { const n = e.target.closest('.hb-node'); if (n) showTip(n); });
+  svg.addEventListener('pointerover', e => { const n = e.target.closest('.hb-node'); if (n && e.pointerType !== 'touch') showTip(n, [e.clientX, e.clientY]); });
   svg.addEventListener('pointerout', e => { const n = e.target.closest('.hb-node'); if (n && !n.contains(e.relatedTarget)) hideTip(); });
   svg.addEventListener('focusin', e => { const n = e.target.closest('.hb-node'); if (n && n.matches(':focus-visible')) showTip(n); });
   svg.addEventListener('focusout', hideTip);
   svg.addEventListener('pointerleave', hideTip);   // 판 밖으로 나가면 늘 닫는다
-  svg.addEventListener('pointermove', e => { if (!e.target.closest('.hb-node')) hideTip(); });   // 토큰 사이 빈 곳에서도 닫는다
+  svg.addEventListener('pointermove', e => {   // 커서를 따라 움직이고, 토큰 사이 빈 곳에서는 닫는다
+    const n = e.target.closest('.hb-node');
+    if (!n) return hideTip();
+    if (e.pointerType !== 'touch' && tip.classList.contains('on')) placeTip(n, [e.clientX, e.clientY]);
+  });
+  // 터치: 누른 자리에 잠깐 띄운다 (잠긴 선택지는 누를 수 없으니 이것으로 알려 준다)
+  svg.addEventListener('pointerdown', e => {
+    const n = e.target.closest('.hb-node');
+    if (!n || e.pointerType === 'mouse') return;
+    showTip(n, [e.clientX, e.clientY]);
+    clearTimeout(touchTimer); touchTimer = setTimeout(() => tip.classList.remove('on'), n.classList.contains('s-lock') ? 2600 : 1800);
+  });
   decideButton.addEventListener('click', () => {
     if (decideButton.disabled || cheering) return;
     if (allDone(state)) cheer(); else onDecide();

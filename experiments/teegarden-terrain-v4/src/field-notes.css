@@ -1,28 +1,13 @@
 /* 메모장 창 (src/fieldNotes.js): 게임의 다른 창과 같은 틀(.window · .titlebar · .wbtn)에 주차별 노드만.
    색은 CLAUDE.md 화면 토큰만 쓴다 (다크 테마, 빨강·초록·보라 없음). 감수는 주황 */
 .fn-modal{--fn-bg:#03081A;--fn-ink:#E8DFC8;--fn-text:#DCE6FF;--fn-sub:#6A8CC8;--fn-hi:#8FC1FF;--fn-edge:#3D8BFF;--fn-chosen:#0A1A44;--fn-orange:#FF993D;
-  position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,4,12,.72);font-family:"Terrarum Sans Bitmap",monospace}
+  position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.8);font-family:"Terrarum Sans Bitmap",monospace}
 .fn-modal[hidden]{display:none}
-.fn-win{width:min(720px,96vw);max-height:min(80vh,720px);animation:fn-open .3s cubic-bezier(.2,.8,.2,1)}
+.fn-win{width:min(780px,96vw);max-height:min(86vh,820px);display:flex;flex-direction:column;animation:fn-open .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes fn-open{from{opacity:0;transform:scaleY(.06)}60%{opacity:1}}
 .fn-win .titlebar{display:flex;align-items:center;justify-content:space-between}
-.fn-rows{flex:1 1 auto;min-height:0;overflow:auto;padding:14px 18px 10px;display:grid;gap:6px;scrollbar-width:thin;scrollbar-color:var(--fn-edge) transparent}
-.fn-row{display:flex;align-items:flex-start;gap:14px;padding:6px 0;border-bottom:1px solid rgba(61,139,255,.1)}
-.fn-row:last-child{border-bottom:0}
-.fn-wk{flex:none;width:34px;padding-top:26px;color:var(--fn-hi);font-size:16px}
 
 .fn-map{display:block;max-width:100%;height:auto;overflow:visible}
-.fn-line{stroke:var(--fn-ink);stroke-width:1.6;opacity:.8}
-.fn-line.wait{stroke:var(--fn-sub);stroke-dasharray:3 6;opacity:.5}
-.fn-node{outline:none}
-.fn-node .fn-hex{fill:none;stroke:var(--fn-sub);stroke-width:1.4;stroke-dasharray:5 4;opacity:.7}
-.fn-node.done .fn-hex{fill:var(--fn-chosen);stroke:var(--fn-hi);stroke-dasharray:none;stroke-width:1.6;opacity:1}
-.fn-node[data-w]{cursor:pointer}
-.fn-node[data-w]:hover .fn-hex,.fn-node[data-w]:focus-visible .fn-hex,.fn-node.pinned .fn-hex{stroke:var(--fn-ink);stroke-width:2.4}
-.fn-icon{fill:none;stroke:var(--fn-ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.fn-node text{text-anchor:middle}
-.fn-name{font-size:13px;fill:var(--fn-text)}
-.fn-q{font-size:16px;fill:var(--fn-sub)}
 
 /* 정보 팝업: 선지판 설명 팝업과 같은 모양 */
 .fn-tip{position:fixed;z-index:46;width:260px;padding:10px 12px;display:grid;gap:6px;background:rgba(10,20,52,.97);border:1px solid var(--fn-hi);color:var(--fn-text);font-size:13px;line-height:1.45;
@@ -36,8 +21,109 @@
 .fn-tip .t-row.cost span:first-child{border-color:var(--fn-orange);color:var(--fn-orange)}
 
 /* 선지판 머리 줄의 '메모장' 단추. 한 주를 다 결정하면 두 번 반짝 */
-.hb-notes{font:inherit;font-size:13px;flex:none;background:#03081A;color:#8FC1FF;border:1px solid #3D8BFF;padding:1px 8px;cursor:pointer;white-space:nowrap}
-.hb-notes:hover,.hb-notes:focus-visible{border-color:#8FC1FF;outline:none}
-.hb-notes.new{animation:fn-ping 1.2s ease-out 2}
 @keyframes fn-ping{0%{box-shadow:0 0 0 0 rgba(61,139,255,.6)}100%{box-shadow:0 0 0 8px rgba(61,139,255,0)}}
 @media(prefers-reduced-motion:reduce){.fn-win,.hb-notes.new{animation:none}.fn-tip{transition:none}}
+
+/* 지난 선택 돌아보기: 거품 지도 (2026-11-28, src/fieldNotes.js). 창 대신 화면 전체, 뒤는 80% 검은 막.
+   비눗방울 막처럼 선이 이어지고, 겹친 테두리는 연관만큼 살짝 굵다. 올리면 바깥 고리만 살짝 돈다 */
+.fn-full{position:absolute;inset:0;display:flex;flex-direction:column;animation:fn-fade .35s ease-out}
+@keyframes fn-fade{from{opacity:0}}
+.fn-head{display:flex;align-items:baseline;gap:18px;padding:18px 24px 0;color:var(--fn-sub);font-size:13px}
+.fn-head h2{margin:0;font-size:15px;font-weight:normal;color:var(--fn-hi);letter-spacing:.04em;white-space:nowrap}
+.fn-head p{margin:0;flex:1}.fn-head b{color:var(--fn-ink);font-weight:normal}
+.fn-x{align-self:center;font:inherit;font-size:22px;line-height:1;width:36px;height:36px;background:none;color:var(--fn-hi);border:1px solid rgba(143,193,255,.4);cursor:pointer}
+.fn-x:hover,.fn-x:focus-visible{color:var(--fn-ink);border-color:var(--fn-ink);outline:none}
+.fn-map{display:block;width:100%;height:100%;overflow:visible}
+.fn-rank{position:absolute;left:24px;bottom:20px;max-width:min(440px,calc(100vw - 48px));list-style:none;margin:0;padding:10px 14px;display:grid;gap:6px;background:rgba(3,8,26,.72);border:1px solid rgba(61,139,255,.25)}
+.fn-rank[hidden]{display:none}
+.fn-rank li{display:grid;grid-template-columns:22px 1fr;column-gap:8px;font-size:13px;color:var(--fn-text);cursor:default}
+.fn-rank li b{grid-row:span 2;width:20px;height:20px;border:1px solid var(--fn-ink);border-radius:50%;text-align:center;line-height:18px;color:var(--fn-ink);font-weight:normal;font-size:12px}
+.fn-rank li small{color:var(--fn-sub);font-size:12px}
+.fn-tip .t-links{font-size:12px;color:var(--fn-hi)}
+.fn-tip .t-why{margin:0;padding-left:16px;display:grid;gap:3px}
+.fn-tip .t-why li.unlock{color:var(--fn-ink)}.fn-tip .t-why li.effect{color:var(--fn-hi)}
+.fn-empty{color:var(--fn-sub);padding:24px}
+@media (max-width:640px){.fn-head{flex-wrap:wrap;gap:6px 12px}.fn-head p{order:3;flex-basis:100%}.fn-rank{left:12px;right:12px;bottom:12px;max-width:none}}
+@media (prefers-reduced-motion:reduce){.fn-full{animation:none}}
+
+/* 노드 보기 (2026-11-28 기본): 고른 순서대로 한 줄, 점 크기 = 중대함, 갈래선 = 영향. 레퍼런스: 둥근 모서리 회로선 */
+.fn-map.nodes .fn-wkl{fill:var(--fn-hi);font-size:14px;text-anchor:middle;opacity:.8}
+.fn-map.nodes .fn-band{fill:rgba(61,139,255,.05)}.fn-map.nodes .fn-band.alt{fill:rgba(61,139,255,.02)}
+.fn-wire{fill:none;stroke:#8FC1FF;stroke-width:var(--w,1.4);stroke-linecap:round;opacity:.55;cursor:pointer;transition:opacity .2s,stroke .2s}
+.fn-wire.top{stroke:#E8DFC8;opacity:.9}
+.fn-map.focus .fn-wire{opacity:.05}
+.fn-map.focus .fn-wire.lit{opacity:1;stroke:#E8DFC8;stroke-width:var(--w,1.6);stroke-dasharray:7 5;animation:fn-flow .9s linear infinite}
+@keyframes fn-flow{to{stroke-dashoffset:-12}}
+.fn-badge{cursor:pointer}.fn-badge circle{fill:#000;stroke:#8FC1FF;stroke-width:1.4}.fn-badge text{fill:#DCE6FF;font-size:11px;text-anchor:middle}
+.fn-n{outline:none}
+.fn-n[data-step]{cursor:pointer}
+.fn-n .hit{fill:rgba(0,0,0,0)}
+/* 토큰: 선지판의 고른 토큰과 같은 모양 (육각형 테두리 두 겹 + 아이콘) */
+.fn-n .tok{fill:#0A1A44;stroke:#8FC1FF;stroke-width:2}
+.fn-n .tok-in{fill:none;stroke:#3D8BFF;stroke-width:1;opacity:.6}
+.fn-n .ic{fill:none;stroke:#E8DFC8;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.fn-n:hover .tok,.fn-n:focus-visible .tok,.fn-n.pinned .tok{stroke:#E8DFC8}
+.fn-n .halo{fill:none;stroke:#E8DFC8;stroke-width:1.4;opacity:0;transform-box:fill-box;transform-origin:center;transform:scale(.7);transition:opacity .25s,transform .35s cubic-bezier(.2,.8,.2,1)}
+.fn-n:hover .halo,.fn-n:focus-visible .halo,.fn-n.pinned .halo{opacity:1;transform:none}
+.fn-n text{pointer-events:none}
+.fn-n .lab{fill:var(--fn-text);font-size:14px;text-anchor:middle}
+.fn-n .sub{fill:var(--fn-sub);font-size:11px;text-anchor:middle}
+.fn-map.focus .fn-n:not(.lit){opacity:.3}
+@media (prefers-reduced-motion:reduce){.fn-map.focus .fn-wire.lit{animation:none}}
+
+/* 전개도 투시 (2026-11-28): 점 바닥 · 토큰 그림자 · 주차 넘기기 단추 */
+.fn-map.flow3d .fn-floor circle{fill:#8FC1FF}
+.fn-map.flow3d .fn-band{fill:rgba(61,139,255,.05);stroke:rgba(143,193,255,.12);stroke-width:1}
+.fn-map.flow3d .fn-band.alt{fill:rgba(61,139,255,.02)}
+.fn-map.flow3d .fn-shadow{fill:rgba(143,193,255,.06);stroke:rgba(143,193,255,.35);stroke-width:1}
+.fn-map.flow3d .fn-spark circle{fill:#DCE6FF}
+.fn-map.flow3d .fn-labels text{text-anchor:middle}
+.fn-map.flow3d .fn-labels .lab{fill:var(--fn-text);font-size:14px}
+.fn-map.flow3d .fn-labels .sub{fill:var(--fn-sub);font-size:11px}
+.fn-map.focus .fn-shadow{opacity:.2!important}
+.fn-pager{position:absolute;right:24px;bottom:20px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.fn-pager button{font:inherit;font-size:12px;background:rgba(3,8,26,.8);color:var(--fn-hi);border:1px solid rgba(143,193,255,.35);padding:3px 10px;cursor:pointer}
+.fn-pager button.on{background:#1450D8;color:#fff;border-color:#3D8BFF}
+.fn-pager button:hover,.fn-pager button:focus-visible{border-color:var(--fn-ink);outline:none}
+.fn-pager .fn-hint{flex-basis:100%;text-align:right;color:var(--fn-sub);font-size:11px}
+@media (max-width:640px){.fn-pager{left:12px;right:12px;bottom:auto;top:8px;justify-content:center}.fn-pager .fn-hint{display:none}}
+
+/* 전개도 다듬기 (2026-11-28): 바닥을 흐르는 선 · 토큰 기둥 · 끌어 둘러보기 · 아래 정보창 */
+.fn-map.flow3d .fn-stem{stroke:rgba(143,193,255,.45);stroke-width:1;stroke-dasharray:2 3}
+.fn-map.flow3d .fn-wire{stroke-linejoin:round}
+.fn-modal .fn-rows{cursor:ew-resize}
+.fn-modal .fn-rows.dragging{cursor:ew-resize}
+.fn-tip.dock{position:fixed;left:24px!important;right:auto;top:auto!important;bottom:20px;width:min(460px,calc(100vw - 48px));transform:none;clip-path:none;border-color:#3D8BFF;background:rgba(3,8,26,.94)}
+.fn-modal.tip-on .fn-rank{opacity:0;pointer-events:none}
+.fn-rank{transition:opacity .2s}
+@media (max-width:640px){.fn-tip.dock{left:12px!important;bottom:60px}}
+
+/* 득실 (2026-11-28): 얻은 게 많은 선택은 파랑, 잃은 게 많은 선택은 주황, 비슷하면 회색 (빨강·초록 대신) */
+.fn-n.gain .tok{stroke:#8FC1FF}.fn-n.gain .tok-in{stroke:#3D8BFF}.fn-n.gain .ic{stroke:#DCE6FF}
+.fn-n.loss .tok{stroke:#FF993D;fill:#1F1408}.fn-n.loss .tok-in{stroke:#FF993D;opacity:.4}.fn-n.loss .ic{stroke:#FFC28A}
+.fn-n.even .tok{stroke:#6A8CC8;fill:#0B1124}.fn-n.even .tok-in{stroke:#6A8CC8;opacity:.3}.fn-n.even .ic{stroke:#AEB9D6}
+.fn-sign circle{fill:#000;stroke-width:1.4}
+.fn-sign text{font-size:11px;text-anchor:middle;font-weight:bold}
+.fn-n.gain .fn-sign circle{stroke:#8FC1FF}.fn-n.gain .fn-sign text{fill:#8FC1FF}
+.fn-n.loss .fn-sign circle{stroke:#FF993D}.fn-n.loss .fn-sign text{fill:#FF993D}
+.fn-n.even .fn-sign circle{stroke:#6A8CC8}.fn-n.even .fn-sign text{fill:#6A8CC8}
+.fn-map.flow3d .fn-labels .sub .g{fill:#8FC1FF}.fn-map.flow3d .fn-labels .sub .l{fill:#FF993D}
+.fn-n:hover .tok,.fn-n:focus-visible .tok,.fn-n.pinned .tok{stroke:#E8DFC8}
+.fn-key{padding:0 5px;border:1px solid currentColor}.fn-key.gain{color:#8FC1FF}.fn-key.loss{color:#FF993D}.fn-key.even{color:#6A8CC8}
+.fn-tip .t-bal{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;font-size:12px}
+.fn-tip .t-bal span:first-child{color:#8FC1FF}.fn-tip .t-bal span:last-of-type{color:#FF993D}
+.fn-tip .t-bal i{height:6px;background:#FF993D;display:block}.fn-tip .t-bal b{display:block;height:100%;background:#8FC1FF}
+.fn-tip .t-bal em{grid-column:1/-1;font-style:normal;color:var(--fn-ink)}
+
+/* 지난 선택 돌아보기 단추 (2026-11-28): 노드 셋이 이어진 아이콘. 현장 화면 오른쪽 아래 (예전 단면 보기 자리), 단면 보기 줄은 그 왼쪽 */
+#stage .fn-open{position:absolute;z-index:3;right:12px;top:38px;width:42px;height:34px;display:grid;place-items:center;padding:0;cursor:pointer;
+  background:rgba(10,20,52,.85);border:1px solid #3D8BFF;color:#8FC1FF;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+#stage .fn-open svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+#stage .fn-open svg circle{fill:#03081A}
+#stage .fn-open:hover,#stage .fn-open:focus-visible{background:#8FC1FF;color:#02040C;outline:none}
+#stage .fn-open:hover svg circle,#stage .fn-open:focus-visible svg circle{fill:#8FC1FF}
+#stage .fn-open.new{animation:fn-ping 1.2s ease-out 2}
+#stage .local-nav{right:62px}
+@media (max-width:960px){#stage .fn-open{top:34px;right:8px;width:38px;height:30px}#stage .local-nav{right:54px}}
+@media (min-width:961px){#stage .fn-open{top:auto;right:var(--k-m,24px);bottom:calc(var(--k-foot,34px) + var(--k-bottom,214px) + 30px)}#stage .local-nav{right:calc(var(--k-m,24px) + 52px)!important}}
+@media (prefers-reduced-motion:reduce){#stage .fn-open.new{animation:none}}

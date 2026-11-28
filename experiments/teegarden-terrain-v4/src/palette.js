@@ -13,6 +13,9 @@ export function blueStep(t) {
 }
 export const cream = (brightness = 1) => CREAM.map(v => v * brightness);
 export const orange = (brightness = 1) => ORANGE.map(v => v * brightness);
+// 민트 (2026-11-27 사용자 요청, CLAUDE.md 색 규칙의 예외): 좋은 소식(긍정 돌발 상황) 연출에만 쓴다. 초록으로 보이지 않게 파랑 쪽으로 기운 민트
+const MINT = [0x6c / 255, 0xf2 / 255, 0xdc / 255];
+export const mint = (brightness = 1) => MINT.map(v => v * brightness);
 // 무채색: 지난 주차 건물 면에만 쓴다 (존재감 없이 뒤로 물러나 보이게)
 export const gray = (brightness = 1) => [brightness, brightness, brightness];
 export function temperatureColor(value, range) {
